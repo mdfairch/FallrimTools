@@ -20,11 +20,14 @@ import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
+import static mf.BufferUtil.getZString;
+
 
 /**
  * Describes a BSA folder record.
@@ -65,15 +68,9 @@ final class BSAFolderRecord {
         channel.read(BLOCK, this.OFFSET - header.TOTAL_FILENAME_LENGTH);
         BLOCK.order(ByteOrder.LITTLE_ENDIAN);
         ((Buffer) BLOCK).flip();
-
-        if (header.INCLUDE_DIRECTORYNAMES) {
-            //final int NAMELEN = Byte.toUnsignedInt(BLOCK.get());
-            this.NAME = mf.BufferUtil.getZString(BLOCK);
-        } else {
-            this.NAME = null;
-        }
-
-        this.PATH = Paths.get(this.NAME);
+        
+        this.NAME = header.INCLUDE_DIRECTORYNAMES ? getZString(BLOCK) : null;
+        this.PATH = pathWithFallback(this.NAME);
         this.FILERECORDS = new ArrayList<>(this.COUNT);
 
         for (int i = 0; i < this.COUNT; i++) {
@@ -110,5 +107,11 @@ final class BSAFolderRecord {
     final public Path PATH;
     final List<BSAFileRecord> FILERECORDS;
 
-    //final public BSAFileRecordBlock FILERECORDBLOCK;
+    static private Path pathWithFallback(String s) {
+        try {
+            return Paths.get(s);
+        } catch (InvalidPathException ex) {
+            return Paths.get(s.replaceAll("[^a-zA-Z0-9._]", ""));
+        }         
+    }
 }
