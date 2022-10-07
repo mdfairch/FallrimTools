@@ -33,7 +33,7 @@ import resaver.ess.papyrus.ScriptInstance;
  *
  * @author Mark Fairchild
  */
-final public class Plugin implements Element, AnalyzableElement, Linkable, Comparable<Plugin>, java.io.Serializable {
+final public class Plugin implements AnalyzableElement, Linkable, Comparable<Plugin>, java.io.Serializable {
 
     static public Plugin PROTOTYPE = new Plugin("Unofficial Skyrim Legendary Edition Patch", -1, false);
 

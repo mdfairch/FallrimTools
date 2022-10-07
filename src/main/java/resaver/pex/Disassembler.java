@@ -258,9 +258,10 @@ final public class Disassembler {
 
         int offs1 = IF[0];
         int offs2 = IF[1];
-        Instruction begin = block.get(0);
-        Instruction end = block.get(offs1 - 1);
-        List<Instruction> block1 = block.subList(1, offs1 - 1);
+
+		@SuppressWarnings("unused") Instruction begin = block.get(0);
+        @SuppressWarnings("unused") Instruction end = block.get(offs1 - 1);
+		List<Instruction> block1 = block.subList(1, offs1 - 1);
         List<Instruction> block2 = block.subList(offs1, offs1 + offs2 - 1);
 
         // Disassemble the IF block, which is relatively easy.

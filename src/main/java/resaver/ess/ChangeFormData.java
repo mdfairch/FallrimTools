@@ -20,7 +20,7 @@ package resaver.ess;
  * 
  * @author Mark Fairchild
  */
-public interface ChangeFormData extends Element, AnalyzableElement {
+public interface ChangeFormData extends AnalyzableElement {
  
     public ChangeFlagConstants[] getChangeConstants();
     

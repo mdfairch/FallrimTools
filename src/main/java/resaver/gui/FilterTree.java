@@ -101,119 +101,89 @@ final public class FilterTree extends JTree {
         });
 
         this.MI_DELETE.addActionListener(e -> deleteNodes());
+		
+		this.MI_FILTER.addActionListener(e -> {
+			Plugin plugin = (Plugin) ((Node) getSelectionPath().getLastPathComponent()).getElement();
+			pluginFilterHandler.accept(plugin);
+		});
 
-        this.MI_FILTER.addActionListener(e -> {
-            if (null != this.pluginFilterHandler) {
-                Plugin plugin = (Plugin) ((Node) getSelectionPath().getLastPathComponent()).getElement();
-                this.pluginFilterHandler.accept(plugin);
-            }
-        });
-
-        this.MI_PURGE.addActionListener(e -> {
+		this.MI_PURGE.addActionListener(e -> {
             Plugin plugin = (Plugin) ((Node) getSelectionPath().getLastPathComponent()).getElement();
-            if (null != this.purgeHandler) {
-                this.purgeHandler.accept(Collections.singleton(plugin));
-            }
-        });
+			purgeHandler.accept(Collections.singleton(plugin));
+		});
+
 
         this.MI_PURGES.addActionListener(e -> {
-            if (null != this.purgeHandler) {
-                final TreePath[] PATHS = getSelectionPaths();
-                if (null == PATHS || PATHS.length == 0) {
-                    return;
-                }
+			final TreePath[] PATHS = getSelectionPaths();
+			if (null == PATHS || PATHS.length == 0) {
+				return;
+			}
 
-                final Map<Element, Node> ELEMENTS = getModel().parsePaths(PATHS);
-                final List<Plugin> PLUGINS = ELEMENTS.keySet()
-                        .stream()
-                        .filter(v -> v instanceof Plugin)
-                        .map(v -> (Plugin) v)
-                        .collect(Collectors.toList());
-                this.purgeHandler.accept(PLUGINS);
-            }
+			final Map<Element, Node> ELEMENTS = getModel().parsePaths(PATHS);
+			final List<Plugin> PLUGINS = ELEMENTS.keySet()
+					.stream()
+					.filter(v -> v instanceof Plugin)
+					.map(v -> (Plugin) v)
+					.collect(Collectors.toList());
+					purgeHandler.accept(PLUGINS);
         });
 
         this.MI_DELETE_FORMS.addActionListener(e -> {
             Plugin plugin = (Plugin) ((Node) getSelectionPath().getLastPathComponent()).getElement();
-            if (null != this.deleteFormsHandler) {
-                this.deleteFormsHandler.accept(plugin);
-            }
+            deleteFormsHandler.accept(plugin);
         });
 
         this.MI_DELETE_INSTANCES.addActionListener(e -> {
             Plugin plugin = (Plugin) ((Node) getSelectionPath().getLastPathComponent()).getElement();
-            if (null != this.deleteInstancesHandler) {
-                this.deleteInstancesHandler.accept(plugin);
-            }
+            deleteInstancesHandler.accept(plugin);
         });
 
         this.MI_ZERO_THREAD.addActionListener(e -> {
-            if (null != this.zeroThreadHandler) {
-                final TreePath[] PATHS = getSelectionPaths();
-                if (null == PATHS || PATHS.length == 0) {
-                    return;
-                }
-
-                final Map<Element, Node> ELEMENTS = getModel().parsePaths(PATHS);
-                final List<ActiveScript> THREADS = ELEMENTS.keySet()
-                        .stream()
-                        .filter(ESS.THREAD)
-                        .map(v -> (ActiveScript) v)
-                        .collect(Collectors.toList());
-                this.zeroThreadHandler.accept(THREADS);
-            }
-        });
+			final TreePath[] PATHS = getSelectionPaths();
+			if (PATHS != null && PATHS.length > 0) {
+				final Map<Element, Node> ELEMENTS = getModel().parsePaths(PATHS);
+				final List<ActiveScript> THREADS = ELEMENTS.keySet()
+						.stream()
+						.filter(ESS.THREAD)
+						.map(v -> (ActiveScript) v)
+						.collect(Collectors.toList());
+						zeroThreadHandler.accept(THREADS);
+			}
+		});
 
         this.MI_FIND_OWNER.addActionListener(e -> {
             Element element = ((Node) getSelectionPath().getLastPathComponent()).getElement();
-            if (null != this.findHandler) {
-                if (element instanceof ActiveScript) {
-                    ActiveScript script = (ActiveScript) element;
-                    if (null != script.getInstance()) {
-                        this.findHandler.accept(script.getInstance());
-                    }
-                } else if (element instanceof StackFrame) {
-                    StackFrame frame = (StackFrame) element;
-                    Variable owner = frame.getOwner();
-                    if (null != owner && owner instanceof Variable.Ref) {
-                        Variable.Ref ref = (Variable.Ref) frame.getOwner();
-                        this.findHandler.accept(ref.getReferent());
-                    }
-                } else if (element instanceof ArrayInfo) {
-                    ArrayInfo array = (ArrayInfo) element;
-                    if (null != array.getHolder()) {
-                        this.findHandler.accept(array.getHolder());
-                    }
-
-                }
-            }
-
+			if (element instanceof ActiveScript) {
+				ActiveScript script = (ActiveScript) element;
+				if (null != script.getInstance()) {
+					findHandler.accept(script.getInstance());
+				}
+			} else if (element instanceof StackFrame) {
+				StackFrame frame = (StackFrame) element;
+				Variable owner = frame.getOwner();
+				if (null != owner && owner instanceof Variable.Ref) {
+					Variable.Ref ref = (Variable.Ref) frame.getOwner();
+					findHandler.accept(ref.getReferent());
+				}
+			} else if (element instanceof ArrayInfo) {
+				ArrayInfo array = (ArrayInfo) element;
+				if (null != array.getHolder()) {
+					findHandler.accept(array.getHolder());
+				}
+			}
         });
 
         this.MI_CLEANSE_FLST.addActionListener(e -> {
             ChangeForm form = (ChangeForm) ((Node) getSelectionPath().getLastPathComponent()).getElement();
-            /*
-            ChangeFormFLST flst = (ChangeFormFLST) form.getData();
-            if (null != this.cleanFLSTHandler) {
-                this.cleanFLSTHandler.accept(flst);
-            }*/
+            ChangeFormFLST flst = (ChangeFormFLST) form.getData(null, null, false);
+            if (null != flst) {
+                cleanFLSTHandler.accept(flst);
+            }
         });
 
-        this.MI_COMPRESS_UNCOMPRESSED.addActionListener(e -> {
-            if (this.compressionHandler != null) {
-                this.compressionHandler.accept(CompressionType.UNCOMPRESSED);
-            }
-        });
-        this.MI_COMPRESS_ZLIB.addActionListener(e -> {
-            if (this.compressionHandler != null) {
-                this.compressionHandler.accept(CompressionType.ZLIB);
-            }
-        });
-        this.MI_COMPRESS_LZ4.addActionListener(e -> {
-            if (this.compressionHandler != null) {
-                this.compressionHandler.accept(CompressionType.LZ4);
-            }
-        });
+        this.MI_COMPRESS_UNCOMPRESSED.addActionListener(e -> compressionHandler.accept(CompressionType.UNCOMPRESSED));
+        this.MI_COMPRESS_ZLIB.addActionListener(e -> compressionHandler.accept(CompressionType.ZLIB));
+        this.MI_COMPRESS_LZ4.addActionListener(e -> compressionHandler.accept(CompressionType.LZ4));
 
         this.addMouseListener(new MouseAdapter() {
             @Override
@@ -478,9 +448,10 @@ final public class FilterTree extends JTree {
     final private JPopupMenu TREE_POPUP_MENU;
     final private JPopupMenu PLUGIN_POPUP_MENU;
     final private JPopupMenu COMPRESSION_POPUP_MENU;
+
+    private Consumer<Element> editHandler;
     private Consumer<Map<Element, Node>> deleteHandler;
     private Consumer<List<ActiveScript>> zeroThreadHandler;
-    private Consumer<Element> editHandler;
     private Consumer<Plugin> pluginFilterHandler;
     private Consumer<Plugin> deleteFormsHandler;
     private Consumer<Plugin> deleteInstancesHandler;

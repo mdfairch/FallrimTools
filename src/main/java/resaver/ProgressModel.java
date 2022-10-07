@@ -52,5 +52,5 @@ final public class ProgressModel extends DefaultBoundedRangeModel {
         super.setValue(n);
     }
 
-    static final private Logger LOG = Logger.getLogger(Saver.class.getCanonicalName());
+    //static final private Logger LOG = Logger.getLogger(Saver.class.getCanonicalName());
 }

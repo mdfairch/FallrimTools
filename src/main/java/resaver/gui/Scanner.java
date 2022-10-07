@@ -21,8 +21,6 @@ import java.io.IOException;
 import java.nio.channels.ClosedByInterruptException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -351,6 +349,7 @@ public class Scanner extends SwingWorker<resaver.Analysis, Double> {
         }
     };
 
+	/*
     public Analysis readAnalysis() {
         final ESS.ESSContext CTX = SAVE.getContext();
         Path dir1 = Path.of("").toAbsolutePath();
@@ -379,6 +378,7 @@ public class Scanner extends SwingWorker<resaver.Analysis, Double> {
     public boolean writeAnalysis(Analysis analysis) {
         try {
             final ESS.ESSContext CTX = SAVE.getContext();
+			Paths.get("")
             Path dir1 = Path.of("").toAbsolutePath();
             Path dir2 = dir1.resolve(CTX.getGame().NAME);
             Path file = dir2.resolve("analysis");
@@ -427,9 +427,12 @@ public class Scanner extends SwingWorker<resaver.Analysis, Double> {
                     : super.resolveObject(obj);
         }
         
-    }
+    }*/
 
-
+	/**
+	 * Keep this around for debugging.
+	 */
+	@SuppressWarnings("unused")
     private boolean CheckPlugin(Plugin plugin, Path path, Analysis analysis) {
         try {
             if (!analysis.ESP_INFOS.containsKey(plugin)) return false;

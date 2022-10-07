@@ -51,7 +51,8 @@ public class TryCatch<T, E extends Exception> {
         T get() throws E;
     }
     
-    static private final void DoSomeTests() {
+    @SuppressWarnings("unused")
+	static private final void DoSomeTests() {
         String result1 = Try(() -> {
             return "TEST";
         }).Catch(() -> "FAIL");

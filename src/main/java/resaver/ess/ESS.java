@@ -1024,6 +1024,7 @@ final public class ESS implements Element {
                 code(ul(
                         li(String.format("Version string: %s", this.VERSION_STRING)),
                         li(String.format("Form version: %s", this.FORMVERSION)),
+                        li(String.format("Time: %s", DATE.toString())),
                         this.HEADER.getCompression().isCompressed() && Float.isFinite(fileSize)
                                 ? li(String.format("Total size: %1.1f mb (%1.1f mb with %s)</li>", calculatedSize, fileSize, this.HEADER.getCompression()))
                                 : li(String.format("Total size: %1.1f mb", calculatedSize)),

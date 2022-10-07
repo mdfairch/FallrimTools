@@ -72,9 +72,6 @@ class ChangeFormInitialData extends GeneralElement {
                 break;
             default:
         }
-        
-        INITIAL_TYPE = initialType;
     }
     
-    final private int INITIAL_TYPE;
 }

@@ -29,7 +29,7 @@ import resaver.ess.Plugin;
  *
  * @author Mark Fairchild
  */
-final public class Analysis extends Mod.Analysis implements java.io.Serializable {
+final public class Analysis extends Mod.Analysis { //implements java.io.Serializable {
 
     /**
      * Creates a new <code>Analysis</code>.

@@ -20,7 +20,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import java.util.regex.Pattern;
 import resaver.ess.Plugin;
 
 /**
@@ -63,7 +62,7 @@ public class StringTable implements java.io.Serializable {
      */
     final public Map<Plugin, Map<Integer, String>> TABLE;
 
-    static private enum Type {
+    /*static private enum Type {
         STRINGS(Pattern.compile(".+\\.STRINGS$", Pattern.CASE_INSENSITIVE)),
         ILSTRINGS(Pattern.compile(".+\\.ILSTRINGS$", Pattern.CASE_INSENSITIVE)),
         DLSTRINGS(Pattern.compile(".+\\.DLSTRINGS$", Pattern.CASE_INSENSITIVE));
@@ -86,6 +85,6 @@ public class StringTable implements java.io.Serializable {
         }
 
         final public java.util.regex.Pattern REGEX;
-    };
+    };*/
 
 }

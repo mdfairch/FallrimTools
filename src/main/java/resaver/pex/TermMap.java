@@ -19,7 +19,7 @@ package resaver.pex;
  *
  * @author Mark
  */
-public class TermMap extends java.util.HashMap<VData.ID, VData.Term> implements Cloneable {
+public class TermMap extends java.util.HashMap<VData.ID, VData.Term> {
     
     public TermMap() {
         

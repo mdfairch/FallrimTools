@@ -15,7 +15,6 @@
  */
 package resaver.esp;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import resaver.IString;
 

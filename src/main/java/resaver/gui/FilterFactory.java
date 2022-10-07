@@ -517,7 +517,7 @@ public class FilterFactory {
                 return false;
             }
 
-            final Flags FLAGS = FORM.getChangeFlags();
+            final Flags.Int FLAGS = FORM.getChangeFlags();
             for (int i = 0; i <= 7; i++) {
                 if (FLAGS.getFlag(i)) {
                     return false;

@@ -548,8 +548,8 @@ public class GeneralElement implements Element {
                     T element = reader.read(input);
                     VAL[i] = element;
                 } catch (ElementException ex) {
-                    VAL[i] = (T) ex.getPartial();
-                    throw new ListException(i, count, ex);
+					VAL[i] = ex.getPartial();
+					throw new ListException(i, count, ex);
                 } catch (RuntimeException ex) {
                     throw new ListException(i, count, ex);
                 }
@@ -677,7 +677,6 @@ public class GeneralElement implements Element {
      * @throws ElementException
      * 
      */
-    @SuppressWarnings("unchecked")
     final public <T extends Element> Element[] readVSElemArray(ByteBuffer input, String name, ElementReader<T> reader) throws ElementException {
         Objects.requireNonNull(input);
         Objects.requireNonNull(reader);

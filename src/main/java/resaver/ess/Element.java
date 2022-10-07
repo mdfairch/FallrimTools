@@ -17,7 +17,6 @@ package resaver.ess;
 
 import java.nio.ByteBuffer;
 import java.util.logging.Logger;
-import resaver.ess.papyrus.ActiveScript;
 
 /**
  * Describes a component of a Skyrim savegame.

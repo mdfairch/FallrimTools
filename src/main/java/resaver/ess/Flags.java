@@ -23,7 +23,7 @@ import java.util.Objects;
  *
  * @author Mark
  */
-abstract public class Flags implements Element {
+abstract public class Flags<T extends Number> implements Element {
 
     /**
      * @return An HTML representation of the <code>Flags</code>.
@@ -106,7 +106,7 @@ abstract public class Flags implements Element {
      * @param index The position of the flag to set.
      * @return The new <code>Flags</code>.
      */
-    abstract public <T extends Flags> T with(int index);
+    abstract public Flags<T> with(int index);
 
     /**
      * Returns a copy of the <code>Flags</code> with a particular index cleared.
@@ -114,7 +114,7 @@ abstract public class Flags implements Element {
      * @param index The position of the flag to clear
      * @return The new <code>Flags</code>.
      */
-    abstract public <T extends Flags> T without(int index);
+    abstract public Flags<T> without(int index);
     
     /**
      * Accesses the flag corresponding to a ChangeFlagConstants.
@@ -147,7 +147,7 @@ abstract public class Flags implements Element {
      * @param flag The flag to set.
      * @return The new <code>Flags</code>.
      */
-    public <T extends Flags> T with(ChangeFlagConstants flag) {
+    public Flags<T> with(ChangeFlagConstants flag) {
         return this.with(flag.getPosition());
     }
     
@@ -159,14 +159,14 @@ abstract public class Flags implements Element {
      * @param flag The flag to clear.
      * @return The new <code>Flags</code>.
      */
-    public <T extends Flags> T without(ChangeFlagConstants flag) {
+    public Flags<T> without(ChangeFlagConstants flag) {
         return this.without(flag.getPosition());
     }
     
     /**
      * 8-bit array of flags.
      */
-    static public class Byte extends Flags {
+    static public class Byte extends Flags<java.lang.Byte> {
 
         public Byte(ByteBuffer input) {
             this.FLAGS = input.get();
@@ -242,7 +242,7 @@ abstract public class Flags implements Element {
     /**
      * 16-bit array of flags.
      */
-    static public class Short extends Flags {
+    static public class Short extends Flags<java.lang.Short> {
 
         public Short(ByteBuffer input) {
             Objects.requireNonNull(input);
@@ -318,7 +318,7 @@ abstract public class Flags implements Element {
     /**
      * 32-bit array of flags.
      */
-    static public class Int extends Flags {
+    static public class Int extends Flags<java.lang.Integer> {
 
         public Int(ByteBuffer input) {
             Objects.requireNonNull(input);

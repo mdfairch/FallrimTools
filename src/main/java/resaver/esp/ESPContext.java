@@ -71,8 +71,8 @@ final public class ESPContext {
 
     public boolean check(String... levels) {        
         int matches = 0;
-        
-        for (String l : levels) {
+
+		for (String l : levels) {
             IString level = IString.get(l);
             if (!this.CONTEXT.contains(level)) {
                 return false;
@@ -81,7 +81,7 @@ final public class ESPContext {
             }
         }
 
-        return true;
+        return matches > 0;
     }
 
     /**

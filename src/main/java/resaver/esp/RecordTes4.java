@@ -191,8 +191,14 @@ public class RecordTes4 extends Record {
     final private RecordCode CODE;
     final private Record.Header HEADER;
     final private FieldList FIELDS;
-    final private float VERSION;
+    
+	@SuppressWarnings("unused")
+	final private float VERSION;
+
+	@SuppressWarnings("unused")
     final private int RECORD_COUNT;
-    final private int NEXT_RECORD;
+    
+	@SuppressWarnings("unused")
+	final private int NEXT_RECORD;
 
 }

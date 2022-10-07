@@ -100,7 +100,7 @@ public class StringsFile {
         this.PLUGIN = Objects.requireNonNull(plugin);
 
         final int COUNT = input.getInt();
-        final int SIZE = input.getInt();
+        //final int SIZE = input.getInt();
         final int DATASTART = 8 + COUNT * 8;
 
         this.TABLE = new HashMap<>(COUNT);

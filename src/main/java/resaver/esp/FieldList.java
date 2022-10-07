@@ -15,43 +15,10 @@
  */
 package resaver.esp;
 
-import java.util.Collection;
-import java.util.Optional;
-import resaver.IString;
-
 /**
  *
  * @author Mark
  */
 public class FieldList extends java.util.LinkedList<Field> {
-
-    /*public boolean add(Field field) {
-        if (this.containsKey(field.getCode())) {
-            throw new IllegalStateException("OVERWRITING FIELD");
-        }
-        this.put(field.getCode(), field);
-        return true;
-    }
-
-    public boolean addAll(Collection<? extends Field> fields) {
-        fields.forEach(field -> this.add(field));
-        return true;
-    }
-    
-    public boolean addAll(FieldList fields) {
-        fields.values().forEach(field -> this.add(field));
-        return true;
-    }
-    
-    public Field get(String key) {
-        return super.get(IString.get(key));
-    }
-    
-    public Optional<Field> getOpt(String key) {
-        Field val = this.get(key);
-        return val == null
-                ? Optional.empty()
-                : Optional.of(val);
-    }*/
 
 }

@@ -393,7 +393,7 @@ public class DataAnalyzer extends JSplitPane {
                                 DOC.setCharacterAttributes(i, length, style, false);
                             }
                         } catch (BadLocationException ex) {
-                            int breakpoint = 0;
+                            
                         }
                     }
                 }

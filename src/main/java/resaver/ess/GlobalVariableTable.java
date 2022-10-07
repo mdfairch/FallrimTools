@@ -23,7 +23,7 @@ import java.util.Objects;
  *
  * @author Mark
  */
-final public class GlobalVariableTable implements Element, GlobalDataBlock {
+final public class GlobalVariableTable implements GlobalDataBlock {
 
     /**
      * Creates a new <code>GlobalVariableTable</code>.

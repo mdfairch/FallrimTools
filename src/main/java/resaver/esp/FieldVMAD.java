@@ -39,7 +39,7 @@ public class FieldVMAD implements Field {
         assert input.hasRemaining();
         assert fieldCode.equals(IString.get("VMAD"));
 
-        this.RECORDCODE = recordCode;
+        //this.RECORDCODE = recordCode;
         this.CODE = fieldCode;
         this.VERSION = input.getShort();
         this.OBJFORMAT = input.getShort();
@@ -54,7 +54,6 @@ public class FieldVMAD implements Field {
             ctx.PLUGIN_INFO.addScriptData(script);
         }
 
-        int i = 0;
         while (input.hasRemaining()) {
             switch (recordCode) {
                 case INFO:
@@ -76,7 +75,6 @@ public class FieldVMAD implements Field {
                 default:
                     throw new IllegalStateException("Unexpected fragment type: " + recordCode);
             }
-            i++;
         }
     }
 
@@ -130,7 +128,7 @@ public class FieldVMAD implements Field {
         return this.getCode().toString();
     }
 
-    final private RecordCode RECORDCODE;
+    //final private RecordCode RECORDCODE;
     final private IString CODE;
     final private short VERSION;
     final private short OBJFORMAT;
