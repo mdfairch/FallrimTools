@@ -17,6 +17,7 @@ package resaver.gui;
 
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.channels.ClosedByInterruptException;
 import java.nio.file.Files;
@@ -86,7 +87,7 @@ public class Scanner extends SwingWorker<resaver.Analysis, Double> {
 
         try {
             final PluginInfo PLUGINS = this.SAVE.getPluginInfo();
-            LOG.log(Level.INFO, I18N.getString("SCANNER_LOG_SCANNING"));
+            LOG.info("Scanning plugins.");
             this.PROGRESS.accept(I18N.getString("SCANNER_LOG_SCANNING"));
 
             final List<Mod> MODS = new ArrayList<>(1024);
@@ -95,7 +96,7 @@ public class Scanner extends SwingWorker<resaver.Analysis, Double> {
 
             if (null != this.MO2_INI) {
                 this.PROGRESS.accept(I18N.getString("SCANNER_ANALYZINGMO2"));
-                LOG.log(Level.INFO, I18N.getString("SCANNER_LOG_ANALYZINGMO2"));
+                LOG.info("Checking Mod Organizer 2.");
                 final java.util.List<Mod> MOMODS = Configurator.analyzeModOrganizer2(GAME, this.MO2_INI);
                 MODS.addAll(MOMODS);
             }
@@ -188,9 +189,8 @@ public class Scanner extends SwingWorker<resaver.Analysis, Double> {
                 ERR_SCRIPTS.addAll(RESULTS.SCRIPT_ERRORS);
                 ERR_STRINGS.addAll(RESULTS.STRINGS_ERRORS);
 
-                RESULTS.getErrorFiles().forEach(v -> {
-                    LOG.log(Level.WARNING, I18N.getString("SCANNER_READING_MOD_ERROR"), new Object[]{v, mod});
-                });
+                final MessageFormat ERRMSG = new MessageFormat("Could not read {0} from {1}.");
+                RESULTS.getErrorFiles().forEach(v -> LOG.warning(ERRMSG.format(new Object[] {v, mod})));
             }
 
             this.PROGRESS.accept(I18N.getString("SCANNER_COMBINING"));
@@ -206,6 +206,7 @@ public class Scanner extends SwingWorker<resaver.Analysis, Double> {
                     .forEach(plugin -> STRINGTABLE.populateFromFiles(PLUGIN_STRINGS.get(plugin), plugin));
 
             // Create the database for plugin data.
+            final List<String> MISSING_PLUGINS = java.util.Collections.synchronizedList(new java.util.LinkedList<>());
             final List<String> ERR_PLUGINS = java.util.Collections.synchronizedList(new java.util.LinkedList<>());
 
             final Map<Plugin, PluginData> PLUGIN_DATA = new HashMap<>();
@@ -217,8 +218,8 @@ public class Scanner extends SwingWorker<resaver.Analysis, Double> {
                 this.PROGRESS.accept(MessageFormat.format(I18N.getString("SCANNER_PARSING_PLUGIN"), COUNTER.eval(), plugin.indexName()));
 
                 if (!PLUGINFILEMAP.containsKey(plugin)) {
-                    ERR_PLUGINS.add(plugin.NAME);
-                    LOG.log(Level.INFO, I18N.getString("SCANNER_LOG_NOTFOUND"), plugin);
+                    MISSING_PLUGINS.add(plugin.NAME);
+                    LOG.info(MessageFormat.format("Plugin {0} could not be found.", plugin));
 
                 } else {
                     try {
@@ -226,7 +227,7 @@ public class Scanner extends SwingWorker<resaver.Analysis, Double> {
                         PLUGIN_DATA.put(plugin, INFO);
 
                         final String MSG = String.format(I18N.getString("SCANNER_LOG_PLUGINDATA"), INFO.getNameCount(), INFO.getScriptDataSize() / 1024.0f, plugin.indexName());
-                        LOG.log(Level.INFO, MSG);
+                        LOG.info(MSG);
 
                         assert plugin != null;
                         assert INFO.getScriptDataSize() >= 0;
@@ -234,14 +235,18 @@ public class Scanner extends SwingWorker<resaver.Analysis, Double> {
 
                     } catch (ClosedByInterruptException ex) {
                         throw ex;
-                    } catch (RuntimeException | IOException ex) {
+                    } catch (FileNotFoundException ex) {
+                        MISSING_PLUGINS.add(plugin.NAME);
+                        final String MSG = MessageFormat.format("Plugin missing: {0}.", plugin.indexName());
+                        LOG.log(Level.WARNING, MSG, ex);                        
+                    } catch (RuntimeException ex) {
                         ERR_PLUGINS.add(plugin.NAME);
-                        final String MSG = MessageFormat.format(I18N.getString("SCANNER_LOG_PLUGIN_READ_ERROR"), plugin.indexName());
+                        final String MSG = MessageFormat.format("Error reading plugin: {0}.", plugin.indexName());
                         LOG.log(Level.WARNING, MSG, ex);
                         ex.printStackTrace(System.err);
                     } catch (PluginException ex) {
                         ERR_PLUGINS.add(ex.CONTEXT);
-                        final String MSG = MessageFormat.format(I18N.getString("SCANNER_LOG_PLUGIN_READ_ERROR"), ex.CONTEXT);
+                        final String MSG = MessageFormat.format("Error reading plugin: {0}.", ex.CONTEXT);
                         LOG.log(Level.WARNING, MSG, ex);
                         ex.printStackTrace(System.err);                        
                     }
@@ -256,7 +261,7 @@ public class Scanner extends SwingWorker<resaver.Analysis, Double> {
             }
 
             TIMER.stop();
-            LOG.log(Level.INFO, I18N.getString("SCANNER_LOG_PLUGINS_DONE"), TIMER.getFormattedTime());
+            LOG.info(MessageFormat.format("Plugin scanning completed, took {0}", TIMER.getFormattedTime()));
 
             // Find the worst offenders for script data size.
             final List<Plugin> OFFENDERS = SIZES.entrySet().stream()
@@ -278,6 +283,12 @@ public class Scanner extends SwingWorker<resaver.Analysis, Double> {
             }
 
             final java.util.function.Function<Path, CharSequence> NAMER = p -> p.getFileName().toString();
+
+            if (MISSING_PLUGINS.size() == 1) {
+                BUF.append(ResaverFormatting.makeTextList(I18N.getString("SCANNER_PLUGIN_MISSING"), MISSING_PLUGINS, 10));
+            } else if (MISSING_PLUGINS.size() > 1) {
+                BUF.append(ResaverFormatting.makeTextList(I18N.getString("SCANNER_PLUGINS_MISSING"), MISSING_PLUGINS, 10));
+            }
 
             if (ERR_PLUGINS.size() == 1) {
                 BUF.append(ResaverFormatting.makeTextList(I18N.getString("SCANNER_PLUGIN_READERROR"), ERR_PLUGINS, 10));
@@ -349,90 +360,10 @@ public class Scanner extends SwingWorker<resaver.Analysis, Double> {
         }
     };
 
-	/*
-    public Analysis readAnalysis() {
-        final ESS.ESSContext CTX = SAVE.getContext();
-        Path dir1 = Path.of("").toAbsolutePath();
-        Path dir2 = dir1.resolve(CTX.getGame().NAME);
-        Path file = dir2.resolve("analysis");
-        
-        try(AnalysisInputStream AIS = new AnalysisInputStream(Files.newInputStream(file, StandardOpenOption.READ))) {
-            Analysis analysis = (Analysis) AIS.readObject();
-            
-            Map<Plugin,PluginData> resolved = analysis.ESP_INFOS
-                    .entrySet()
-                    .stream()
-                    .collect(Collectors.toMap(
-                            e -> CTX.resolvePlugin(e.getKey()), 
-                            e -> e.getValue()));
-            analysis.ESP_INFOS.clear();
-            analysis.ESP_INFOS.putAll(resolved);
-            
-            return analysis;
-        } catch (java.io.IOException | ClassNotFoundException | RuntimeException ex) {
-            LOG.log(Level.WARNING, "Couldn't read analysis.", ex);
-            return null;
-        }
-    }
-    
-    public boolean writeAnalysis(Analysis analysis) {
-        try {
-            final ESS.ESSContext CTX = SAVE.getContext();
-			Paths.get("")
-            Path dir1 = Path.of("").toAbsolutePath();
-            Path dir2 = dir1.resolve(CTX.getGame().NAME);
-            Path file = dir2.resolve("analysis");
-
-            if (!Files.exists(dir2)) {
-                Files.createDirectory(dir2);
-            }
-            
-            try(AnalysisOutputStream AOS = new AnalysisOutputStream(Files.newOutputStream(file, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE))) {
-                AOS.writeObject(analysis);
-                return true;
-            }
-        } catch (java.io.IOException ex) {
-            LOG.log(Level.WARNING, "Couldn't write analysis.", ex);            
-            return false;
-        }        
-    }
-
-    static final private class AnalysisOutputStream extends java.io.ObjectOutputStream {
-
-        public AnalysisOutputStream(java.io.OutputStream out) throws java.io.IOException {
-            super(out);
-            this.enableReplaceObject(true);
-        }
-
-        @Override
-        protected Object replaceObject(Object obj) throws IOException {
-            return obj instanceof Path
-                    ? ((Path) obj).toFile()
-                    : super.replaceObject(obj);
-        }
-
-    }
-
-    static final private class AnalysisInputStream extends java.io.ObjectInputStream {
-
-        public AnalysisInputStream(java.io.InputStream in) throws java.io.IOException {
-            super(in);
-            this.enableResolveObject(true);
-        }
-
-        @Override
-        protected Object resolveObject(Object obj) throws IOException {
-            return obj instanceof java.io.File
-                    ? ((java.io.File) obj).toPath()
-                    : super.resolveObject(obj);
-        }
-        
-    }*/
-
-	/**
-	 * Keep this around for debugging.
-	 */
-	@SuppressWarnings("unused")
+    /**
+     * Keep this around for debugging.
+     */
+    @SuppressWarnings("unused")
     private boolean CheckPlugin(Plugin plugin, Path path, Analysis analysis) {
         try {
             if (!analysis.ESP_INFOS.containsKey(plugin)) return false;

@@ -29,6 +29,7 @@ import java.nio.file.PathMatcher;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.mozilla.universalchardet.UniversalDetector;
 import resaver.ess.Plugin;
@@ -92,39 +93,45 @@ public class StringsFile {
      * @param type The type of stringtable.
      */
     private StringsFile(Path path, Plugin plugin, ByteBuffer input, Type type) {
-        Objects.requireNonNull(input);
-        Objects.requireNonNull(type);
-        input.order(ByteOrder.LITTLE_ENDIAN);
+        try {
+            Objects.requireNonNull(input);
+            Objects.requireNonNull(type);
+            input.order(ByteOrder.LITTLE_ENDIAN);
 
-        this.PATH = Objects.requireNonNull(path);
-        this.PLUGIN = Objects.requireNonNull(plugin);
+            this.PATH = Objects.requireNonNull(path);
+            this.PLUGIN = Objects.requireNonNull(plugin);
 
-        final int COUNT = input.getInt();
-        //final int SIZE = input.getInt();
-        final int DATASTART = 8 + COUNT * 8;
+            final int COUNT = input.getInt();
+            final int SIZE = input.getInt();
+            final int DATASTART = 8 + COUNT * 8;
+            assert input.remaining() == COUNT*8 + SIZE : "Size sanity check.";
+            
+            this.TABLE = new HashMap<>(COUNT);
 
-        this.TABLE = new HashMap<>(COUNT);
+            final ByteBuffer DIRECTORY = input.slice().order(ByteOrder.LITTLE_ENDIAN);
+            ((Buffer) DIRECTORY).limit(COUNT * 8);
 
-        final ByteBuffer DIRECTORY = input.slice().order(ByteOrder.LITTLE_ENDIAN);
-        ((Buffer) DIRECTORY).limit(COUNT * 8);
+            for (int i = 0; i < COUNT; i++) {
+                final int STRINGID = DIRECTORY.getInt();
+                final int OFFSET = DIRECTORY.getInt();
 
-        for (int i = 0; i < COUNT; i++) {
-            final int STRINGID = DIRECTORY.getInt();
-            final int OFFSET = DIRECTORY.getInt();
+                ((Buffer) input).position(DATASTART + OFFSET);
 
-            ((Buffer) input).position(DATASTART + OFFSET);
-
-            if (type == Type.STRINGS) {
-                byte[] bytes = mf.BufferUtil.getZStringRaw(input);
-                String string = mf.BufferUtil.mozillaString(bytes);
-                this.TABLE.put(STRINGID, string);
-            } else {
-                int length = input.getInt();
-                byte[] bytes = new byte[length];
-                input.get(bytes);
-                String string = mf.BufferUtil.mozillaString(bytes);
-                this.TABLE.put(STRINGID, string);
+                if (type == Type.STRINGS) {
+                    byte[] bytes = mf.BufferUtil.getZStringRaw(input);
+                    String string = mf.BufferUtil.mozillaString(bytes);
+                    this.TABLE.put(STRINGID, string);
+                } else {
+                    int length = input.getInt();
+                    byte[] bytes = new byte[length];
+                    input.get(bytes);
+                    String string = mf.BufferUtil.mozillaString(bytes);
+                    this.TABLE.put(STRINGID, string);
+                }
             }
+        } catch (RuntimeException ex) {
+            LOG.log(Level.SEVERE, String.format("StringsFile format error: %s %s", path.toString(), ex.getMessage()));
+            throw ex;
         }
     }
 

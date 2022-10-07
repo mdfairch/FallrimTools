@@ -60,6 +60,7 @@ abstract public class ResaverFormatting {
             BUF.append(String.format("(+ %d more\n", excess));
         }
 
+        BUF.append('\n');
         return BUF;
     }
 

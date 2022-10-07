@@ -288,7 +288,10 @@ final public class Mod implements java.io.Serializable {
         List<Path> ARCHIVE_ERRORS = new LinkedList<>();
         List<Path> STRINGSFILE_ERRORS = new LinkedList<>();
 
-        // Read the archives.
+        //=================================================
+        // Read the archives, and their stringfiles and scripts.
+        //=================================================
+
         final List<StringsFile> STRINGSFILES = new LinkedList<>();
         final Map<Path, Path> SCRIPT_ORIGINS = new LinkedHashMap<>();
 
@@ -305,12 +308,12 @@ final public class Mod implements java.io.Serializable {
                             try {
                                 final StringsFile STRINGSFILE = StringsFile.readStringsFile(path, PLUGIN, input.get());
                                 ARCHIVE_STRINGSFILES.add(STRINGSFILE);
-                            } catch (java.nio.BufferUnderflowException ex) {
-                                STRINGSFILE_ERRORS.add(archivePath.getFileName());
+                            } catch (java.nio.BufferUnderflowException|IllegalArgumentException ex) {
+                                STRINGSFILE_ERRORS.add(path);
                             }
                         }
                     } else {
-                        STRINGSFILE_ERRORS.add(archivePath.getFileName());
+                        STRINGSFILE_ERRORS.add(path);
                     }
                 });
 
@@ -332,8 +335,11 @@ final public class Mod implements java.io.Serializable {
                 ARCHIVE_ERRORS.add(archivePath.getFileName());
             }
         });
-
+        
+        //=================================================
         // Read the loose stringtable files.
+        //=================================================
+        
         final List<StringsFile> LOOSE_STRINGSFILES = this.STRINGS_FILES.stream()
                 .filter(MATCHER::matches)
                 .map(path -> {
@@ -352,7 +358,10 @@ final public class Mod implements java.io.Serializable {
                     }
                 }).filter(Objects::nonNull).collect(Collectors.toList());
 
-        // Read the loose stringtable files.
+        //=================================================
+        // Read the loose script files.
+        //=================================================
+        
         final Map<Path, Path> LOOSE_SCRIPTS = this.SCRIPT_FILES.stream()
                 .filter(GLOB_SCRIPT::matches)
                 .collect(Collectors.toMap(p -> p, p -> p.getFileName()));
