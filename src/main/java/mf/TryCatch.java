@@ -63,12 +63,15 @@ public class TryCatch<T, E extends Exception> {
         assert result2 == 10;
         
         String result3 = Try(() -> {
-            if (1==2) throw new java.io.IOException();
+            if (1==2) throw new java.io.IOException("Test - throwing an IOException");
             else return "FAIL";
         }).Catch(java.io.IOException.class, () -> "TEST");
         assert "TEST".equals(result3);
         
     }
     
-    
+ 
+	static void main(String[] args) {
+		DoSomeTests();
+	}
 }

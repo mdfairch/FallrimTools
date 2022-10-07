@@ -35,9 +35,10 @@ public class RecordGrup extends Record {
      * @param input The LittleEndianInput to read.
      * @param ctx The mod descriptor.
      * @throws RecordException
+     * @throws FieldException
      * 
      */
-    public RecordGrup(RecordCode code, ByteBuffer headerData, ByteBuffer input, ESPContext ctx) throws RecordException {
+    public RecordGrup(RecordCode code, ByteBuffer headerData, ByteBuffer input, ESPContext ctx) throws RecordException, FieldException {
         this.CODE = code;
         this.HEADER = headerData;
         this.RECORDS = new LinkedList<>();

@@ -80,8 +80,8 @@ final public class ESP implements Entry {
                 }
 
                 return CTX.PLUGIN_INFO;
-            } catch (RecordException ex) {
-                throw new PluginException("Error reading plugin: " + NAME, ex, ex.CONTEXT);
+            } catch (RecordException|FieldException ex) {
+                throw new PluginException("Error reading plugin: " + NAME, ex, ex.getContext());
             }
 
         } catch (FileNotFoundException ex) {
@@ -108,9 +108,10 @@ final public class ESP implements Entry {
      * @param name The name of the plugin.
      * @param plugins The list of plugins, for correcting FormIDs.
      * @throws RecordException Exceptions aren't handled.
+     * @throws FieldException Exceptions aren't handled.
      * @throws IOException Exceptions aren't handled.
      */
-    public ESP(ByteBuffer input, Game game, Plugin plugin, String name, PluginInfo plugins) throws IOException, RecordException {
+    public ESP(ByteBuffer input, Game game, Plugin plugin, String name, PluginInfo plugins) throws IOException, RecordException, FieldException {
         assert input.hasRemaining();
         this.RECORDS = new LinkedList<>();
 

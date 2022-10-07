@@ -135,8 +135,9 @@ abstract public class Record implements Entry {
      * @param ctx The mod descriptor.
      * @return The next Record from input.
      * @throws RecordException
+	 * @throws FieldException
      */
-    static public Record readRecord(ByteBuffer input, ESPContext ctx) throws RecordException {
+    static public Record readRecord(ByteBuffer input, ESPContext ctx) throws RecordException, FieldException {
         // Read the record identification code.
         final byte[] CODEBYTES = new byte[4];
         input.get(CODEBYTES);
@@ -184,9 +185,10 @@ abstract public class Record implements Entry {
      * @param input The LittleEndianInput to readFully.
      * @param ctx The mod descriptor.
      * @throws RecordException
+	 * @throws FieldException
      * 
      */
-    static public void skimRecord(ByteBuffer input, ESPContext ctx) throws RecordException {
+    static public void skimRecord(ByteBuffer input, ESPContext ctx) throws RecordException, FieldException {
         // Read the record identification code.
         final byte[] CODEBYTES = new byte[4];
         input.get(CODEBYTES);

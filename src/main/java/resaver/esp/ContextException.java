@@ -19,17 +19,12 @@ package resaver.esp;
  *
  * @author Mark
  */
-public class RecordException extends ContextException {
+abstract public class ContextException extends Exception {
 
-    public RecordException(String message, Throwable cause, String context) {
-        super(message, cause);
-        this.CONTEXT = context;
-    }
-    
-	public String getContext() {
-		return CONTEXT;
+	public ContextException(String message, Throwable cause) {
+		super(message, cause);
 	}
 
-    final public String CONTEXT;
-    
+    abstract public String getContext();
+
 }

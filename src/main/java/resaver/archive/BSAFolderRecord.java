@@ -67,7 +67,7 @@ final class BSAFolderRecord {
         ((Buffer) BLOCK).flip();
 
         if (header.INCLUDE_DIRECTORYNAMES) {
-            final int NAMELEN = Byte.toUnsignedInt(BLOCK.get());
+            //final int NAMELEN = Byte.toUnsignedInt(BLOCK.get());
             this.NAME = mf.BufferUtil.getZString(BLOCK);
         } else {
             this.NAME = null;
