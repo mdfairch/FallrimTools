@@ -28,6 +28,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
@@ -526,14 +527,29 @@ abstract public class Configurator {
     }
 
     /**
-     * Validates a directory, checking if it contains a valid installation of
-     * ModOrganizer.
+     * Validates a mod organizer directory, checking if it contains a 
+     * reasonable-looking installation of ModOrganizer.
      *
      * @param dir The directory to validate.
      * @return True if the directory contains ModOrganizer, false otherwise.
      */
     static public boolean validateMODir(Path dir) {
         return validDir(dir) && Files.exists(dir.resolve("mods"));
+    }
+
+    /**
+     * Validates an MO2 ini, checking if it points to a reasonable-looking
+     * MO2 profile.
+     *
+     * @param mo2Ini The ini file to validate.
+     * @return True if the ini file exists and is readable and contains 
+     * relevant info.
+     */
+    static public boolean validateMO2Ini(Path mo2Ini) {
+        Path profile = getMO2Profile(mo2Ini);
+        return validDir(profile) 
+                && Files.exists(profile.resolve("modlist.txt"))
+                && Files.exists(profile.resolve("plugins.txt"));
     }
 
     /**
@@ -545,7 +561,9 @@ abstract public class Configurator {
      * @return True if the directory contains the game, false otherwise.
      */
     static public boolean validateGameDirectory(Game game, Path dir) {
-        return validDir(dir) && dir.getFileName().equals(game.GAME_DIRECTORY) && Files.exists(dir.resolve(game.EXECUTABLE));
+        return validDir(dir) 
+                && dir.getFileName().equals(game.GAME_DIRECTORY) 
+                && Files.exists(dir.resolve(game.EXECUTABLE));
     }
 
     /**
@@ -561,14 +579,14 @@ abstract public class Configurator {
     }
 
     /**
-     * Validates an ini, checking if it contains a valid installation of
-     * ModOrganizer.
+     * Reads an MO2 ini file and returns a list of tokens.
      *
-     * @param mo2Ini The ini file to validate and store.
+     * @param mo2Ini The ini file to parse.
+     * @return A map of tokens and names.
      */
-    static public void storeMO2Ini(Path mo2Ini) {
-        if (!validFile(mo2Ini)) {
-            return;
+    static private Optional<Map<String, String>> tokenizeMO2Ini(Path mo2Ini) {
+         if (!validFile(mo2Ini)) {
+            return Optional.empty();
         }
 
         try (final java.util.Scanner SCANNER = new java.util.Scanner(mo2Ini)) {
@@ -583,9 +601,24 @@ abstract public class Configurator {
                     TOKENS.put(KEY, VALUE);
                 }
             }
-
-            final String GAME_NAME = TOKENS.get("gamename");
-            final String GAME_DIR = TOKENS.get("gamepath");
+            return Optional.of(TOKENS);
+            
+        } catch (IOException | RuntimeException ex) {
+            LOG.log(Level.WARNING, "Problem while parsing MO2 ini file.", ex);
+            return Optional.empty();
+        }
+    }
+    
+    /**
+     * Validates an MO2 ini, checking if it contains a valid installation of
+     * ModOrganizer, and stores the 
+     *
+     * @param mo2Ini The ini file to validate and store.
+     */
+    static public void storeMO2Ini(Path mo2Ini) {
+        tokenizeMO2Ini(mo2Ini).ifPresentOrElse(tokens -> {
+            final String GAME_NAME = tokens.get("gamename");
+            final String GAME_DIR = tokens.get("gamepath");
             final Path GAME_PATH = Paths.get(GAME_DIR);
             LOG.info(String.format("Scanned %s", mo2Ini));
             LOG.info(String.format("GameName=%s", GAME_NAME));
@@ -608,11 +641,10 @@ abstract public class Configurator {
                     .ifPresent(game -> {
                         setMO2Ini(game, mo2Ini);
                         JOptionPane.showMessageDialog(null, "Stored MO2 ini file for " + game.NAME, "Success", JOptionPane.INFORMATION_MESSAGE);
-                    });
-
-        } catch (IOException | RuntimeException ex) {
-            LOG.log(Level.WARNING, "Problem while parsing MO2 ini file.", ex);
-        }
+                    });           
+            
+        }, () -> {
+        });        
     }
 
     /**
@@ -622,26 +654,12 @@ abstract public class Configurator {
      * @return The path to the current MO2 profile.
      */
     static public Path getMO2Profile(Path mo2Ini) {
-        if (!validFile(mo2Ini)) {
-            return null;
-        }
-
-        try (final java.util.Scanner SCANNER = new java.util.Scanner(mo2Ini)) {
-            final Map<String, String> TOKENS = new java.util.TreeMap<>();
-
-            while (SCANNER.hasNextLine()) {
-                final String TOKEN = SCANNER.nextLine();
-                Matcher MATCHER = KEY_VALUE.matcher(TOKEN);
-                if (MATCHER.find()) {
-                    final String KEY = MATCHER.group(1).toLowerCase();
-                    final String VALUE = getFirst(MATCHER.group(2), MATCHER.group(3));
-                    TOKENS.put(KEY, VALUE);
-                }
-            }
-
-            final String GAME_NAME = TOKENS.get("gamename");
-            final String PROFILE_NAME = TOKENS.get("selected_profile");
-            final String BASEDIR_NAME = TOKENS.get("base_directory");
+        return tokenizeMO2Ini(mo2Ini).map(tokens -> {
+            final String GAME_NAME = tokens.get("gamename");
+            final String PROFILE_NAME = tokens.get("selected_profile");
+            final String BASEDIR_NAME = tokens.get("base_directory");
+            final String GAME_DIR = tokens.get("gamepath");
+            final Path GAME_PATH = Paths.get(GAME_DIR);
 
             final Path BASEDIR = BASEDIR_NAME == null
                     ? mo2Ini.getParent()
@@ -656,86 +674,25 @@ abstract public class Configurator {
             LOG.info(String.format("selected_profile=%s", PROFILE_NAME));
             LOG.info(String.format("base_directory=%s", BASEDIR_NAME));
 
+            if (!Files.exists(GAME_PATH)) {
+                LOG.warning(String.format("Game path not found: %s", GAME_PATH));
+            }
+            
             if (!Files.exists(MODS)) {
-                LOG.warning(String.format("Directory %s missing.", MODS));
+                LOG.warning(String.format("Mods directory not found: %s", MODS));
                 return null;
             } else if (!Files.exists(PROFILES)) {
-                LOG.warning(String.format("Directory %s missing.", PROFILES));
+                LOG.warning(String.format("Profiles directory not found: %s", PROFILES));
                 return null;
             } else if (!Files.exists(PROFILE)) {
-                LOG.warning(String.format("Directory %s missing.", PROFILE));
+                LOG.warning(String.format("Selected profile directory not found: %s", PROFILE));
                 return null;
             } else {
                 return PROFILE;
             }
-        } catch (IOException | RuntimeException ex) {
-            LOG.log(Level.WARNING, "Problem while parsing MO2 ini file.", ex);
-            return null;
-        }
+        }).orElse(null);
     }
     
-    /**
-     * Validates an ini, checking if it contains a valid installation of
-     * ModOrganizer.
-     *
-     * @param mo2Ini The ini file to validate.
-     * @return True if the ini file exists and is readable and contains relevant
-     * info.
-     */
-    static public boolean validateMO2Ini(Path mo2Ini) {
-        if (!validFile(mo2Ini)) {
-            return false;
-        }
-
-        try (final java.util.Scanner SCANNER = new java.util.Scanner(mo2Ini)) {
-            final Map<String, String> TOKENS = new java.util.TreeMap<>();
-
-            while (SCANNER.hasNextLine()) {
-                final String TOKEN = SCANNER.nextLine();
-                Matcher MATCHER = KEY_VALUE.matcher(TOKEN);
-                if (MATCHER.find()) {
-                    final String KEY = MATCHER.group(1).toLowerCase();
-                    final String VALUE = getFirst(MATCHER.group(2), MATCHER.group(3));
-                    TOKENS.put(KEY, VALUE);
-                }
-            }
-
-            final String GAME_NAME = TOKENS.get("gamename");
-            final String PROFILE_NAME = TOKENS.get("selected_profile");
-            final String BASEDIR_NAME = TOKENS.get("base_directory");
-
-            final Path BASEDIR = BASEDIR_NAME == null
-                    ? mo2Ini.getParent()
-                    : Paths.get(BASEDIR_NAME);
-
-            final Path MODS = BASEDIR.resolve("mods");
-            final Path PROFILES = BASEDIR.resolve("profiles");
-            final Path PROFILE = PROFILES.resolve(PROFILE_NAME);
-
-            LOG.info(String.format("Scanned %s", mo2Ini));
-            LOG.info(String.format("GameName=%s", GAME_NAME));
-            LOG.info(String.format("selected_profile=%s", PROFILE_NAME));
-            LOG.info(String.format("base_directory=%s", BASEDIR_NAME));
-
-            if (!Files.exists(MODS)) {
-                LOG.warning(String.format("Directory %s missing.", MODS));
-                return false;
-            } else if (!Files.exists(PROFILES)) {
-                LOG.warning(String.format("Directory %s missing.", PROFILES));
-                return false;
-            } else if (!Files.exists(PROFILE)) {
-                LOG.warning(String.format("Directory %s missing.", PROFILE));
-                return false;
-            } else {
-                return Configurator.validateMODir(BASEDIR);
-            }
-
-        } catch (IOException | RuntimeException ex) {
-            LOG.log(Level.WARNING, "Problem while parsing MO2 ini file.", ex);
-            return false;
-        }
-    }
-
     /**
      * Analyzes the ModOrganizer 2 directories and returns a list of mod names,
      * in the order they appear in the currently selected profile's mod list.
@@ -747,22 +704,12 @@ abstract public class Configurator {
      *
      */
     static public List<Mod> analyzeModOrganizer2(Game game, Path mo2Ini) {
-        try (final java.util.Scanner SCANNER = new java.util.Scanner(mo2Ini)) {
-            final Map<String, String> TOKENS = new java.util.TreeMap<>();
-
-            while (SCANNER.hasNextLine()) {
-                final String TOKEN = SCANNER.nextLine();
-                Matcher MATCHER = KEY_VALUE.matcher(TOKEN);
-                if (MATCHER.find()) {
-                    final String KEY = MATCHER.group(1).toLowerCase();
-                    final String VALUE = getFirst(MATCHER.group(2), MATCHER.group(3));
-                    TOKENS.put(KEY, VALUE);
-                }
-            }
-
-            final String GAME_NAME = TOKENS.get("gamename");
-            final String PROFILE_NAME = TOKENS.get("selected_profile");
-            final String BASEDIR_NAME = TOKENS.get("base_directory");
+        return tokenizeMO2Ini(mo2Ini).map(tokens -> {
+            final String GAME_NAME = tokens.get("gamename");
+            final String PROFILE_NAME = tokens.get("selected_profile");
+            final String BASEDIR_NAME = tokens.get("base_directory");
+            final String GAME_DIR = tokens.get("gamepath");
+            final Path GAME_PATH = Paths.get(GAME_DIR);
 
             final Path BASEDIR = BASEDIR_NAME == null
                     ? mo2Ini.getParent()
@@ -777,23 +724,23 @@ abstract public class Configurator {
             LOG.info(String.format("selected_profile=%s", PROFILE_NAME));
             LOG.info(String.format("base_directory=%s", BASEDIR_NAME));
 
+            if (!Files.exists(GAME_PATH)) {
+                LOG.warning(String.format("Game path not found: %s", GAME_PATH));
+            }
+            
             if (!Files.exists(MODS)) {
-                LOG.warning(String.format("Directory %s missing.", MODS));
+                LOG.warning(String.format("Mods directory not found: %s", MODS));
                 return null;
             } else if (!Files.exists(PROFILES)) {
-                LOG.warning(String.format("Directory %s missing.", PROFILES));
+                LOG.warning(String.format("Profiles directory not found: %s", PROFILES));
                 return null;
             } else if (!Files.exists(PROFILE)) {
-                LOG.warning(String.format("Directory %s missing.", PROFILE));
+                LOG.warning(String.format("Selected profile directory not found: %s", PROFILE));
                 return null;
             } else {
                 return Configurator.analyzeModDirectory(game, PROFILE, MODS);
             }
-
-        } catch (IOException | RuntimeException ex) {
-            LOG.log(Level.WARNING, "Problem while parsing MO2 ini file.", ex);
-            return null;
-        }
+        }).orElse(null);
     }
 
     /**
@@ -802,12 +749,12 @@ abstract public class Configurator {
      *
      * @param game The game to analyze.
      * @param profile The ModOrganizer profile.
-     * @param modDir The ModOranizer mod folder.
+     * @param modsDir The ModOranizer mods folder.
      * @return The list of Mods, or null if the modlist file could not be read
      * for any reason.
      *
      */
-    static public List<Mod> analyzeModDirectory(Game game, Path profile, Path modDir) {
+    static public List<Mod> analyzeModDirectory(Game game, Path profile, Path modsDir) {
         LOG.info("Attempting to analyze the Mod Organizer directory.");
 
         try {
@@ -833,7 +780,7 @@ abstract public class Configurator {
             }
 
             final List<Mod> MODS = MODNAMES.parallelStream()
-                    .map(name -> modDir.resolve(name))
+                    .map(name -> modsDir.resolve(name))
                     .map(path -> Mod.createMod(game, path))
                     .filter(Objects::nonNull)
                     .collect(Collectors.toList());
