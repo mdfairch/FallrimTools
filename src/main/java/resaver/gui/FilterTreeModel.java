@@ -321,8 +321,6 @@ final public class FilterTreeModel implements TreeModel {
      * @return True if the node is still visible.
      */
     private void setFilter(Node node, Predicate<Node> filter) {
-        Objects.requireNonNull(filter);
-
         // Determine if the node itself would be filtered out.
         // Never setFilter the root!            
         boolean nodeVisible = filter.test(node);
@@ -332,15 +330,16 @@ final public class FilterTreeModel implements TreeModel {
             node.setVisible(nodeVisible);
 
         } else if (node.hasElement() && nodeVisible) {
-            // For Elements that contain other elements, don't setFilter 
+            // For Elements that contain other elements, don't filter 
             // children at all unless the Element itself is filtered. 
             // Don't apply this to the root!
             node.setVisible(nodeVisible);
 
         } else {
             // For folders, determine which children to setFilter.
-            node.getChildren().parallelStream().forEach(child -> this.setFilter(child, filter));
-            boolean hasVisibleChildren = node.getChildren().stream().anyMatch(c -> c.isVisible());
+            Predicate<Node> childFilter = n -> (nodeVisible && !node.filterChildren()) || filter.test(n);
+            node.getChildren().parallelStream().forEach(child -> this.setFilter(child, childFilter));
+            boolean hasVisibleChildren = node.getChildren().stream().anyMatch(c -> c.isVisible());                
             node.setVisible(nodeVisible || hasVisibleChildren);
         }
     }
@@ -657,6 +656,14 @@ final public class FilterTreeModel implements TreeModel {
             this.isVisible = visible;
         }
 
+        /**
+         * @return A flag indicating that filters should apply to children as
+         * well.
+         */
+        protected boolean filterChildren() {
+            return true;
+        }
+
         private Node parent = null;
         private boolean isVisible = true;
     }
@@ -798,11 +805,10 @@ final public class FilterTreeModel implements TreeModel {
          * Creates a new <code>Node</code> to wrap the specified element.
          *
          * @param element The element that the node will contain.
-         *
+         * @param parent The parent node.
          */
         private ElementNode(T element) {
             this.ELEMENT = Objects.requireNonNull(element);
-            this.label = null;
         }
 
         @Override
@@ -934,6 +940,11 @@ final public class FilterTreeModel implements TreeModel {
             return this.CHILDREN;
         }
 
+        @Override
+        protected boolean filterChildren() {
+            return false;
+        }
+        
         final private List<Node> CHILDREN;
     }
 
@@ -969,6 +980,11 @@ final public class FilterTreeModel implements TreeModel {
             return this.CHILDREN;
         }
 
+        @Override
+        protected boolean filterChildren() {
+            return false;
+        }
+        
         final private List<Node> CHILDREN;
     }
 
@@ -1004,6 +1020,11 @@ final public class FilterTreeModel implements TreeModel {
             return this.CHILDREN;
         }
 
+        @Override
+        protected boolean filterChildren() {
+            return false;
+        }
+        
         final private List<Node> CHILDREN;
     }
 
