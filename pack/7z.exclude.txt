@@ -1,0 +1,5 @@
+*.fos 
+*.ess 
+*.bak 
+*.skse 
+*.f4se 

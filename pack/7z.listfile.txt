@@ -1,0 +1,9 @@
+target\ReSaver.jar 
+target\ReSaver-sources.jar 
+target\lib
+src 
+.\pack\ReSaver.exe 
+.\pack\ReSaver.bat 
+License.txt 
+ReadMe.txt 
+pom.xml
