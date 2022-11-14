@@ -37,14 +37,12 @@ public class ChangeFormInventoryItem extends GeneralElement {
         
         try {
             this.ITEM = super.readRefID(input, "ITEM", context);
-            super.readInt(input, "COUNT");
-            super.readElement(input, "EXTRA", in -> new ChangeFormExtraData(in, context));
+            this.COUNT = super.readInt(input, "COUNT");
+            this.EXTRA = super.readElement(input, "EXTRA", in -> new ChangeFormExtraData(in, context));
         } catch (RuntimeException ex) {
             throw new ElementException("Error reading ChangeFormInventoryItem", ex, this);
         }
     }
-    
-    final private RefID ITEM; 
     
     public String getName() {
         if (this.ITEM == null) {
@@ -56,16 +54,27 @@ public class ChangeFormInventoryItem extends GeneralElement {
     }
     @Override
     protected String toStringFlat(String name) {
-        return super.toStringFlat(this.getName());
+        return new StringBuilder()
+                .append(this.ITEM.toHTML(null))
+                .append(" (count = ")
+                .append(this.COUNT)
+                .append(")")
+                .toString();
     }
 
     @Override
     protected String toStringStructured(String name, int level) {
-        return this.hasVal("EXTRA")
-                ? super.toStringStructured(this.getName(), level)
-                : super.toStringFlat(this.getName());
+        return new StringBuilder()
+                .append(indent2(level))
+                .append(toStringFlat(""))
+                .append(this.EXTRA.isEmpty() ? "" : this.EXTRA.toStringStructured("", level))
+                .toString();
     }
     
+    
+    final private RefID ITEM;
+    final private int COUNT;
+    final private ChangeFormExtraData EXTRA;
     
 
 }

@@ -39,10 +39,10 @@ final public class ChangeFormExtraData extends GeneralElement {
         Objects.requireNonNull(input);
         
         try {
-            final int COUNT = this.readVSVal(input, "EXTRA_DATA_COUNT").getValue();
-            if (COUNT < 0) {
+            this.COUNT = this.readVSVal(input, "EXTRA_DATA_COUNT").getValue();
+            if (this.COUNT < 0) {
                 throw new IllegalArgumentException("Negative array count: " + COUNT);
-            } else if (COUNT > 1024) {
+            } else if (this.COUNT > 1024) {
                 throw new IllegalArgumentException("Excessive array count: " + COUNT);
             }
 
@@ -65,4 +65,13 @@ final public class ChangeFormExtraData extends GeneralElement {
         }
     }
 
+    /**
+     * @return True if there is no extra data.
+     */
+    final public boolean isEmpty() {
+        return this.COUNT == 0;
+    }
+
+    final private int COUNT;
+    
 }

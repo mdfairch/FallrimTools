@@ -42,7 +42,7 @@ import resaver.ess.papyrus.PapyrusContext;
  *
  * @author Mark Fairchild
  */
-public class GeneralElement implements Element {
+public class GeneralElement implements AnalyzableElement {
 
     /**
      * Create a new <code>GeneralElement</code>.
@@ -52,13 +52,30 @@ public class GeneralElement implements Element {
     }
 
     /**
-     *
      * @return The number of sub-elements in the <code>Element</code>.
      */
     final public int count() {
         return this.DATA.size();
     }
 
+    /**
+     * @return A simple heuristic for deciding if the GeneralElement will
+     * fit on a single line.
+     */
+    final public boolean isSimple() {
+        for (Object val : this.DATA.values()) {
+            if (val instanceof GeneralElement) {
+                if (!((GeneralElement)val).isSimple()) {
+                    return false;
+                }
+            } else if (val != null && val.getClass().isArray()) {
+                return false;
+            }
+        }
+        
+        return this.count() < 4;
+    }
+    
     /**
      * @return Retrieves a copy of the <name,value> map.
      *
@@ -914,13 +931,20 @@ public class GeneralElement implements Element {
      * @return String representation.
      */
     protected String toStringFlat(String name) {
-        return new StringBuilder()
-                .append(null == name ? "" : name)
-                .append(this.DATA.entrySet()
-                        .stream()
-                        .map(e -> formatKeyPairFlat(e.getKey(), e.getValue()))
-                        .collect(Collectors.joining(", ", "{", "}")))
-                .toString();
+        if (this.DATA.isEmpty()) {
+            return new StringBuilder()
+                    .append(null == name ? "" : name)
+                    .append("(EMPTY)").toString();
+            
+        } else {
+            return new StringBuilder()
+                    .append(null == name ? "" : name)
+                    .append(this.DATA.entrySet()
+                            .stream()
+                            .map(e -> formatKeyPairFlat(e.getKey(), e.getValue()))
+                            .collect(Collectors.joining(", ", "{", "}")))
+                    .toString();
+        }
     }
 
     /**
@@ -930,26 +954,31 @@ public class GeneralElement implements Element {
      */
     protected String toStringStructured(String name, int level) {
         CharSequence tabs = indent2(level);
+        
+        if (this.isSimple()) {
+            return new StringBuilder().append(tabs).append(this.toStringFlat(name)).toString();
+            
+        } else {        
+            if (this.DATA.keySet().isEmpty()) {
+                return new StringBuilder()
+                        .append(tabs)
+                        .append(null == name ? "" : name)
+                        .append("{}")
+                        .toString();
+            }
 
-        if (this.DATA.keySet().isEmpty()) {
             return new StringBuilder()
                     .append(tabs)
                     .append(null == name ? "" : name)
-                    .append("{}")
+                    .append("{")
+                    .append(this.DATA.entrySet()
+                            .stream()
+                            .map(e -> formatKeyPairStructured(e.getKey(), e.getValue(), level))
+                            .collect(Collectors.joining("\n", "\n", "\n")))
+                    .append(tabs)
+                    .append("}")
                     .toString();
         }
-
-        return new StringBuilder()
-                .append(tabs)
-                .append(null == name ? "" : name)
-                .append("{")
-                .append(this.DATA.entrySet()
-                        .stream()
-                        .map(e -> formatKeyPairStructured(e.getKey(), e.getValue(), level))
-                        .collect(Collectors.joining("\n", "\n", "\n")))
-                .append(tabs)
-                .append("}")
-                .toString();
     }
 
     private String formatKeyPairFlat(IString key, Object val) {
@@ -1172,6 +1201,7 @@ public class GeneralElement implements Element {
      * @param save
      * @return
      */
+    @Override
     public String getInfo(resaver.Analysis analysis, ESS save) {
         return body(
                 table(

@@ -43,7 +43,8 @@ public class ChangeFormExtraDataData extends GeneralElement {
             case 4:
                 this.NAME = "Unknown04";
                 this.BRIEF = true;
-                super.readBytes(input, "UNK", 6);
+                super.readElement(input, "SUB_DATA", in -> new ChangeFormExtraDataData(in, context));
+                //super.readBytes(input, "UNK", 1);
                 break;
             case 8:
                 this.NAME = "Unknown08";
@@ -332,7 +333,7 @@ public class ChangeFormExtraDataData extends GeneralElement {
                 this.BRIEF = false;
                 super.readElement(input, "DATA", in -> new SayToTopicInfo(in, context));
                 break;
-            case 120:
+            case 120: 
                 this.NAME = "GuardedRefData";
                 this.BRIEF = false;
                 super.readVSElemArray(input, "DATA", in -> new GuardedRefData(in, context));
@@ -344,7 +345,7 @@ public class ChangeFormExtraDataData extends GeneralElement {
                 break;
             case 136:
                 this.NAME = "AliasInstanceArray";
-                this.BRIEF = true;
+                this.BRIEF = false;
                 super.readVSElemArray(input, "ALIASES", in -> new AliasInstance(in, context));
                 break;
             case 140:
@@ -470,9 +471,22 @@ public class ChangeFormExtraDataData extends GeneralElement {
     static class AliasInstance extends GeneralElement {
 
         AliasInstance(ByteBuffer input, ESS.ESSContext context) throws ElementException {
-            super.readRefID(input, "REF", context);
-            super.readInt(input, "FORMID");
+            this.QUEST = super.readRefID(input, "QUEST", context);
+            this.ALIAS = super.readInt(input, "ALIAS");
         }
+        
+        @Override
+        protected String toStringFlat(String name) {
+            return new StringBuilder()
+                    .append("Alias ")
+                    .append(this.ALIAS)
+                    .append(" of ")
+                    .append(this.QUEST.toHTML(null))
+                    .toString();
+        }
+        
+        final private RefID QUEST;
+        final private int ALIAS;
     }
 
     static class MagicTarget extends GeneralElement {
