@@ -639,14 +639,14 @@ final public class Papyrus implements PapyrusElement, GlobalDataBlock {
     }
 
     /**
-     * Find a <code>GameElement</code> by its <code>EID</code>.
-     * <code>GameElement</code> includes <code>ScriptInstance</code>,
+     * Find a <code>DefinedElement</code> by its <code>EID</code>.
+     * <code>DefinedElement</code> includes <code>ScriptInstance</code>,
      * <code>StructInstance</code>, and <code>Reference</code>.
      *
      * @param id
      * @return
      */
-    public GameElement findReferrent(EID id) {
+    public DefinedElement findReferrent(EID id) {
         if (this.getScriptInstances().containsKey(id)) {
             return this.getScriptInstances().get(id);
         } else if (this.getReferences().containsKey(id)) {
@@ -881,7 +881,7 @@ final public class Papyrus implements PapyrusElement, GlobalDataBlock {
      * @param builder
      * @param myName
      */
-    public void printReferrents(GameElement ref, StringBuilder builder, String myName) {
+    public void printReferrents(DefinedElement ref, StringBuilder builder, String myName) {
         final ReferrentMap REFERENTS = this.findMatches(ref.getID());
         referrentsPrint(ref, builder, REFERENTS.get(ActiveScript.class), myName, "threads", "attached to");
         referrentsPrint(ref, builder, REFERENTS.get(StackFrame.class), myName, "stackframes", "with member data referring to");

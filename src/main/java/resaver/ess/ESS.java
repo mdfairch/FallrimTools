@@ -1231,7 +1231,7 @@ final public class ESS implements Element {
 
     static final public Predicate<Element> DELETABLE = (Element v)
             -> v instanceof resaver.ess.papyrus.Definition
-            || v instanceof resaver.ess.papyrus.GameElement
+            || v instanceof resaver.ess.papyrus.DefinedElement
             || v instanceof resaver.ess.papyrus.ArrayInfo
             || v instanceof resaver.ess.papyrus.ActiveScript
             || v instanceof resaver.ess.ChangeForm

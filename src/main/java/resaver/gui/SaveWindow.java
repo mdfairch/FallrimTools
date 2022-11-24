@@ -88,7 +88,7 @@ final public class SaveWindow extends JFrame {
         this.analysis = null;
         this.filter = (x -> true);
         this.scanner = null;
-
+        
         this.TREE = new FilterTree();
         this.TREESCROLLER = new JScrollPane(this.TREE);
         this.TOPPANEL = new JPanel();
@@ -148,7 +148,8 @@ final public class SaveWindow extends JFrame {
         this.MI_SHOWSCRIPTATTACHED = new JCheckBoxMenuItem("Show forms with scripts", PREFS.getBoolean("settings.showAttached", false));
         this.MI_CHANGEFILTER = new JValueMenuItem<>("ChangeFlag filter (%s)", null);
         this.MI_CHANGEFORMFILTER = new JValueMenuItem<>("ChangeFormFlag filter (%s)", null);
-
+        this.MI_CHANGEFORMCONTENTFILTER = new JValueMenuItem<>("ChangeForm Content filter (%s)", "");
+        
         this.MI_REMOVEUNATTACHED = new JMenuItem("Remove unattached instances", KeyEvent.VK_1);
         this.MI_REMOVEUNDEFINED = new JMenuItem("Remove undefined elements", KeyEvent.VK_2);
         this.MI_RESETHAVOK = new JMenuItem("Reset Havok", KeyEvent.VK_3);
@@ -274,6 +275,7 @@ final public class SaveWindow extends JFrame {
         this.CLEANMENU.add(this.MI_SHOWSCRIPTATTACHED);
         this.CLEANMENU.add(this.MI_CHANGEFILTER);
         this.CLEANMENU.add(this.MI_CHANGEFORMFILTER);
+        this.CLEANMENU.add(this.MI_CHANGEFORMCONTENTFILTER);
 
         this.CLEANMENU.addSeparator();
         this.CLEANMENU.add(this.MI_REMOVEUNATTACHED);
@@ -336,6 +338,7 @@ final public class SaveWindow extends JFrame {
         this.MI_SHOWSCRIPTATTACHED.addActionListener(e -> updateFilters(false));
         this.MI_CHANGEFILTER.addActionListener(e -> setChangeFlagFilter());
         this.MI_CHANGEFORMFILTER.addActionListener(e -> setChangeFormFlagFilter());
+        this.MI_CHANGEFORMCONTENTFILTER.addActionListener(e -> setChangeFormContentFilter());
         this.MI_REMOVEUNATTACHED.addActionListener(e -> cleanUnattached());
         this.MI_REMOVEUNDEFINED.addActionListener(e -> cleanUndefined());
         this.MI_RESETHAVOK.addActionListener(e -> resetHavok());
@@ -374,6 +377,7 @@ final public class SaveWindow extends JFrame {
 
         this.MI_CHANGEFILTER.setToolTipText("Sets a ChangeFlag filter. ChangeFlags describe what kind of changes are present in ChangeForms.");
         this.MI_CHANGEFORMFILTER.setToolTipText("Sets a ChangeFormFlag filter. ChangeFormFlags are part of a ChangeForm and modify the Form's flags. You can examine those flags in xEdit for more information.");
+        this.MI_CHANGEFORMCONTENTFILTER.setToolTipText("Sets a ChangeForm content filter. Advanced!");
         this.MI_REMOVENONEXISTENT.setToolTipText("Removes ScriptInstances attached to non-existent ChangeForms. These ScriptInstances can be left behind when in-game objects are created and then destroyed. Cleaning them can cause some mods to stop working though.");
         this.MI_REMOVEUNATTACHED.setToolTipText("Removes ScriptInstances that aren't attached to anything. These ScriptInstances are usually left behind when mods are uinstalled. However in Fallout 4 they are used deliberately, so use caution when removing them.");
         this.MI_REMOVEUNDEFINED.setToolTipText("Removes Scripts and ScriptInstances for which the script itself is missing, as well as terminating any ActiveScripts associated with them. SKSE and F4SE usually remove these automatically; if it doesn't, there's probably a good reason. So use caution when removing them.");
@@ -447,6 +451,7 @@ final public class SaveWindow extends JFrame {
         this.TREE.setFilterPluginsHandler(plugin -> PLUGINCOMBO.setSelectedItem(plugin));
         this.TREE.setZeroThreadHandler(threads -> zeroThreads(threads));
         this.TREE.setFindHandler(element -> this.findElement(element));
+        this.TREE.setFinder(element -> this.findOwner(element));
         this.TREE.setCleanseFLSTHandler(flst -> this.cleanseFormList(flst));
         this.TREE.setCompressionHandler(ct -> this.setCompressionType(ct));
         this.LBL_MEMORY.initialize();
@@ -687,8 +692,11 @@ final public class SaveWindow extends JFrame {
            
             Duad<Integer> changeFilter = this.MI_CHANGEFILTER.getValue();
             Duad<Integer> changeFormFilter = this.MI_CHANGEFORMFILTER.getValue();
+            String fieldCodes = this.MI_CHANGEFORMCONTENTFILTER.getValue();
+            
             if (changeFilter != null) factory.addChangeFlagFilter(changeFilter.A, changeFilter.B);
             if (changeFormFilter != null) factory.addChangeFormFlagFilter(changeFormFilter.A, changeFormFilter.B);
+            if (fieldCodes != null && !fieldCodes.isBlank()) factory.addChangeFormContentFilter(fieldCodes);
             
             if (MOD != null) factory.addModFilter(MOD);
             if (PLUGIN != null) factory.addPluginFilter(PLUGIN);
@@ -738,6 +746,7 @@ final public class SaveWindow extends JFrame {
                         this.MODCOMBO.setSelectedItem(null);
                         this.MI_CHANGEFILTER.setValue(null);
                         this.MI_CHANGEFORMFILTER.setValue(null);
+                        this.MI_CHANGEFORMCONTENTFILTER.setValue("");
                         this.PLUGINCOMBO.setSelectedItem(null);
                     }
 
@@ -777,6 +786,7 @@ final public class SaveWindow extends JFrame {
                         this.PLUGINCOMBO.setSelectedItem(null);
                         this.MI_CHANGEFILTER.setValue(null);
                         this.MI_CHANGEFORMFILTER.setValue(null);
+                        this.MI_CHANGEFORMCONTENTFILTER.setValue("");
                     }
 
                     MODEL.setValue(2);
@@ -970,9 +980,10 @@ final public class SaveWindow extends JFrame {
 
             final Runnable DOAFTER = () -> {
                 updateFilters(false);
+                new Precacher(this, this.save, this::onScanProgress).execute();
                 if (parse) {
                     scanESPs(false);
-                }
+                }                
             };
             
             final Opener OPENER = new Opener(this, path, this.WORRIER, DOAFTER);
@@ -1591,6 +1602,38 @@ final public class SaveWindow extends JFrame {
         dlg.setVisible(true);
     }
 
+    private void setChangeFormContentFilter() {
+        String result = (String)JOptionPane.showInputDialog(
+               this,
+               "Enter field codes for content filter:", 
+               "ChangeForm content filter",            
+               JOptionPane.QUESTION_MESSAGE,
+               null,            
+               null, 
+               this.MI_CHANGEFORMCONTENTFILTER.getValue()
+            );
+        
+            if(result != null && result.length() > 0){
+                this.MI_CHANGEFORMCONTENTFILTER.setValue(result);
+                this.updateFilters(false);
+            }    
+    }
+    
+    private DefinedElement findOwner(Element element) {
+        if (this.save == null) {
+            return null;
+        } else {
+            return this.save
+                    .getPapyrus()
+                    .getContext()
+                    .findReferees(element)
+                    .stream()
+                    .findFirst()
+                    .orElse(null);
+        }
+    }
+    
+    
     /**
      * Selects an <code>Element</code> in the <code>FilterTree</code>.
      *
@@ -2345,6 +2388,7 @@ final public class SaveWindow extends JFrame {
     final private JCheckBoxMenuItem MI_SHOWSCRIPTATTACHED;
     final private JValueMenuItem<Duad<Integer>> MI_CHANGEFILTER;
     final private JValueMenuItem<Duad<Integer>> MI_CHANGEFORMFILTER;
+    final private JValueMenuItem<String> MI_CHANGEFORMCONTENTFILTER;
     final private LogWindow LOGWINDOW;
     final private Watcher WATCHER;
     final private Worrier WORRIER;

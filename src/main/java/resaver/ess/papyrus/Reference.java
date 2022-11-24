@@ -31,7 +31,7 @@ import resaver.ess.Linkable;
  *
  * @author Mark Fairchild
  */
-final public class Reference extends GameElement implements SeparateData, HasVariables {
+final public class Reference extends DefinedElement implements SeparateData, HasVariables {
 
     /**
      * Creates a new <code>Reference</code> by reading from a

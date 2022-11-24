@@ -104,7 +104,14 @@ public class StringsFile {
             final int COUNT = input.getInt();
             final int SIZE = input.getInt();
             final int DATASTART = 8 + COUNT * 8;
-            assert input.remaining() == COUNT*8 + SIZE : "Size sanity check.";
+            
+            if (input.remaining() != COUNT*8 + SIZE) {
+                LOG.severe(String.format("Size sanity check failed in %s: %d remaining vs %d expected", 
+                        path.getFileName().toString(),
+                        input.remaining(),
+                        COUNT*8 + SIZE
+                        ));
+            }
             
             this.TABLE = new HashMap<>(COUNT);
 

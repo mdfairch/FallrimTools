@@ -222,6 +222,14 @@ final public class RefID implements Element, Linkable, Comparable<RefID> {
         }
     }
 
+    public boolean equals(int other) {
+        if (this.FORMID != 0) {
+            return this.FORMID == other;
+        } else {
+            return this.DATA == other;
+        }
+    }
+
     final private int DATA;
     final public int FORMID;
     final public Plugin PLUGIN;

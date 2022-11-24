@@ -388,6 +388,36 @@ final public class ChangeForm implements Element, AnalyzableElement, Linkable {
     }
 
     /**
+     * @see resaver.ess.Linkable#toHTML(Element)
+     * @return
+     */
+    public String toLinkedString() {
+        final StringBuilder BUF = new StringBuilder();
+        BUF.append(this.TYPE);
+
+        if (null != this.REFID.PLUGIN) {
+            BUF.append(" (").append(this.REFID.PLUGIN).append(")");
+        } 
+        BUF.append(" refid=").append(this.REFID.toHTML(null));
+
+        if (parsedData != null && this.parsedData instanceof GeneralElement) {
+            GeneralElement gen = (GeneralElement) this.parsedData;
+            if (gen.hasVal("BASE_OBJECT")) {
+                RefID base = (RefID) gen.getVal("BASE_OBJECT");
+                BUF.append(" base=").append(base.toString());
+            } else if (gen.hasVal("INITIAL")) {
+                GeneralElement initial = gen.getGeneralElement("INITIAL");
+                if (initial.hasVal("BASE_OBJECT")) {
+                    RefID base = (RefID) initial.getVal("BASE_OBJECT");
+                    BUF.append(" base=").append(base.toString());
+                }
+            }
+        }
+
+        return BUF.toString();        
+    }
+
+    /**
      * @return String representation.
      */
     @Override

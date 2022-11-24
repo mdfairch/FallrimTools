@@ -35,7 +35,7 @@ import resaver.ess.RefID;
  *
  * @author Mark Fairchild
  */
-final public class ScriptInstance extends GameElement implements SeparateData, HasVariables {
+final public class ScriptInstance extends DefinedElement implements SeparateData, HasVariables {
 
     /**
      * Creates a new <code>ScriptInstances</code> by reading from a
@@ -288,7 +288,7 @@ final public class ScriptInstance extends GameElement implements SeparateData, H
             BUF.append("*");
         }
 
-        BUF.append(this.REFID.toString());
+        BUF.append(this.REFID.toHex());
         BUF.append(" (").append(this.getID()).append(")");
         return BUF.toString();
     }

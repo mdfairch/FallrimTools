@@ -127,6 +127,13 @@ final public class SuspendedStack implements PapyrusElement, AnalyzableElement, 
     }
 
     /**
+     * @return The corresponding <code>ActiveScript</code>.
+     */
+    public ActiveScript getThread() {
+        return this.THREAD;
+    }
+
+    /**
      * @see resaver.ess.Linkable#toHTML(Element)
      * @param target A target within the <code>Linkable</code>.
      * @return

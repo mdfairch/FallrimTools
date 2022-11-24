@@ -26,6 +26,7 @@ import java.util.SortedSet;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import resaver.Analysis;
+import resaver.ess.papyrus.PapyrusContext;
 import resaver.ess.papyrus.ScriptInstance;
 
 /**
@@ -193,13 +194,19 @@ final public class Plugin implements AnalyzableElement, Linkable, Comparable<Plu
             BUILDER.append("<p>Index: ").append(this.INDEX).append("</p>");
         }
 
+        PapyrusContext context = save.getPapyrus().getContext();
+        Set<Element> uniqueRefs = context.getPluginReferences(this);
+        
+        int dataSize = uniqueRefs.stream().mapToInt(e -> e.calculateSize()).sum();
+            BUILDER.append("<h1>DATA SIZE: ").append(dataSize).append("</h1>");
+        
         final Set<ChangeForm> FORMS = this.getChangeForms(save);
         final Set<ScriptInstance> INSTANCES = this.getInstances(save);
 
         BUILDER.append("<p>").append(FORMS.size()).append(" ChangeForms.</p>");
         if (FORMS.size() < 100) {
             BUILDER.append("<ul>");
-            FORMS.forEach(form -> BUILDER.append("<li>").append(form.toHTML(null)));
+            FORMS.forEach(form -> BUILDER.append("<li>").append(form.toHTML(null)).append(" ").append(form.toLinkedString()));
             BUILDER.append("</ul>");
         }
 

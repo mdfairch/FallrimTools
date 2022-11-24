@@ -850,7 +850,7 @@ final public class StackFrame implements PapyrusElement, AnalyzableElement, Link
     final private int PTR;
     final private Variable OWNERFIELD;
     final private List<Variable> VARIABLES;
-    final private GameElement OWNER;
+    final private DefinedElement OWNER;
     static final Pattern AUTOVAR_REGEX = Pattern.compile("^::(.+)_var$", Pattern.CASE_INSENSITIVE);
 
 }

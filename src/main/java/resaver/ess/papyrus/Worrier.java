@@ -51,7 +51,7 @@ final public class Worrier {
 
         // Check the first fatal condition -- truncation.
         if (ESS.isTruncated()) {
-            BUF.append("<p><em>THIS FILE IS TRUNCATED.</em> It is corrupted and can never be recovered, not even by scrubbing it with baking soda and vinegar.");
+            BUF.append("<p><em>THIS FILE IS TRUNCATED.</em> It is corrupted and can never be recovered, not even by the pure-hearted love of a Paraguay Jaguar.");
 
             if (PAPYRUS == null) {
                 BUF.append("<br/><strong>No Papyrus section.</strong>");

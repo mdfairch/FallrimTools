@@ -21,6 +21,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.swing.*;
@@ -47,6 +48,7 @@ final public class FilterTree extends JTree {
         this.deleteInstancesHandler = null;
         this.purgeHandler = null;
         this.editHandler = null;
+        this.finder = null;
         this.MI_PURGE = new JMenuItem("Purge (1 plugin)", KeyEvent.VK_P);
         this.MI_PURGES = new JMenuItem("Purge (%d plugins)", KeyEvent.VK_P);
         this.MI_DELETE = new JMenuItem("Delete", KeyEvent.VK_D);
@@ -166,10 +168,9 @@ final public class FilterTree extends JTree {
 					findHandler.accept(ref.getReferent());
 				}
 			} else if (element instanceof ArrayInfo) {
-				ArrayInfo array = (ArrayInfo) element;
-				if (null != array.getHolder()) {
-					findHandler.accept(array.getHolder());
-				}
+                            if (this.finder != null) {
+                                findHandler.accept(this.finder.apply(element));
+                            }
 			}
         });
 
@@ -393,6 +394,15 @@ final public class FilterTree extends JTree {
     }
 
     /**
+     * Sets the find element handler.
+     *
+     * @param newHandler The new handler.
+     */
+    public void setFinder(Function<Element, Element> newFinder) {
+        this.finder = newFinder;
+    }
+
+    /**
      * Sets the cleanse formlist handler.
      *
      * @param newHandler The new handler.
@@ -449,6 +459,7 @@ final public class FilterTree extends JTree {
     final private JPopupMenu PLUGIN_POPUP_MENU;
     final private JPopupMenu COMPRESSION_POPUP_MENU;
 
+    private Function<Element, Element> finder;
     private Consumer<Element> editHandler;
     private Consumer<Map<Element, Node>> deleteHandler;
     private Consumer<List<ActiveScript>> zeroThreadHandler;

@@ -30,6 +30,7 @@ import java.util.function.Predicate;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import javax.swing.tree.TreePath;
+import resaver.ess.AnalyzableElement;
 import resaver.ess.Plugin;
 
 /**
@@ -39,6 +40,8 @@ import resaver.ess.Plugin;
  */
 final public class FilterTreeModel implements TreeModel {
 
+    static public enum SortingMethod { ALPHA, SIZE, SUPPLIED };
+    
     /**
      *
      */
@@ -324,7 +327,7 @@ final public class FilterTreeModel implements TreeModel {
         // Determine if the node itself would be filtered out.
         // Never setFilter the root!            
         boolean nodeVisible = filter.test(node);
-
+        
         if (node.isLeaf()) {
             // If there are no children, finish up.
             node.setVisible(nodeVisible);
@@ -337,7 +340,9 @@ final public class FilterTreeModel implements TreeModel {
 
         } else {
             // For folders, determine which children to setFilter.
-            Predicate<Node> childFilter = n -> (nodeVisible && !node.filterChildren()) || filter.test(n);
+            boolean filterChildren = (nodeVisible && node.filterChildren()) || !nodeVisible;
+            Predicate<Node> childFilter = filterChildren ? filter : n -> true;
+            
             node.getChildren().parallelStream().forEach(child -> this.setFilter(child, childFilter));
             boolean hasVisibleChildren = node.getChildren().stream().anyMatch(c -> c.isVisible());                
             node.setVisible(nodeVisible || hasVisibleChildren);
@@ -671,7 +676,6 @@ final public class FilterTreeModel implements TreeModel {
     /**
      * A node class that wraps an <code>Element</code> or string provides
      * filtering.
-     *
      */
     static public class ContainerNode extends Node {
 
@@ -721,12 +725,12 @@ final public class FilterTreeModel implements TreeModel {
         /**
          * Sorts the children of the node.
          *
-         * @param alternateSorting The sorting style.
+         * @param method The sorting style.
          * @return The <code>Node</code> itself, to allow for chaining.
          *
          */
-        public ContainerNode sort(boolean alternateSorting) {
-            if (alternateSorting) {
+        public ContainerNode sort(SortingMethod method) {
+            if (method == SortingMethod.SIZE) {
                 this.CHILDREN.sort((n1, n2) -> {
                     if (n1.hasElement() && n2.hasElement()) {
                         Element e1 = n1.getElement();

@@ -84,7 +84,7 @@ abstract public class Variable implements PapyrusElement, Linkable {
             case VARIANT:
                 return new Variant(input, context);
             case STRUCT:
-                return new Struct(input, context);
+                return new StructRef(input, context);
             case REF_ARRAY:
             case STRING_ARRAY:
             case INTEGER_ARRAY:
@@ -155,7 +155,7 @@ abstract public class Variable implements PapyrusElement, Linkable {
      *
      * @return
      */
-    public GameElement getReferent() {
+    public PapyrusElement getReferent() {
         return null;
     }
 
@@ -244,7 +244,7 @@ abstract public class Variable implements PapyrusElement, Linkable {
         }
 
         @Override
-        public GameElement getReferent() {
+        public DefinedElement getReferent() {
             return this.REFERENT;
         }
 
@@ -297,7 +297,7 @@ abstract public class Variable implements PapyrusElement, Linkable {
 
         final private TString REFTYPE;
         final private EID REF;
-        final private GameElement REFERENT;
+        final private DefinedElement REFERENT;
     }
 
     /**
@@ -324,7 +324,7 @@ abstract public class Variable implements PapyrusElement, Linkable {
         public Type getType() {
             return Type.REF;
         }
-
+        
     }
 
     /**
@@ -375,7 +375,7 @@ abstract public class Variable implements PapyrusElement, Linkable {
         }
 
         @Override
-        public GameElement getReferent() {
+        public PapyrusElement getReferent() {
             return this.VALUE.getReferent();
         }
 
@@ -401,18 +401,18 @@ abstract public class Variable implements PapyrusElement, Linkable {
      * Variable that stores an UNKNOWN7.
      *
      */
-    static final public class Struct extends AbstractRef {
+    static final public class StructRef extends AbstractRef {
 
-        public Struct(ByteBuffer input, PapyrusContext context) throws PapyrusFormatException {
+        public StructRef(ByteBuffer input, PapyrusContext context) throws PapyrusFormatException {
             super(input, context);
         }
 
-        public Struct(TString type, EID id, PapyrusContext context) {
+        public StructRef(TString type, EID id, PapyrusContext context) {
             super(type, id, context);
         }
 
-        public Struct derive(long id, PapyrusContext context) {
-            return new Struct(this.getRefType(), this.getRef().derive(id), context);
+        public StructRef derive(long id, PapyrusContext context) {
+            return new StructRef(this.getRefType(), this.getRef().derive(id), context);
         }
 
         @Override
@@ -420,7 +420,7 @@ abstract public class Variable implements PapyrusElement, Linkable {
             return Type.STRUCT;
         }
 
-    }
+   }
 
     /**
      * Variable that stores a string.
@@ -665,8 +665,8 @@ abstract public class Variable implements PapyrusElement, Linkable {
         }
 
         @Override
-        public GameElement getReferent() {
-            return null;
+        public ArrayInfo getReferent() {
+            return this.ARRAY;
         }
 
         @Override

@@ -1365,4 +1365,77 @@ public class GeneralElement implements AnalyzableElement {
         }
         return new String(hexChars, java.nio.charset.StandardCharsets.UTF_8);
     }
+    
+    /** 
+     * Equivalent to the conjunction of multiple calls to searchMatch(String[]).
+     * 
+     * @param fieldCodes
+     * @return 
+     */
+    public boolean searchMatches(String[][] fieldCodes) {
+        for (String[] fields : fieldCodes) {
+            if (!searchMatch(fields)) {
+                return false;
+            }
+        }
+        
+        return true;
+    }
+    
+    /** 
+     * Searches a GeneralElement tree by a list of value names.
+     * The final value matches data of types:
+     * VSVal, RefID, Strings, or any numeric primitive.
+     * 
+     * @param fields
+     * @return 
+     */
+    public boolean searchMatch(String[] fields) {
+        assert fields != null;
+        assert fields.length >= 2;
+        
+        String value = fields[fields.length - 1];
+        
+        GeneralElement current = this;
+        Object val = null;
+
+        for (int i = 0; i < fields.length - 1; i++) {
+            String field = fields[i];
+            
+            if (current == null || !current.hasVal(field)) {
+                return false;
+            }
+
+            val = current.getVal(field);
+            current = val instanceof GeneralElement
+                    ? (GeneralElement) val
+                    : null;
+        }
+
+        try {
+            if (val instanceof String) {
+                return value == val;
+            } else if (val instanceof Byte) {
+                return Integer.parseInt(value, 16) == (Byte)val;
+            } else if (val instanceof Short) {
+                return Integer.parseInt(value, 16) == (Short)val;
+            } else if (val instanceof Integer) {
+                return Integer.parseInt(value, 16) == (Short)val;
+            } else if (val instanceof Long) {
+                return Integer.parseInt(value, 16) == (Integer)val;
+            } else if (val instanceof Float) {
+                return Integer.parseInt(value, 16) == (Integer)val;
+            }  else if (val instanceof VSVal) {
+                return Integer.parseInt(value, 10) == ((VSVal)val).getValue();
+            } else if (val instanceof RefID) {
+                RefID ref = (RefID) val;
+                return ref.equals(Integer.parseInt(value, 16));
+            }
+        } catch (RuntimeException ex) {
+            int k = 0;
+        } finally {
+        }
+        return false;
+    }
+    
 }

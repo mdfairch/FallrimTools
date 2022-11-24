@@ -30,7 +30,7 @@ import resaver.ess.Linkable;
  *
  * @author Mark Fairchild
  */
-public class StructInstance extends GameElement implements SeparateData, HasVariables {
+public class StructInstance extends DefinedElement implements SeparateData, HasVariables {
 
     /**
      * Creates a new <code>Struct</code> by reading from a

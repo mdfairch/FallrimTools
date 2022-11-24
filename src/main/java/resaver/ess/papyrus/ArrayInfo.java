@@ -17,9 +17,7 @@ package resaver.ess.papyrus;
 
 import resaver.ListException;
 import resaver.ess.AnalyzableElement;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.SortedSet;
@@ -150,7 +148,7 @@ final public class ArrayInfo implements AnalyzableElement, Linkable, HasID, Sepa
     public String toValueString() {
         if (this.TYPE.isRefType()) {
             return this.REFTYPE + "[" + this.LENGTH + "]";
-        } else if (this.TYPE == Type.NULL && 0 < this.getVariables().size()) {
+        } else if (this.TYPE == Type.NULL && !this.getVariables().isEmpty()) {
             Type t = this.getVariables().get(0).getType();
             return t + "[" + this.LENGTH + "]";
         } else {
@@ -202,24 +200,10 @@ final public class ArrayInfo implements AnalyzableElement, Linkable, HasID, Sepa
 
         BUILDER.append("<html><h3>ARRAY</h3>");
 
-        if (this.HOLDERS.isEmpty()) {
-            BUILDER.append("<p><em>WARNING: THIS ARRAY HAS NO OWNER.</em></p>");
-        } else {
-            BUILDER.append("<p>Owners:</p><ul>");
-
-            this.HOLDERS.stream().forEach(owner -> {
-                if (owner instanceof Linkable) {
-                    BUILDER.append(String.format("<li>%s %s", owner.getClass().getSimpleName(), ((Linkable) owner).toHTML(this)));
-                } else if (owner != null) {
-                    BUILDER.append(String.format("<li>%s %s", owner.getClass().getSimpleName(), owner));
-                }
-            });
-
-            BUILDER.append("</ul>");
-        }
+        List<DefinedElement> HOLDERS = save.getPapyrus().getContext().findReferees(this);
 
         if (null != analysis) {
-            this.HOLDERS.forEach(owner -> {
+            HOLDERS.forEach(owner -> {
                 if (owner instanceof ScriptInstance) {
                     ScriptInstance instance = (ScriptInstance) owner;
                     SortedSet<String> mods = analysis.SCRIPT_ORIGINS.get(instance.getScriptName().toIString());
@@ -248,6 +232,22 @@ final public class ArrayInfo implements AnalyzableElement, Linkable, HasID, Sepa
         BUILDER.append(String.format("<p>Length: %d</p>", this.getLength()));
         //BUILDER.append("</p>");
 
+        if (HOLDERS.isEmpty()) {
+            BUILDER.append("<p><em>NO OWNER FOUND.</em> But we didn't look very hard.</p>");
+        } else {
+            BUILDER.append("<p>Owners:</p><ul>");
+
+            HOLDERS.stream().forEach(owner -> {
+                if (owner instanceof Linkable) {
+                    BUILDER.append(String.format("<li>%s %s", owner.getClass().getSimpleName(), ((Linkable) owner).toHTML(this)));
+                } else if (owner != null) {
+                    BUILDER.append(String.format("<li>%s %s", owner.getClass().getSimpleName(), owner));
+                }
+            });
+
+            BUILDER.append("</ul>");
+        }
+
         BUILDER.append("</html>");
         return BUILDER.toString();
     }
@@ -263,27 +263,6 @@ final public class ArrayInfo implements AnalyzableElement, Linkable, HasID, Sepa
         Objects.requireNonNull(analysis);
         Objects.requireNonNull(mod);
         return false;
-    }
-
-    /**
-     * @return The holder of the array, if there is exactly one. Null otherwise.
-     */
-    public PapyrusElement getHolder() {
-        if (this.HOLDERS.size() == 1) {
-            return this.HOLDERS.iterator().next();
-        } else {
-            return null;
-        }
-    }
-
-    /**
-     * Adds an element as a reference holder.
-     *
-     * @param newHolder The new reference holder.
-     */
-    public void addRefHolder(PapyrusElement newHolder) {
-        Objects.requireNonNull(newHolder);
-        this.HOLDERS.add(newHolder);
     }
 
     /**
@@ -327,7 +306,6 @@ final public class ArrayInfo implements AnalyzableElement, Linkable, HasID, Sepa
     final private Type TYPE;
     final private TString REFTYPE;
     final private int LENGTH;
-    final private Collection<PapyrusElement> HOLDERS = new ArrayList<>(1);
     private ArrayData data;
 
     static final private List<Type> VALID_TYPES = Arrays.asList(

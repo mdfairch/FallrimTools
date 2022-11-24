@@ -55,6 +55,7 @@ import resaver.gui.FilterTreeModel.PluginNode;
 import resaver.gui.FilterTreeModel.ActiveScriptNode;
 import resaver.gui.FilterTreeModel.FunctionMessageNode;
 import resaver.gui.FilterTreeModel.SuspendedStackNode;
+import resaver.gui.FilterTreeModel.SortingMethod;
 
 /**
  *
@@ -71,7 +72,9 @@ public class ModelBuilder {
         this.EXECUTOR = java.util.concurrent.Executors.newFixedThreadPool(2);
         this.TASKS = java.util.Collections.synchronizedList(new ArrayList<>(15));
         this.PROGRESS = progress;
-        this.ALT_SORT = Preferences.userNodeForPackage(resaver.ReSaver.class).getBoolean("settings.altSort", false);
+        
+        boolean altSort = Preferences.userNodeForPackage(resaver.ReSaver.class).getBoolean("settings.altSort", false);
+        this.SORT = altSort ? SortingMethod.SIZE : SortingMethod.ALPHA;
     }
 
     /**
@@ -102,7 +105,7 @@ public class ModelBuilder {
      */
     public void addGlobalVariableTable(GlobalVariableTable gvt) {
         this.TASKS.add(this.EXECUTOR.submit(() -> {
-            final ContainerNode NODE = new ContainerNode("Global Variables", gvt.getVariables()).sort(ALT_SORT);
+            final ContainerNode NODE = new ContainerNode("Global Variables", gvt.getVariables()).sort(SORT);
             PROGRESS.modifyValue(1);
             return NODE;
         }));
@@ -119,11 +122,11 @@ public class ModelBuilder {
                     .collect(Collectors.groupingBy(ALPHABETICAL));
 
             final List<Node> NODES = DICTIONARY.entrySet().stream()
-                    .map(entry -> new ContainerNode(entry.getKey().toString(), entry.getValue()).sort(ALT_SORT))
+                    .map(entry -> new ContainerNode(entry.getKey().toString(), entry.getValue()).sort(SORT))
                     .collect(Collectors.toList());
 
             final ContainerNode NODE = new ContainerNode("Strings");
-            NODE.addAll(NODES).sort(ALT_SORT);
+            NODE.addAll(NODES).sort(SORT);
             PROGRESS.modifyValue(1);
             return NODE;
         }));
@@ -136,7 +139,7 @@ public class ModelBuilder {
      */
     public void addScripts(ScriptMap script) {
         this.TASKS.add(this.EXECUTOR.submit(() -> {
-            final ContainerNode NODE = new ContainerNode("Script Definitions", script.values()).sort(ALT_SORT);
+            final ContainerNode NODE = new ContainerNode("Script Definitions", script.values()).sort(SORT);
             PROGRESS.modifyValue(1);
             return NODE;
         }));
@@ -149,7 +152,7 @@ public class ModelBuilder {
      */
     public void addStructs(StructMap structs) {
         this.TASKS.add(this.EXECUTOR.submit(() -> {
-            final ContainerNode NODE = new ContainerNode("Struct Definitions", structs.values()).sort(ALT_SORT);
+            final ContainerNode NODE = new ContainerNode("Struct Definitions", structs.values()).sort(SORT);
             PROGRESS.modifyValue(1);
             return NODE;
         }));
@@ -162,7 +165,7 @@ public class ModelBuilder {
      */
     public void addReferences(ReferenceMap references) {
         this.TASKS.add(this.EXECUTOR.submit(() -> {
-            final ContainerNode NODE = new ContainerNode("References", references.values()).sort(ALT_SORT);
+            final ContainerNode NODE = new ContainerNode("References", references.values()).sort(SORT);
             PROGRESS.modifyValue(1);
             return NODE;
         }));
@@ -175,7 +178,7 @@ public class ModelBuilder {
      */
     public void addArrays(ArrayMap arrays) {
         this.TASKS.add(this.EXECUTOR.submit(() -> {
-            final ContainerNode NODE = new ContainerNode("Arrays", arrays.values()).sort(ALT_SORT);
+            final ContainerNode NODE = new ContainerNode("Arrays", arrays.values()).sort(SORT);
             PROGRESS.modifyValue(1);
             return NODE;
         }));
@@ -188,7 +191,7 @@ public class ModelBuilder {
      */
     public void addUnbinds(UnbindMap unbinds) {
         this.TASKS.add(this.EXECUTOR.submit(() -> {
-            final ContainerNode NODE = new ContainerNode("QueuedUnbinds", unbinds.values()).sort(ALT_SORT);
+            final ContainerNode NODE = new ContainerNode("QueuedUnbinds", unbinds.values()).sort(SORT);
             PROGRESS.modifyValue(1);
             return NODE;
         }));
@@ -199,7 +202,7 @@ public class ModelBuilder {
      */
     public void addUnknownIDList(List<EID> unknownIDs) {
         this.TASKS.add(this.EXECUTOR.submit(() -> {
-            final ContainerNode NODE = new ContainerNode("Unknown ID List", unknownIDs).sort(ALT_SORT);
+            final ContainerNode NODE = new ContainerNode("Unknown ID List", unknownIDs).sort(SORT);
             PROGRESS.modifyValue(1);
             return NODE;
         }));
@@ -229,10 +232,10 @@ public class ModelBuilder {
                     .collect(Collectors.groupingBy(ALPHABETICAL));
 
             final List<Node> NODES = DICTIONARY.entrySet().stream()
-                    .map(entry -> new ContainerNode(entry.getKey().toString(), entry.getValue()).sort(ALT_SORT))
+                    .map(entry -> new ContainerNode(entry.getKey().toString(), entry.getValue()).sort(SORT))
                     .collect(Collectors.toList());
 
-            final ContainerNode NODE = new ContainerNode("Script Instances").addAll(NODES).sort(ALT_SORT);
+            final ContainerNode NODE = new ContainerNode("Script Instances").addAll(NODES).sort(SORT);
             PROGRESS.modifyValue(1);
             return NODE;
         }));
@@ -245,7 +248,7 @@ public class ModelBuilder {
      */
     public void addStructInstances(StructInstanceMap instances) {
         this.TASKS.add(this.EXECUTOR.submit(() -> {
-            final ContainerNode NODE = new ContainerNode("Struct Instances", instances.values()).sort(ALT_SORT);
+            final ContainerNode NODE = new ContainerNode("Struct Instances", instances.values()).sort(SORT);
             PROGRESS.modifyValue(1);
             return NODE;
         }));
@@ -275,11 +278,11 @@ public class ModelBuilder {
                 }
                 
                 final List<ContainerNode> NODE_GROUPS = GROUPS.entrySet().stream()
-                        .map(entry -> new ContainerNode(entry.getKey()).addAll(entry.getValue()).sort(ALT_SORT))
+                        .map(entry -> new ContainerNode(entry.getKey()).addAll(entry.getValue()).sort(SORT))
                         .collect(Collectors.toList());
 
                 final ContainerNode NODE = new ContainerNode("Active Scripts");
-                NODE.addAll(NODE_GROUPS).sort(ALT_SORT);
+                NODE.addAll(NODE_GROUPS).sort(SORT);
                 PROGRESS.modifyValue(1);
                 return NODE;
             }));
@@ -287,7 +290,7 @@ public class ModelBuilder {
         } else {
             this.TASKS.add(this.EXECUTOR.submit(() -> {
                 final ContainerNode NODE = new ContainerNode("Active Scripts");
-                NODE.addAll(threads.values().stream().map(t -> new ActiveScriptNode(t)).collect(Collectors.toList())).sort(ALT_SORT);
+                NODE.addAll(threads.values().stream().map(t -> new ActiveScriptNode(t)).collect(Collectors.toList())).sort(SORT);
                 PROGRESS.modifyValue(1);
                 return NODE;
             }));
@@ -302,7 +305,7 @@ public class ModelBuilder {
     public void addFunctionMessages(List<FunctionMessage> messages) {
         this.TASKS.add(this.EXECUTOR.submit(() -> {
             final ContainerNode NODE = new ContainerNode("Function Messages");
-            NODE.addAll(messages.stream().map(t -> new FunctionMessageNode(t)).collect(Collectors.toList())).sort(ALT_SORT);
+            NODE.addAll(messages.stream().map(t -> new FunctionMessageNode(t)).collect(Collectors.toList())).sort(SORT);
             PROGRESS.modifyValue(1);
             return NODE;
         }));
@@ -316,7 +319,7 @@ public class ModelBuilder {
     public void addSuspendedStacks1(SuspendedStackMap stacks) {
         this.TASKS.add(this.EXECUTOR.submit(() -> {
             final ContainerNode NODE = new ContainerNode("Suspended Stacks 1");
-            NODE.addAll(stacks.values().stream().map(t -> new SuspendedStackNode(t)).collect(Collectors.toList())).sort(ALT_SORT);
+            NODE.addAll(stacks.values().stream().map(t -> new SuspendedStackNode(t)).collect(Collectors.toList())).sort(SORT);
             PROGRESS.modifyValue(1);
             return NODE;
         }));
@@ -330,7 +333,7 @@ public class ModelBuilder {
     public void addSuspendedStacks2(SuspendedStackMap stacks) {
         this.TASKS.add(this.EXECUTOR.submit(() -> {
             final ContainerNode NODE = new ContainerNode("Suspended Stacks 2");
-            NODE.addAll(stacks.values().stream().map(t -> new SuspendedStackNode(t)).collect(Collectors.toList())).sort(ALT_SORT);
+            NODE.addAll(stacks.values().stream().map(t -> new SuspendedStackNode(t)).collect(Collectors.toList())).sort(SORT);
             PROGRESS.modifyValue(1);
             return NODE;
         }));
@@ -345,10 +348,10 @@ public class ModelBuilder {
             final Map<ChangeForm.Type, List<ChangeForm>> DICTIONARY = changeForms.stream().collect(Collectors.groupingBy(form -> form.getType()));
 
             final List<Node> NODES = DICTIONARY.entrySet().stream()
-                    .map(entry -> new ContainerNode(entry.getKey().toString(), entry.getValue()).sort(ALT_SORT))
+                    .map(entry -> new ContainerNode(entry.getKey().toString(), entry.getValue()).sort(SORT))
                     .collect(Collectors.toList());
 
-            final ContainerNode NODE = new ContainerNode("ChangeForms").addAll(NODES).sort(ALT_SORT);
+            final ContainerNode NODE = new ContainerNode("ChangeForms").addAll(NODES).sort(SORT);
             PROGRESS.modifyValue(1);
             return NODE;
         }));
@@ -372,7 +375,7 @@ public class ModelBuilder {
                 });
             }
 
-            final ContainerNode NODE = new ContainerNode("Mystery Arrays").addAll(OTHERDATA_NODES).sort(ALT_SORT);
+            final ContainerNode NODE = new ContainerNode("Mystery Arrays").addAll(OTHERDATA_NODES).sort(SORT);
             PROGRESS.modifyValue(1);
             return NODE;
         }));
@@ -455,7 +458,7 @@ public class ModelBuilder {
     final private ExecutorService EXECUTOR;
     final private List<Future<Node>> TASKS;
     final private ProgressModel PROGRESS;
-    final private boolean ALT_SORT;
+    final private SortingMethod SORT;
 
     /**
      * Maps a <code>TString</code> to a character.

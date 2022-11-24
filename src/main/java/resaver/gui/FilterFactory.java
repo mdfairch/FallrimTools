@@ -224,6 +224,14 @@ public class FilterFactory {
         return this;
     }
     
+    public FilterFactory addChangeFormContentFilter(String fieldCodes) {
+        if (fieldCodes == null || fieldCodes.isBlank()) {
+            return this;
+        } else {
+            return addFilter(createChangeFormContentFilter(fieldCodes));
+        }
+    }
+    
     final private Analysis ANALYSIS;
     final private ESS ESS;
     final private ESS.ESSContext CONTEXT;
@@ -703,6 +711,46 @@ public class FilterFactory {
                 return false;
             }
         };
+    }
+
+    /**
+     * Setup a ChangeForm contents filter.
+     *
+     * @param fieldCodes
+     * @return
+     */
+    private Predicate<Node> createChangeFormContentFilter(String fieldCodesStringsString) {
+        if (fieldCodesStringsString == null || fieldCodesStringsString.isBlank()) {
+            return n -> false;
+        }
+        
+        String[] fieldCodesStrings = fieldCodesStringsString.split(";");
+        if (fieldCodesStrings == null || fieldCodesStrings.length == 0) {
+            return n -> false;
+        }
+        
+        String[][] fieldCodes = new String[fieldCodesStrings.length][];
+        for (int i = 0; i < fieldCodesStrings.length; i++) {
+            String fieldCodesString = fieldCodesStrings[i];
+            fieldCodes[i] = fieldCodesString.split("[\\/]");
+            if (fieldCodes[i] == null || fieldCodes[i].length < 2) {
+                return n-> false;
+            }
+        }
+               
+        return node -> {
+            if (node.hasElement() && node.getElement() instanceof ChangeForm) {
+                ChangeForm form = (ChangeForm) node.getElement();
+                ChangeFormData data = form.getData(ANALYSIS, CONTEXT, true);
+                if (data != null && data instanceof GeneralElement) {
+                    return ((GeneralElement) data).searchMatches(fieldCodes);
+                }
+            }
+            
+            return false;
+        };
+        
+        
     }
 
     /**

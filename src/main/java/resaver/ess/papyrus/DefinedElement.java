@@ -24,16 +24,16 @@ import resaver.ess.AnalyzableElement;
 import resaver.ess.Linkable;
 
 /**
- * <code>GameElement</code> is a superclass of <code>ScriptInstance</code>,
+ * <code>DefinedElement</code> is a superclass of <code>ScriptInstance</code>,
  * <code>Reference</code>, and <code>Struct</code>, for situations in which they
  * are interchangeable.
  *
  * @author Mark Fairchild
  */
-abstract public class GameElement implements AnalyzableElement, Linkable, PapyrusElement, HasID {
+abstract public class DefinedElement implements AnalyzableElement, Linkable, PapyrusElement, HasID {
 
     /**
-     * Creates a new <code>GameElement</code> by reading from a
+     * Creates a new <code>DefinedElement</code> by reading from a
      * <code>ByteBuffer</code>. No error handling is performed.
      *
      * @param input The input stream.
@@ -41,7 +41,7 @@ abstract public class GameElement implements AnalyzableElement, Linkable, Papyru
      * @param context The <code>PapyrusContext</code> info.
      * @throws PapyrusFormatException
      */
-    public GameElement(ByteBuffer input, Map<TString, ? extends Definition> defs, PapyrusContext context) throws PapyrusFormatException {
+    public DefinedElement(ByteBuffer input, Map<TString, ? extends Definition> defs, PapyrusContext context) throws PapyrusFormatException {
         Objects.requireNonNull(input);
         Objects.requireNonNull(defs);
         Objects.requireNonNull(context);
@@ -98,7 +98,7 @@ abstract public class GameElement implements AnalyzableElement, Linkable, Papyru
     }
 
     /**
-     * @return A flag indicating if the <code>GameElement</code> is undefined.
+     * @return A flag indicating if the <code>DefinedElement</code> is undefined.
      *
      */
     abstract public boolean isUndefined();
@@ -140,5 +140,6 @@ abstract public class GameElement implements AnalyzableElement, Linkable, Papyru
 
     final private EID ID;
     final private TString DEFINITION_NAME;
-    final private Definition DEFINITION;
+    final private Definition DEFINITION;   
+    
 }
