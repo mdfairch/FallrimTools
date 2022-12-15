@@ -45,9 +45,10 @@ public class RecordBasic extends Record {
                 FIELDS.addAll(newFields);
             }
 
+            ctx.incrementRecord(recordCode);
             ctx.PLUGIN_INFO.addRecord(header.ID, recordCode, FIELDS);
         } catch (RuntimeException | FieldException ex) {
-            throw new RecordException("Error reading record " + recordCode, ex, ctx.toString());
+            throw new RecordException(ex, recordCode, header.ID, ctx.toString());
         }
     }
 
@@ -71,7 +72,7 @@ public class RecordBasic extends Record {
                 FIELDS.addAll(newFields);
             }
         } catch (RuntimeException | FieldException ex) {
-            throw new RecordException("Error reading record " + recordCode, ex, ctx.toString());            
+            throw new RecordException(ex, recordCode, header.ID, ctx.toString());            
         }
     }
 
