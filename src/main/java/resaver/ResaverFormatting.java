@@ -17,8 +17,11 @@ package resaver;
 
 import static j2html.TagCreator.*;
 import j2html.tags.ContainerTag;
+import java.text.MessageFormat;
 import java.util.List;
 import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  *
@@ -26,16 +29,53 @@ import java.util.function.Function;
  */
 abstract public class ResaverFormatting {
 
+    static public String makeMetric(int value, String unit, Integer total, Float percentage) {
+        return makeMetric(withTotal(withUnit(value, unit), withUnit(total, unit)), percentage);
+    }
+    
+    @SuppressWarnings("UnnecessaryUnboxing")
+    static private String makeMetric(String countPart, Float percentage) {
+        return percentage != null
+                ? MessageFormat.format("{0} ({1,number,#.##%})", countPart, percentage.floatValue())
+                : countPart;
+    }
+    
+    static private String withTotal(String subTotal, String total) {
+        return total != null
+                ? MessageFormat.format("{0} out of {1}", subTotal, total)
+                : subTotal;
+    }
+    
+    static private String withUnit(Integer value, String unit) {
+        if (value != null) {
+        return unit != null
+                ? MessageFormat.format("{0} {1}", value, unit)
+                : MessageFormat.format("{0}", value);
+        } else {
+            return null;
+        }
+    }
+    
     static public <T> CharSequence makeHTMLList(String msg, List<T> items, int limit) {
         return makeHTMLList(msg, items, limit, s -> s.toString());
     }
     
+    static public <T> CharSequence makeTextList(String msg, List<T> items, int limit) {
+        return makeTextList(msg, items, limit, s -> s.toString());
+    }
+    
     static public <T> CharSequence makeHTMLList(String msg, List<T> items, int limit, Function<T, CharSequence> namer) {
         int excess = items.size() - limit;
+        List<String> names = items.stream()
+                .limit(limit)
+                .map(namer)
+                .map(CharSequence::toString)
+                .collect(Collectors.toList());
+        
         return p(
                 text(String.format(msg, items.size())),
-                ol(
-                        items.stream().limit(limit).map(namer).map(n -> li(n.toString())).toArray(ContainerTag[]::new)
+                ol(each(names, name -> li(rawHtml(name)))
+                        //items.stream().limit(limit).map(namer).map(n -> li(n.toString())).toArray(ContainerTag[]::new)
                 ),
                 text(excess > 0 
                         ? String.format("(+ %d more)", excess) 
@@ -43,10 +83,6 @@ abstract public class ResaverFormatting {
         ).toString();
     }
 
-    static public <T> CharSequence makeTextList(String msg, List<T> items, int limit) {
-        return makeTextList(msg, items, limit, s -> s.toString());
-    }
-    
     static public <T> CharSequence makeTextList(String msg, List<T> items, int limit, Function<T, CharSequence> namer) {
         final StringBuilder BUF = new StringBuilder();
         BUF.append(String.format(msg, items.size()));
