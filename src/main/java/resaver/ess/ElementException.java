@@ -20,7 +20,7 @@ package resaver.ess;
  * @author Mark
  */
 @SuppressWarnings("serial")
-public class ElementException extends /*Runtime*/Exception {
+public class ElementException extends Exception {
 
     /**
      * Constructs an instance of <code>ElementException</code> with the
