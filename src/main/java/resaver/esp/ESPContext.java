@@ -104,5 +104,13 @@ final public class ESPContext {
     final public RecordTes4 TES4;
     final private LinkedList<IString> CONTEXT;
     final public PluginData PLUGIN_INFO;
-
+    final private int[] RECORD_COUNTS = new int[256];
+    
+    public void incrementRecord(RecordCode code) {
+        RECORD_COUNTS[code.ordinal()]++;
+    }
+    
+    public int getRecordCount(RecordCode code) {
+        return RECORD_COUNTS[code.ordinal()];
+    }
 }
