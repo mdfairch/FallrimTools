@@ -98,6 +98,10 @@ public class ChangeFormRefr extends GeneralElement implements ChangeFormData {
                 super.readVSElemArray(input, "INVENTORY", in -> new ChangeFormInventoryItem(in, context));
             }
 
+            if (changeFlags.getFlag(CHANGE_REFR_PROMOTED)) {
+                super.readVSElemArray(input, "PROMOTION", in -> context.readRefID(in));
+            }
+            
             if (changeFlags.getFlag(CHANGE_REFR_ANIMATION)) {
                 super.readBytesVS(input, "ANIMATIONS");
             }
