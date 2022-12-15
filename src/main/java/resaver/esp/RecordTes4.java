@@ -103,7 +103,7 @@ public class RecordTes4 extends Record {
 
         this.ESPs = java.util.Collections.unmodifiableMap(esps);*/
         } catch (RuntimeException | FieldException ex) {
-            throw new RecordException("Problem reading header", ex, ctx.toString());
+            throw new RecordException(ex, RecordCode.TES4, 0, ctx.toString());
         }
     }
 
