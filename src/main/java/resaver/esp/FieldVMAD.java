@@ -36,45 +36,49 @@ public class FieldVMAD implements Field {
      * @param ctx
      */
     public FieldVMAD(RecordCode recordCode, IString fieldCode, ByteBuffer input, boolean big, ESPContext ctx) {
-        assert input.hasRemaining();
-        assert fieldCode.equals(IString.get("VMAD"));
+        try {
+            assert input.hasRemaining();
+            assert fieldCode.equals(IString.get("VMAD"));
 
-        //this.RECORDCODE = recordCode;
-        this.CODE = fieldCode;
-        this.VERSION = input.getShort();
-        this.OBJFORMAT = input.getShort();
-        this.SCRIPTS = new java.util.ArrayList<>(1);
-        this.FRAGMENTS = new java.util.ArrayList<>(1);
-        this.BIG = big;
+            //this.RECORDCODE = recordCode;
+            this.CODE = fieldCode;
+            this.VERSION = input.getShort();
+            this.OBJFORMAT = input.getShort();
+            this.SCRIPTS = new java.util.ArrayList<>(1);
+            this.FRAGMENTS = new java.util.ArrayList<>(1);
+            this.BIG = big;
 
-        int scriptCount = Short.toUnsignedInt(input.getShort());
+            int scriptCount = Short.toUnsignedInt(input.getShort());
 
-        for (int i = 0; i < scriptCount; i++) {
-            Script script = new Script(input, ctx);
-            ctx.PLUGIN_INFO.addScriptData(script);
-        }
-
-        while (input.hasRemaining()) {
-            switch (recordCode) {
-                case INFO:
-                case PACK:
-                    this.FRAGMENTS.add(new FragmentInfoPack(input, ctx));
-                    break;
-                case PERK:
-                    this.FRAGMENTS.add(new FragmentPerk(input, ctx));
-                    break;
-                case QUST:
-                    this.FRAGMENTS.add(new FragmentQust(input, ctx));
-                    break;
-                case SCEN:
-                    this.FRAGMENTS.add(new FragmentScen(input, ctx));
-                    break;
-                case TERM:
-                    this.FRAGMENTS.add(new FragmentTerm(input, ctx));
-                    break;
-                default:
-                    throw new IllegalStateException("Unexpected fragment type: " + recordCode);
+            for (int i = 0; i < scriptCount; i++) {
+                Script script = new Script(input, ctx);
+                ctx.PLUGIN_INFO.addScriptData(script);
             }
+
+            while (input.hasRemaining()) {
+                switch (recordCode) {
+                    case INFO:
+                    case PACK:
+                        this.FRAGMENTS.add(new FragmentInfoPack(input, ctx));
+                        break;
+                    case PERK:
+                        this.FRAGMENTS.add(new FragmentPerk(input, ctx));
+                        break;
+                    case QUST:
+                        this.FRAGMENTS.add(new FragmentQust(input, ctx));
+                        break;
+                    case SCEN:
+                        this.FRAGMENTS.add(new FragmentScen(input, ctx));
+                        break;
+                    case TERM:
+                        this.FRAGMENTS.add(new FragmentTerm(input, ctx));
+                        break;
+                    default:
+                        throw new IllegalStateException("Unexpected fragment type: " + recordCode);
+                }
+            }
+        } catch (RuntimeException ex) {
+            throw ex;
         }
     }
 
