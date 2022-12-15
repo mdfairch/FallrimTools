@@ -30,7 +30,6 @@ import java.util.function.Predicate;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import javax.swing.tree.TreePath;
-import resaver.ess.AnalyzableElement;
 import resaver.ess.Plugin;
 
 /**
@@ -40,10 +39,8 @@ import resaver.ess.Plugin;
  */
 final public class FilterTreeModel implements TreeModel {
 
-    static public enum SortingMethod { ALPHA, SIZE, SUPPLIED };
-    
     /**
-     *
+     * Creates a new FilterTreeModel with default alphabetical sorting.
      */
     public FilterTreeModel() {
         this.LISTENERS = new java.util.LinkedList<>();
@@ -573,7 +570,7 @@ final public class FilterTreeModel implements TreeModel {
          * @return The <code>Collection</code> of children, or null if the
          * <code>Node</code> is a leaf.
          */
-        abstract public Collection<Node> getChildren();
+        abstract public List<Node> getChildren();
 
         /**
          * @return A flag indicating if the <code>Node</code> has an element.
@@ -722,38 +719,13 @@ final public class FilterTreeModel implements TreeModel {
             return this;
         }
 
-        /**
-         * Sorts the children of the node.
-         *
-         * @param method The sorting style.
-         * @return The <code>Node</code> itself, to allow for chaining.
-         *
-         */
-        public ContainerNode sort(SortingMethod method) {
-            if (method == SortingMethod.SIZE) {
-                this.CHILDREN.sort((n1, n2) -> {
-                    if (n1.hasElement() && n2.hasElement()) {
-                        Element e1 = n1.getElement();
-                        Element e2 = n2.getElement();
-                        return Integer.compare(e1.calculateSize(), e2.calculateSize());
-                    } else {
-                        return Integer.compare(n1.countLeaves(), n2.countLeaves());
-                    }
-                });
-            } else {
-                this.CHILDREN.sort((n1, n2) -> n1.toString().compareToIgnoreCase(n2.toString()));
-            }
-            
-            return this;
-        }
-
         @Override
         public String getName() {
             return this.NAME;
         }
 
         @Override
-        public Collection<Node> getChildren() {
+        public List<Node> getChildren() {
             return this.CHILDREN;
         }
 
@@ -786,6 +758,11 @@ final public class FilterTreeModel implements TreeModel {
             return leafCount;
         }
 
+        public ContainerNode sort() {
+            this.getChildren().sort((a,b) -> a.toString().compareToIgnoreCase(b.toString()));
+            return this;
+        }
+        
         @Override
         public String toString() {
             return this.label;
@@ -821,7 +798,7 @@ final public class FilterTreeModel implements TreeModel {
         }
 
         @Override
-        public Collection<Node> getChildren() {
+        public List<Node> getChildren() {
             return null;
         }
 
@@ -940,7 +917,7 @@ final public class FilterTreeModel implements TreeModel {
         }
 
         @Override
-        public Collection<Node> getChildren() {
+        public List<Node> getChildren() {
             return this.CHILDREN;
         }
 
@@ -980,7 +957,7 @@ final public class FilterTreeModel implements TreeModel {
         }
 
         @Override
-        public Collection<Node> getChildren() {
+        public List<Node> getChildren() {
             return this.CHILDREN;
         }
 
@@ -1020,7 +997,7 @@ final public class FilterTreeModel implements TreeModel {
         }
 
         @Override
-        public Collection<Node> getChildren() {
+        public List<Node> getChildren() {
             return this.CHILDREN;
         }
 

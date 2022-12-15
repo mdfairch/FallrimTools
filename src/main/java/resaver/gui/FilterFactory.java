@@ -720,39 +720,73 @@ public class FilterFactory {
      * @return
      */
     private Predicate<Node> createChangeFormContentFilter(String fieldCodesStringsString) {
+        final String AND = ";";
+        final String OR = ",";
+        final String NOT = "!";
+        
         if (fieldCodesStringsString == null || fieldCodesStringsString.isBlank()) {
-            return n -> false;
+            return n -> true;
         }
         
-        String[] fieldCodesStrings = fieldCodesStringsString.split(";");
-        if (fieldCodesStrings == null || fieldCodesStrings.length == 0) {
-            return n -> false;
+        // Split the code in terms.
+        String[] termCodes = fieldCodesStringsString.split(AND);
+        if (termCodes == null || termCodes.length == 0) {
+            return n -> true;
         }
+        String[][][] terms = new String[termCodes.length][][];
         
-        String[][] fieldCodes = new String[fieldCodesStrings.length][];
-        for (int i = 0; i < fieldCodesStrings.length; i++) {
-            String fieldCodesString = fieldCodesStrings[i];
-            fieldCodes[i] = fieldCodesString.split("[\\/]");
-            if (fieldCodes[i] == null || fieldCodes[i].length < 2) {
-                return n-> false;
+        // Parse the terms into clauses.
+        for (int termIndex = 0; termIndex < termCodes.length; termIndex++) {
+            String termCode = termCodes[termIndex];
+            String[] clauseCodes = termCode.split(OR);
+            if (clauseCodes == null || clauseCodes.length == 0) {
+                return n -> false;
             }
-        }
-               
-        return node -> {
-            if (node.hasElement() && node.getElement() instanceof ChangeForm) {
-                ChangeForm form = (ChangeForm) node.getElement();
-                ChangeFormData data = form.getData(ANALYSIS, CONTEXT, true);
-                if (data != null && data instanceof GeneralElement) {
-                    return ((GeneralElement) data).searchMatches(fieldCodes);
+            terms[termIndex] = new String[clauseCodes.length][];
+                   
+            // Parse the clause into patterns.
+            for (int clauseIndex = 0; clauseIndex < clauseCodes.length; clauseIndex++) {
+                String clauseCode = clauseCodes[clauseIndex];
+                String[] pattern = clauseCode.split("[\\/]");
+                if (pattern == null || pattern.length < 1) {
+                    return n-> false;
+                }
+                
+                // Check for negation.
+                String head = pattern[0];
+                if (head.startsWith(NOT)) {
+                    pattern[0] = head.replace(NOT, "");
+                    terms[termIndex][clauseIndex] = prepend(NOT, pattern);
+                } else {
+                    terms[termIndex][clauseIndex] = pattern;
                 }
             }
-            
-            return false;
+        }
+             
+        return node -> {
+            try {
+                if (node.hasElement() && node.getElement() instanceof ChangeForm) {
+                    ChangeForm form = (ChangeForm) node.getElement();
+                    ChangeFormData data = form.getData(ANALYSIS, CONTEXT, true);
+                    if (data != null && data instanceof GeneralElement) {
+                        return ((GeneralElement) data).searchMatches(terms);
+                    }
+                }
+
+                return false;
+            } catch (IllegalArgumentException ex) {
+                return false;
+            }
         };
-        
-        
     }
 
+    static private String[] prepend(String head, String[] tail) {
+        String[] result = new String[tail.length + 1];
+        result[0] = head;
+        System.arraycopy(tail, 0, result, 1, tail.length);
+        return result;
+    }
+    
     /**
      *
      */

@@ -289,14 +289,19 @@ final public class FilterTree extends JTree {
      *
      */
     public void setESS(ESS ess, FilterTreeModel model, Predicate<Node> filter) {
-        final TreePath[] PATHS = this.getSelectionPaths();
-
-        if (null != filter) {
+        setModel(model);
+        
+        if (null != filter && null != model) {
             model.setFilter(filter);
         }
+    }
+
+    public void setModel(FilterTreeModel model) {
+        final TreePath[] PATHS = this.getSelectionPaths();
 
         if (null != model) {
-            this.setModel(model);
+            super.setModel(model);
+            super.revalidate();
         }
 
         if (null != PATHS) {
@@ -305,9 +310,9 @@ final public class FilterTree extends JTree {
             }
 
             this.setSelectionPaths(PATHS);
-        }
+        }        
     }
-
+    
     /**
      * Searches for the <code>Node</code> that represents a specified
      * <code>Element</code> and returns it.
