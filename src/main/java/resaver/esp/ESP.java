@@ -81,7 +81,8 @@ final public class ESP implements Entry {
 
                 return CTX.PLUGIN_INFO;
             } catch (RecordException|FieldException ex) {
-                throw new PluginException("Error reading plugin: " + NAME, ex, ex.getContext());
+               //LOG.warning(String.format("Error reading plugin %s\n%s", NAME, ex.getContext()));
+                throw new PluginException(ex, NAME, ex.getContext());
             }
 
         } catch (FileNotFoundException ex) {
@@ -93,7 +94,7 @@ final public class ESP implements Entry {
             
         } catch (IOException | RuntimeException ex) {
             LOG.warning(ex.getMessage());
-            throw new PluginException("Error reading plugin: " + NAME, ex, NAME);
+            throw new PluginException(ex, NAME, NAME);
             
         } 
     }
