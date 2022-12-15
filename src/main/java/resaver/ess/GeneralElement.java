@@ -59,23 +59,23 @@ public class GeneralElement implements AnalyzableElement {
     }
 
     /**
-     * @return A simple heuristic for deciding if the GeneralElement will
-     * fit on a single line.
+     * @return A simple heuristic for deciding if the GeneralElement will fit on
+     * a single line.
      */
     final public boolean isSimple() {
         for (Object val : this.DATA.values()) {
             if (val instanceof GeneralElement) {
-                if (!((GeneralElement)val).isSimple()) {
+                if (!((GeneralElement) val).isSimple()) {
                     return false;
                 }
             } else if (val != null && val.getClass().isArray()) {
                 return false;
             }
         }
-        
+
         return this.count() < 4;
     }
-    
+
     /**
      * @return Retrieves a copy of the <name,value> map.
      *
@@ -348,12 +348,12 @@ public class GeneralElement implements AnalyzableElement {
     final public RefID readRefID(ByteBuffer input, String name, ESS.ESSContext context) throws ElementException {
         Objects.requireNonNull(input);
         Objects.requireNonNull(name);
-        
+
         try {
             return this.readElement(input, name, i -> context.readRefID(i));
         } catch (RuntimeException ex) {
             this.setIncomplete();
-            throw new ElementException("Error reading refID " + name, ex, this);            
+            throw new ElementException("Error reading refID " + name, ex, this);
         }
     }
 
@@ -368,7 +368,7 @@ public class GeneralElement implements AnalyzableElement {
     final public VSVal readVSVal(ByteBuffer input, String name) throws ElementException {
         Objects.requireNonNull(input);
         Objects.requireNonNull(name);
-        
+
         try {
             return this.readElement(input, name, i -> new VSVal(i));
         } catch (BufferUnderflowException ex) {
@@ -565,8 +565,8 @@ public class GeneralElement implements AnalyzableElement {
                     T element = reader.read(input);
                     VAL[i] = element;
                 } catch (ElementException ex) {
-					VAL[i] = ex.getPartial();
-					throw new ListException(i, count, ex);
+                    VAL[i] = ex.getPartial();
+                    throw new ListException(i, count, ex);
                 } catch (RuntimeException ex) {
                     throw new ListException(i, count, ex);
                 }
@@ -669,7 +669,7 @@ public class GeneralElement implements AnalyzableElement {
      * @param name The name of the new element.
      * @return The array.
      * @throws ElementException
-     * 
+     *
      */
     final public float[] readFloatsVS(ByteBuffer input, String name) throws ElementException {
         Objects.requireNonNull(input);
@@ -692,7 +692,7 @@ public class GeneralElement implements AnalyzableElement {
      * @param <T> The element type.
      * @return The array.
      * @throws ElementException
-     * 
+     *
      */
     final public <T extends Element> Element[] readVSElemArray(ByteBuffer input, String name, ElementReader<T> reader) throws ElementException {
         Objects.requireNonNull(input);
@@ -733,12 +733,12 @@ public class GeneralElement implements AnalyzableElement {
 
     /**
      * Reads all the remaining data in the input in 64k chunks.
-     * 
+     *
      * @param input The inputstream.
      * @return A flag indicating that at least one byte was read.
      */
     final public boolean readUnparsed(ByteBuffer input) {
-        int count = 0;        
+        int count = 0;
         while (input.hasRemaining()) {
             int size = Math.min(65536, input.capacity() - input.position());
             byte[] val = new byte[size];
@@ -750,7 +750,7 @@ public class GeneralElement implements AnalyzableElement {
         if (count > 0) {
             this.setIncomplete();
         }
-        
+
         return count > 0;
     }
 
@@ -760,7 +760,7 @@ public class GeneralElement implements AnalyzableElement {
     public void setIncomplete() {
         this.incomplete = true;
     }
-    
+
     /**
      * @return True if the <code>GeneralElement</code> has any unparsed data.
      */
@@ -935,7 +935,7 @@ public class GeneralElement implements AnalyzableElement {
             return new StringBuilder()
                     .append(null == name ? "" : name)
                     .append("(EMPTY)").toString();
-            
+
         } else {
             return new StringBuilder()
                     .append(null == name ? "" : name)
@@ -954,11 +954,11 @@ public class GeneralElement implements AnalyzableElement {
      */
     protected String toStringStructured(String name, int level) {
         CharSequence tabs = indent2(level);
-        
+
         if (this.isSimple()) {
             return new StringBuilder().append(tabs).append(this.toStringFlat(name)).toString();
-            
-        } else {        
+
+        } else {
             if (this.DATA.keySet().isEmpty()) {
                 return new StringBuilder()
                         .append(tabs)
@@ -1000,10 +1000,11 @@ public class GeneralElement implements AnalyzableElement {
         } else if (val instanceof boolean[]) {
             return String.format("%s=%s", key, Arrays.toString((boolean[]) val));
         } else if (val instanceof byte[]) {
-            if (key.toString().toUpperCase().contains("UNPARSED_DATA")) {
-                return String.format("%d bytes of unparsed data", ((byte[]) val).length);
+            byte[] bytes = (byte[]) val;
+            if (bytes.length > 200 && key.toString().toUpperCase().contains("UNPARSED_DATA")) {
+                return String.format("%d bytes of unparsed data", bytes.length);
             } else {
-                return String.format("%s=%s", key, bytesToHex((byte[]) val));
+                return String.format("%s=%s", key, bytesToHex(bytes));
             }
         } else if (val instanceof char[]) {
             return String.format("%s=%s", key, Arrays.toString((char[]) val));
@@ -1045,7 +1046,8 @@ public class GeneralElement implements AnalyzableElement {
         } else if (val instanceof boolean[]) {
             return String.format("%s%s=%s", tabs, key, Arrays.toString((boolean[]) val));
         } else if (val instanceof byte[]) {
-            if (key.toString().toUpperCase().contains("UNPARSED_DATA")) {
+            byte[] bytes = (byte[]) val;
+            if (bytes.length > 200 && key.toString().toUpperCase().contains("UNPARSED_DATA")) {
                 return String.format("%s%s=%d bytes of unparsed data", tabs, key, ((byte[]) val).length);
             } else {
                 return String.format("%s%s=%s", tabs, key, bytesToHex((byte[]) val));
@@ -1191,7 +1193,7 @@ public class GeneralElement implements AnalyzableElement {
                     }
                 })
                 .collect(Collectors.joining(", ", "[", "]")));
-        
+
         return BUF.toString();
     }
 
@@ -1206,10 +1208,10 @@ public class GeneralElement implements AnalyzableElement {
         return body(
                 table(
                         tbody(
-                                each(this.DATA, (k,v) -> tr(
-                                        td(k.toString()), 
-                                        td(rawHtml(getInfoFor(k, v, analysis, save)))
-                                ))
+                                each(this.DATA, (k, v) -> tr(
+                                td(k.toString()),
+                                td(rawHtml(getInfoFor(k, v, analysis, save)))
+                        ))
                         )
                 ).withData("border", "1")
         ).toString();
@@ -1229,9 +1231,9 @@ public class GeneralElement implements AnalyzableElement {
             return formatGeneralElement(key.toString(), GEN, analysis, save);
         } else {
             return val.toString();
-        }        
+        }
     }
-    
+
     static private String formatElement(String key, Object val, resaver.Analysis analysis, ESS save) {
         final StringBuilder BUF = new StringBuilder();
         if (val == null) {
@@ -1312,7 +1314,7 @@ public class GeneralElement implements AnalyzableElement {
      */
     final private Map<IString, Object> DATA;
     private boolean incomplete = false;
-            
+
     static final private Set<Class<?>> SUPPORTED = new HashSet<>(Arrays.asList(
             new Class<?>[]{
                 Element.class,
@@ -1333,17 +1335,21 @@ public class GeneralElement implements AnalyzableElement {
 
     @FunctionalInterface
     static public interface ElementReader<T extends Element> {
+
         T read(ByteBuffer input) throws ElementException;
     }
 
     static class ZString implements Element {
+
         ZString(ByteBuffer input) {
             VAL = mf.BufferUtil.getZString(input);
         }
+
         @Override
         public void write(ByteBuffer output) {
             mf.BufferUtil.putZString(output, VAL);
         }
+
         @Override
         public int calculateSize() {
             return 1 + VAL.getBytes(UTF_8).length;
@@ -1352,10 +1358,12 @@ public class GeneralElement implements AnalyzableElement {
     }
 
     /**
-     * Taken from https://stackoverflow.com/questions/9655181/how-to-convert-a-byte-array-to-a-hex-string-in-java
-     * 
+     * Taken from
+     * https://stackoverflow.com/questions/9655181/how-to-convert-a-byte-array-to-a-hex-string-in-java
+     *
      */
     static private final byte[] HEX_ARRAY = "0123456789abcdef".getBytes(java.nio.charset.StandardCharsets.US_ASCII);
+
     static private String bytesToHex(byte[] bytes) {
         byte[] hexChars = new byte[bytes.length * 2];
         for (int j = 0; j < bytes.length; j++) {
@@ -1365,77 +1373,170 @@ public class GeneralElement implements AnalyzableElement {
         }
         return new String(hexChars, java.nio.charset.StandardCharsets.UTF_8);
     }
-    
-    /** 
-     * Equivalent to the conjunction of multiple calls to searchMatch(String[]).
-     * 
-     * @param fieldCodes
-     * @return 
+
+    /**
+     * Equivalent to disjunctive-normal-form of searchMatch(String[]).
+     *
+     * @param terms An array of clauses. Each clause is an array of patterns.
+     * Each pattern is an array of fields. Each field is a String.
+     * @return True if the terms all evaluate to true and each clause is
+     * satisfied.
+     * @throws IllegalArgumentException If a pattern is invalid.
      */
-    public boolean searchMatches(String[][] fieldCodes) {
-        for (String[] fields : fieldCodes) {
-            if (!searchMatch(fields)) {
-                return false;
+    public boolean searchMatches(String[][][] terms) {
+        assert terms != null : "Bad terms: null";
+        boolean termsResult = true;
+
+        for (String[][] clauses : terms) {
+            assert clauses != null : "Bad clauses: null";
+            boolean clausesResult = false;
+
+            for (String[] pattern : clauses) {
+                assert clauses != null : "Bad pattern: null";
+                clausesResult = clausesResult || searchMatch(pattern);
+                if (clausesResult) {
+                    break;
+                }
+            }
+
+            termsResult = clausesResult && termsResult;
+            if (!termsResult) {
+                break;
             }
         }
-        
-        return true;
+
+        return termsResult;
     }
-    
-    /** 
-     * Searches a GeneralElement tree by a list of value names.
-     * The final value matches data of types:
-     * VSVal, RefID, Strings, or any numeric primitive.
-     * 
-     * @param fields
-     * @return 
+
+    /**
+     * Searches a GeneralElement tree by a list of value names. The final value
+     * matches data of types: VSVal, RefID, Strings, or any numeric primitive.
+     * It will match a GenericElement by the class name. It will match anything
+     * else by string comparison.
+     *
+     * @param pattern
+     * @return
+     * @throws IllegalArgumentException If a pattern is invalid.
      */
-    public boolean searchMatch(String[] fields) {
-        assert fields != null;
-        assert fields.length >= 2;
-        
-        String value = fields[fields.length - 1];
-        
-        GeneralElement current = this;
-        Object val = null;
+    public boolean searchMatch(String[] pattern) {
+        assert pattern != null : "Invalid pattern: null";
+        assert pattern.length > 0 : "Invalid pattern, two fields required: " + Arrays.toString(pattern);
 
-        for (int i = 0; i < fields.length - 1; i++) {
-            String field = fields[i];
-            
-            if (current == null || !current.hasVal(field)) {
-                return false;
+        String expected = pattern[pattern.length - 1];
+        boolean negate = pattern[0].equalsIgnoreCase("!");
+
+        if (this.hasVal("inventory_count")) {
+            VSVal count = (VSVal) this.getVal("inventory_count");
+            if (count.getValue() == 6) {
+                int k = 0;
             }
-
-            val = current.getVal(field);
-            current = val instanceof GeneralElement
-                    ? (GeneralElement) val
-                    : null;
         }
 
+        return negate
+                ? !searchMatch_aux(pattern, expected, this, 1)
+                : searchMatch_aux(pattern, expected, this, 0);
+    }
+
+    private boolean searchMatch_aux(String[] pattern, String expected, Object cursor, int index) {
+        assert pattern != null;
+        assert expected != null;
+        assert cursor != null;
+
+        String field = pattern[index];
+        assert field != null;
+        assert !field.isBlank();
+
+        if (index < pattern.length - 2) {
+            return searchMatch_recurse(pattern, expected, cursor, index, field);
+        } else if (index == pattern.length - 2) {
+            return searchMatch_penultimate(pattern, expected, cursor, index, field);
+        } else if (index == pattern.length - 1) {
+            return searchMatch_terminus(pattern, expected, cursor, field);
+        } else {
+            throw new IllegalArgumentException("Went too far.");
+        }
+    }
+
+    private boolean searchMatch_recurse(String[] pattern, String expected, Object cursor, int index, String field) {
+        if (cursor instanceof GeneralElement) {
+            GeneralElement element = (GeneralElement) cursor;
+            return element.hasVal(field) 
+                    ? searchMatch_aux(pattern, expected, element.getVal(field), index + 1)
+                    : false;
+        } else {
+            return false;
+        }
+    }
+
+    private boolean searchMatch_penultimate(String[] pattern, String expected, Object cursor, int index, String field) {
+        if (cursor instanceof GeneralElement) {
+            GeneralElement element = (GeneralElement) cursor;
+            return element.hasVal(field) 
+                    ? searchMatch_values(expected, element.getVal(field))
+                    : searchMatch_values(expected, field);
+        } else {
+            return false;
+        }
+    }
+
+    private boolean searchMatch_terminus(String[] pattern, String expected, Object cursor, String field) {
+        if (cursor instanceof GeneralElement) {
+            GeneralElement element = (GeneralElement) cursor;
+            return element.hasVal(field) 
+                    ? searchMatch_values(expected, element.getVal(field))
+                    : searchMatch_values(expected, field);
+        } else {
+            return false;
+        }
+    }
+
+    private boolean searchMatch_values(String expected, Object value) {
         try {
-            if (val instanceof String) {
-                return value == val;
-            } else if (val instanceof Byte) {
-                return Integer.parseInt(value, 16) == (Byte)val;
-            } else if (val instanceof Short) {
-                return Integer.parseInt(value, 16) == (Short)val;
-            } else if (val instanceof Integer) {
-                return Integer.parseInt(value, 16) == (Short)val;
-            } else if (val instanceof Long) {
-                return Integer.parseInt(value, 16) == (Integer)val;
-            } else if (val instanceof Float) {
-                return Integer.parseInt(value, 16) == (Integer)val;
-            }  else if (val instanceof VSVal) {
-                return Integer.parseInt(value, 10) == ((VSVal)val).getValue();
-            } else if (val instanceof RefID) {
-                RefID ref = (RefID) val;
-                return ref.equals(Integer.parseInt(value, 16));
+            if (value == null) {
+                return expected.equalsIgnoreCase("null");
+            } else if (value instanceof String) {
+                return expected == value;
+            } else if (value instanceof Byte) {
+                return Integer.parseInt(expected, 16) == (Byte) value;
+            } else if (value instanceof Short) {
+                return Integer.parseInt(expected, 16) == (Short) value;
+            } else if (value instanceof Integer) {
+                return Integer.parseInt(expected, 16) == (Short) value;
+            } else if (value instanceof Long) {
+                return Integer.parseInt(expected, 16) == (Integer) value;
+            } else if (value instanceof Float) {
+                return floatsKindaEqual(Float.parseFloat(expected), (Float) value);
+            } else if (value instanceof VSVal) {
+                return Integer.parseInt(expected, 10) == ((VSVal) value).getValue();
+            } else if (value instanceof RefID) {
+                RefID ref = (RefID) value;
+                return ref.equals(Integer.parseInt(expected, 16));
+            } else if (value instanceof GeneralElement) {
+                GeneralElement element = (GeneralElement) value;
+                if (element.hasVal(expected)) {
+                    return true;
+                } else {
+                    return expected.equalsIgnoreCase(value.getClass().getName());
+                }
+            } else {
+                return expected.equalsIgnoreCase(value.toString());
             }
         } catch (RuntimeException ex) {
-            int k = 0;
-        } finally {
+            throw new IllegalArgumentException("Bad pattern.");
         }
-        return false;
     }
-    
+
+    private boolean floatsKindaEqual(float f1, float f2) {
+        if (f1 == f2) {
+            return true;
+        } else if (f1 == 0.0f) {
+            return Math.abs(f2) < 1.0f;
+        } else if (f2 == 0.0f) {
+            return Math.abs(f1) < 1.0f;
+        } else {
+            float diff = Math.abs(f1 - f2) / (Math.abs(f1) + Math.abs(f2));
+            return diff < 0.05;
+        }
+    }
+
 }
