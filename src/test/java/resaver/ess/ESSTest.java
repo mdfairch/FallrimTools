@@ -34,6 +34,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import resaver.Game;
 import resaver.ProgressModel;
 import resaver.ess.papyrus.Papyrus;
+import static resaver.ess.ModelBuilder.SortingMethod;
 
 /**
  * Tests the read and write methods of the <code>ESS</code> class.
@@ -94,11 +95,11 @@ public class ESSTest {
         System.out.printf("Testing %s)\n", WORK_DIR.relativize(path));
         
         try {
-            ModelBuilder MODEL_ORIGINAL = new ModelBuilder(new ProgressModel(1));
+            ModelBuilder MODEL_ORIGINAL = new ModelBuilder(new ProgressModel(1), SortingMethod.NONE);
             final ESS.Result IN_RESULT = ESS.readESS(path, MODEL_ORIGINAL);
             final ESS ORIGINAL = IN_RESULT.ESS;
 
-            if (ORIGINAL.isTruncated() || ORIGINAL.getPapyrus().getStringTable().hasSTB()) {                
+            if (ORIGINAL.isBroken() || ORIGINAL.getPapyrus().getStringTable().hasSTB()) {                
                 System.out.println("\tCorruption detected");
                 return;
             }
