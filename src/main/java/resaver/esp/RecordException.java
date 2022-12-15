@@ -21,15 +21,19 @@ package resaver.esp;
  */
 public class RecordException extends ContextException {
 
-    public RecordException(String message, Throwable cause, String context) {
-        super(message, cause);
+    public RecordException(Throwable cause, RecordCode code, int formID, String context) {
+        super(String.format("Error reading record: %s %s", code, formID), cause);
+        this.CODE = code;
+        this.FORMID = formID;
         this.CONTEXT = context;
     }
-    
-	public String getContext() {
-		return CONTEXT;
-	}
 
+    public String getContext() {
+        return CONTEXT;
+    }
+
+    final public RecordCode CODE;
+    final public int FORMID;
     final public String CONTEXT;
-    
+
 }

@@ -16,22 +16,26 @@
 package resaver.esp;
 
 /**
- * An exception that includes a second string that provides some context information, for recursive processes.
- * 
+ * An exception that includes a second string that provides some context
+ * information, for recursive processes.
+ *
  * @author Mark Fairchild
- * 
+ *
  */
 public class FieldException extends ContextException {
 
-    public FieldException(String message, Throwable cause, String context) {
-        super(message, cause);
+    public FieldException(Throwable cause, String code, String context) {
+        super(String.format("Error reading field: %s", code), cause);
+        this.CODE = code;
         this.CONTEXT = context;
-    }
-    
-	public String getContext() {
-		return CONTEXT;
-	}
 
-    final public String CONTEXT;    
+    }
+
+    public String getContext() {
+        return CONTEXT;
+    }
+
+    final public String CODE;
+    final public String CONTEXT;
 
 }

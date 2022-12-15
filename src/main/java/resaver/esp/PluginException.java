@@ -21,12 +21,13 @@ package resaver.esp;
  */
 public class PluginException extends Exception {
 
-    public PluginException(String message, Throwable cause, String context) {
-        super(message, cause);
+    public PluginException(Throwable cause, String plugin, String context) {
+        super(String.format("Error reading plugin: %s", plugin), cause);
+        this.PLUGIN = plugin;
         this.CONTEXT = context;
     }
     
     final public String CONTEXT;
-    
+    final public String PLUGIN;
 
 }
