@@ -39,6 +39,7 @@ import java.util.stream.Collectors;
 import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
 import resaver.Game;
+import resaver.ess.ModelBuilder.SortingMethod;
 import resaver.ess.papyrus.Worrier;
 
 /**
@@ -168,7 +169,7 @@ public class Watcher {
                             }
 
                             if (Configurator.validateSavegame(FULL)) {
-                                final Opener OPENER = new Opener(WINDOW, FULL, WORRIER, null);
+                                final Opener OPENER = new Opener(WINDOW, FULL, SortingMethod.ALPHA, WORRIER, null);
                                 OPENER.execute();
                             } else {
                                 LOG.info(String.format("WATCHER: Invalid file %s.", FULL));
