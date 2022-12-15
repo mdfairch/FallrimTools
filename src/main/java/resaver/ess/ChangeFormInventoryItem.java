@@ -67,7 +67,7 @@ public class ChangeFormInventoryItem extends GeneralElement {
         return new StringBuilder()
                 .append(indent2(level))
                 .append(toStringFlat(""))
-                .append(this.EXTRA.isEmpty() ? "" : this.EXTRA.toStringStructured("", level))
+                .append(this.EXTRA == null || this.EXTRA.isEmpty() ? "" : this.EXTRA.toStringStructured("", level))
                 .toString();
     }
     
