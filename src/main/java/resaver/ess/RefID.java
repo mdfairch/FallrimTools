@@ -50,7 +50,7 @@ final public class RefID implements Element, Linkable, Comparable<RefID> {
                     break;
                 case CREATED:
                     this.FORMID = 0xFF000000 | this.getValPart();
-                    this.PLUGIN = null;
+                    this.PLUGIN = PluginInfo.Created;
                     break;
                 case FORMIDX:
                     assert this.getValPart() > 0 : "Invalid form index: " + this.getValPart();
