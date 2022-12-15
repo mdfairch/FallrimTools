@@ -52,6 +52,7 @@ import mf.Duad;
 import mf.JValueMenuItem;
 import resaver.*;
 import resaver.ess.*;
+import static resaver.ess.ModelBuilder.SortingMethod;
 import resaver.ess.papyrus.*;
 import resaver.gui.FilterTreeModel.Node;
 import resaver.pex.AssemblyLevel;
@@ -112,11 +113,12 @@ final public class SaveWindow extends JFrame {
         this.RIGHTSPLITTER = new JSplitPane(JSplitPane.VERTICAL_SPLIT, this.INFOSCROLLER, this.DATASCROLLER);
         this.MAINSPLITTER = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, this.MAINPANEL, this.RIGHTSPLITTER);
         this.MENUBAR = new JMenuBar();
-        this.FILEMENU = new JMenu("File");
-        this.CLEANMENU = new JMenu("Clean");
-        this.OPTIONSMENU = new JMenu("Options");
-        this.DATAMENU = new JMenu("Data");
-        this.HELPMENU = new JMenu("Help");
+        this.MENU_FILE = new JMenu("File");
+        this.MENU_FILTER = new JMenu("Filter");
+        this.MENU_CLEAN = new JMenu("Clean");
+        this.MENU_OPTIONS = new JMenu("Options");
+        this.MENU_DATA = new JMenu("Data");
+        this.MENU_HELP = new JMenu("Help");
 
         this.MI_EXIT = new JMenuItem("Exit", KeyEvent.VK_E);
         this.MI_LOAD = new JMenuItem("Open", KeyEvent.VK_O);
@@ -139,7 +141,6 @@ final public class SaveWindow extends JFrame {
         this.MI_SHOWPARSED1 = new JRadioButtonMenuItem("Show fully parsed ChangeForms", false);
         this.MI_SHOWPARSED2 = new JRadioButtonMenuItem("Show partial ChangeForms", false);
         this.MI_SHOWPARSED3 = new JRadioButtonMenuItem("Show unparsed ChangeForms", false);
-        this.PARSING_GROUP = new ButtonGroup();
         
         this.MI_SHOWNONEXISTENTCREATED = new JCheckBoxMenuItem("Show non-existent-form instances", PREFS.getBoolean("settings.showNonexistent", false));
         this.MI_SHOWLONGSTRINGS = new JCheckBoxMenuItem("Show long strings (512ch or more)", PREFS.getBoolean("settings.showLongStrings", false));
@@ -149,6 +150,7 @@ final public class SaveWindow extends JFrame {
         this.MI_CHANGEFILTER = new JValueMenuItem<>("ChangeFlag filter (%s)", null);
         this.MI_CHANGEFORMFILTER = new JValueMenuItem<>("ChangeFormFlag filter (%s)", null);
         this.MI_CHANGEFORMCONTENTFILTER = new JValueMenuItem<>("ChangeForm Content filter (%s)", "");
+        this.MI_CHANGEFORMCONTENTFILTER.setValue(PREFS.get("settings.cfc_filter", ""));
         
         this.MI_REMOVEUNATTACHED = new JMenuItem("Remove unattached instances", KeyEvent.VK_1);
         this.MI_REMOVEUNDEFINED = new JMenuItem("Remove undefined elements", KeyEvent.VK_2);
@@ -236,82 +238,97 @@ final public class SaveWindow extends JFrame {
         this.MAINPANEL.add(this.TOPPANEL, BorderLayout.PAGE_START);
         this.MAINPANEL.add(this.STATUSPANEL, BorderLayout.PAGE_END);
 
-        this.FILEMENU.add(this.MI_LOAD);
-        this.FILEMENU.add(this.MI_SAVE);
-        this.FILEMENU.add(this.MI_SAVEAS);
-        this.FILEMENU.addSeparator();
-        this.FILEMENU.add(this.MI_LOADESPS);
-        this.FILEMENU.add(this.MI_WATCHSAVES);
-        this.FILEMENU.addSeparator();
-        this.FILEMENU.add(this.MI_EXPORTPLUGINS);
-        this.FILEMENU.addSeparator();
-        this.FILEMENU.add(this.MI_EXIT);
-        this.FILEMENU.setMnemonic('f');
+        this.MENU_FILE.setMnemonic('f');
+        fillMenu(MENU_FILE, 
+                this.MI_LOAD,
+                MI_SAVE,
+                MI_SAVEAS,
+                null,
+                MI_LOADESPS,
+                MI_WATCHSAVES,
+                null,
+                MI_EXPORTPLUGINS,
+                null,
+                MI_EXIT);
 
-        this.CLEANMENU.add(this.MI_SHOWUNATTACHED);
-        this.CLEANMENU.add(this.MI_SHOWUNDEFINED);
-        this.CLEANMENU.add(this.MI_SHOWMEMBERLESS);
-        this.CLEANMENU.add(this.MI_SHOWCANARIES);
-        this.CLEANMENU.add(this.MI_SHOWNULLREFS);
-        this.CLEANMENU.add(this.MI_SHOWNONEXISTENTCREATED);
-        this.CLEANMENU.add(this.MI_SHOWLONGSTRINGS);
-        this.CLEANMENU.add(this.MI_SHOWDELETED);
-        this.CLEANMENU.add(this.MI_SHOWEMPTY);
-
-        this.CLEANMENU.addSeparator();
-        
-        PARSING_GROUP.add(this.MI_SHOWPARSED0);
-        PARSING_GROUP.add(this.MI_SHOWPARSED1);
-        PARSING_GROUP.add(this.MI_SHOWPARSED2);
-        PARSING_GROUP.add(this.MI_SHOWPARSED3);
-        
         final JMenu PARSE_MENU = new JMenu("Changeforms");
-        PARSE_MENU.add(this.MI_SHOWPARSED0);
-        PARSE_MENU.add(this.MI_SHOWPARSED1);
-        PARSE_MENU.add(this.MI_SHOWPARSED2);
-        PARSE_MENU.add(this.MI_SHOWPARSED3);
+        groupMenuItems(MI_SHOWPARSED0, MI_SHOWPARSED1, MI_SHOWPARSED2, MI_SHOWPARSED3);
+        fillMenu(PARSE_MENU, 
+                MI_SHOWPARSED0, 
+                MI_SHOWPARSED1, 
+                MI_SHOWPARSED2, 
+                MI_SHOWPARSED3);
         
-        this.CLEANMENU.add(PARSE_MENU);        
-        this.CLEANMENU.add(this.MI_SHOWSCRIPTATTACHED);
-        this.CLEANMENU.add(this.MI_CHANGEFILTER);
-        this.CLEANMENU.add(this.MI_CHANGEFORMFILTER);
-        this.CLEANMENU.add(this.MI_CHANGEFORMCONTENTFILTER);
+        //this.MENU_FILTER.add(PARSE_MENU);        
+        fillMenu(MENU_FILTER, 
+                MI_SHOWUNATTACHED, 
+                MI_SHOWUNDEFINED,
+                null,
+                MENU_FILTER, 
+                MI_SHOWMEMBERLESS, 
+                MI_SHOWCANARIES, 
+                MI_SHOWNULLREFS, 
+                MI_SHOWNONEXISTENTCREATED, 
+                MI_SHOWLONGSTRINGS, 
+                MI_SHOWDELETED, 
+                MI_SHOWEMPTY,
+                null,
+                PARSE_MENU,
+                MI_SHOWSCRIPTATTACHED,
+                MI_CHANGEFILTER,
+                MI_CHANGEFORMFILTER,
+                MI_CHANGEFORMCONTENTFILTER);
+     
+        MENU_CLEAN.setMnemonic('c');
+        fillMenu(MENU_CLEAN,
+            MI_REMOVEUNATTACHED,
+            MI_REMOVEUNDEFINED,
+            MI_RESETHAVOK,
+            MI_CLEANSEFORMLISTS,
+            MI_REMOVENONEXISTENT,
+            null,
+            MI_BATCHCLEAN,
+            MI_KILL);
+        
+        MENU_OPTIONS.setMnemonic('o');
+        fillMenu(MENU_OPTIONS, MI_USEMO2, MI_SHOWMODS, MI_SETTINGS);
 
-        this.CLEANMENU.addSeparator();
-        this.CLEANMENU.add(this.MI_REMOVEUNATTACHED);
-        this.CLEANMENU.add(this.MI_REMOVEUNDEFINED);
-        this.CLEANMENU.add(this.MI_RESETHAVOK);
-        this.CLEANMENU.add(this.MI_CLEANSEFORMLISTS);
-        this.CLEANMENU.add(this.MI_REMOVENONEXISTENT);
-        this.CLEANMENU.addSeparator();
-        this.CLEANMENU.add(this.MI_BATCHCLEAN);
-        this.CLEANMENU.add(this.MI_KILL);
-        this.CLEANMENU.setMnemonic('c');
+        SortingMethod sort = getSorting();
+        JRadioButtonMenuItem miAlpha = new JRadioButtonMenuItem("Alphabetical", sort==SortingMethod.ALPHA);
+        JRadioButtonMenuItem miSize = new JRadioButtonMenuItem("Size", sort==SortingMethod.SIZE);
+        JRadioButtonMenuItem miMass = new JRadioButtonMenuItem("Mass", sort==SortingMethod.MASS);
+        JRadioButtonMenuItem miNone = new JRadioButtonMenuItem("None", sort==SortingMethod.NONE);
 
-        this.OPTIONSMENU.add(this.MI_USEMO2);
-        this.OPTIONSMENU.add(this.MI_SHOWMODS);
-        this.OPTIONSMENU.add(this.MI_SETTINGS);
-        this.OPTIONSMENU.setMnemonic('o');
+        miAlpha.addActionListener(e -> setSorting(SortingMethod.ALPHA));
+        miSize.addActionListener(e -> setSorting(SortingMethod.SIZE));        
+        miMass.addActionListener(e -> setSorting(SortingMethod.MASS));
+        miNone.addActionListener(e -> setSorting(SortingMethod.NONE));
+        groupMenuItems(miAlpha, miSize, miMass, miNone);
 
-        this.DATAMENU.add(this.MI_LOOKUPID);
-        this.DATAMENU.add(this.MI_LOOKUPBASE);
-        this.DATAMENU.add(this.MI_ANALYZE_ARRAYS);
-        this.DATAMENU.add(this.MI_COMPARETO);
+        miAlpha.setToolTipText("Simple alphabetical sorting");
+        miSize.setToolTipText("Sorting by the size of each element and by the number of elements in each group.");
+        miMass.setToolTipText("Very slow and very alpha.");
+        miNone.setToolTipText("Quick.");
 
-        this.DATAMENU.setMnemonic('d');
-        this.MI_LOOKUPID.setEnabled(false);
-        this.MI_LOOKUPBASE.setEnabled(false);
-        this.MI_LOADESPS.setEnabled(false);
+        JMenu MENU_SORT = new JMenu("Sorting");
+        fillMenu(MENU_SORT, miAlpha, miSize, miMass, miNone);
+        
+        this.MENU_DATA.setMnemonic('d');
+        fillMenu(MENU_DATA, MENU_SORT, MI_LOOKUPID, MI_LOOKUPBASE, MI_ANALYZE_ARRAYS, MI_COMPARETO);
 
-        this.HELPMENU.add(this.MI_SHOWLOG);
-        this.HELPMENU.add(this.MI_ABOUT);
-        this.HELPMENU.setMnemonic('h');
+        MI_LOOKUPID.setEnabled(false);
+        MI_LOOKUPBASE.setEnabled(false);
+        MI_LOADESPS.setEnabled(false);
 
-        this.MENUBAR.add(this.FILEMENU);
-        this.MENUBAR.add(this.CLEANMENU);
-        this.MENUBAR.add(this.OPTIONSMENU);
-        this.MENUBAR.add(this.DATAMENU);
-        this.MENUBAR.add(this.HELPMENU);
+        MENU_HELP.setMnemonic('h');
+        fillMenu(MENU_HELP, MI_SHOWLOG, MI_ABOUT);
+
+        this.MENUBAR.add(this.MENU_FILE);
+        this.MENUBAR.add(this.MENU_FILTER);
+        this.MENUBAR.add(this.MENU_CLEAN);
+        this.MENUBAR.add(this.MENU_OPTIONS);
+        this.MENUBAR.add(this.MENU_DATA);
+        this.MENUBAR.add(this.MENU_HELP);
 
         this.MI_EXIT.addActionListener(e -> exitWithPrompt());
         this.MI_LOAD.addActionListener(e -> openWithPrompt());
@@ -724,6 +741,7 @@ final public class SaveWindow extends JFrame {
      */
     private void updateFilters(boolean clear) {
         PREFS.put("settings.regex", this.FILTERFIELD.getText());
+        PREFS.put("settings.cfc_filter", this.MI_CHANGEFORMCONTENTFILTER.getValue());
 
         if (null == this.save) {
             SwingUtilities.invokeLater(() -> {
@@ -963,6 +981,27 @@ final public class SaveWindow extends JFrame {
         }
     }
 
+    void setSorting(SortingMethod method) {
+        if (method == null) return;
+        
+        SortingMethod previous = getSorting();
+        
+        if (previous != method) {
+            PREFS.put("settings.sort", method.toString());
+            this.TREE.setModel(ModelBuilder.createModel(new ProgressModel(), method, this.save));
+        }
+    }
+        
+    SortingMethod getSorting() {
+        SortingMethod sort = SortingMethod.ALPHA;
+        try {
+            String val = PREFS.get("settings.sort", "ALPHA");
+            sort = SortingMethod.valueOf(val);
+        } catch(RuntimeException ex) {
+        }
+        return sort;
+    }
+    
     /**
      * Opens a save file.
      *
@@ -986,7 +1025,7 @@ final public class SaveWindow extends JFrame {
                 }                
             };
             
-            final Opener OPENER = new Opener(this, path, this.WORRIER, DOAFTER);
+            final Opener OPENER = new Opener(this, path, getSorting(), this.WORRIER, DOAFTER);
             OPENER.execute();
 
         } else if (Mod.GLOB_SCRIPT.matches(path)) {
@@ -2310,6 +2349,24 @@ final public class SaveWindow extends JFrame {
     }
 
     /**
+     * Convenience method for grouping menuitems.
+     * @param items 
+     */
+    static void groupMenuItems(AbstractButton... items) {
+        ButtonGroup group = new ButtonGroup();
+        for (AbstractButton item : items) {
+            group.add(item);
+        }
+    }
+    
+    static void fillMenu(JMenu menu, JMenuItem... items) {
+        for (AbstractButton item : items) {
+            if (item == null) menu.addSeparator();
+            else menu.add(item);
+        }        
+    }
+    
+    /**
      * Listener for tree selection events.
      */
     private ESS save;
@@ -2343,11 +2400,13 @@ final public class SaveWindow extends JFrame {
     final private JPanel PROGRESSPANEL;
     final private ProgressIndicator PROGRESS;
     final private JMenuBar MENUBAR;
-    final private JMenu FILEMENU;
-    final private JMenu DATAMENU;
-    final private JMenu CLEANMENU;
-    final private JMenu OPTIONSMENU;
-    final private JMenu HELPMENU;
+    final private JMenu MENU_FILE;
+    final private JMenu MENU_FILTER;
+    final private JMenu MENU_CLEAN;
+    final private JMenu MENU_DATA;
+    final private JMenu MENU_OPTIONS;
+    final private JMenu MENU_HELP;
+    
     final private JMenuItem MI_LOAD;
     final private JMenuItem MI_SAVE;
     final private JMenuItem MI_SAVEAS;
@@ -2381,7 +2440,6 @@ final public class SaveWindow extends JFrame {
     final private JRadioButtonMenuItem MI_SHOWPARSED1;
     final private JRadioButtonMenuItem MI_SHOWPARSED2;
     final private JRadioButtonMenuItem MI_SHOWPARSED3;
-    final private ButtonGroup PARSING_GROUP;
     final private JCheckBoxMenuItem MI_SHOWNONEXISTENTCREATED;
     final private JCheckBoxMenuItem MI_SHOWDELETED;
     final private JCheckBoxMenuItem MI_SHOWEMPTY;
