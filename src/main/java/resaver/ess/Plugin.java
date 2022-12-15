@@ -26,8 +26,15 @@ import java.util.SortedSet;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import resaver.Analysis;
+import resaver.ess.papyrus.Papyrus;
 import resaver.ess.papyrus.PapyrusContext;
 import resaver.ess.papyrus.ScriptInstance;
+import static j2html.TagCreator.*;
+import j2html.tags.DomContent;
+import static resaver.ResaverFormatting.makeMetric;
+import java.text.MessageFormat;
+import java.util.Optional;
+import resaver.ess.papyrus.ScriptInstanceMap;
 
 /**
  * Abstraction for plugins.
@@ -83,6 +90,14 @@ final public class Plugin implements AnalyzableElement, Linkable, Comparable<Plu
     static public Plugin makeUnloadedPlugin(String name) {
         Objects.requireNonNull(name);
         return new Plugin(name, -1, false);
+    }
+
+    /**
+     * Creates a new Created pseudo-plugin.
+     * @return The Created plugin.
+     */
+    static public Plugin makeCreated() {
+        return new Plugin("(Created)", 0xFF, false);
     }
 
     /**
@@ -174,76 +189,76 @@ final public class Plugin implements AnalyzableElement, Linkable, Comparable<Plu
         return INSTANCES;
     }
 
+    private String createIndexString() {
+        return this.LIGHTWEIGHT
+                ? String.format("FE%02x", INDEX)
+                : String.format("%02x", INDEX);
+    }
+    
     /**
      * @see AnalyzableElement#getInfo(resaver.Analysis, resaver.ess.ESS)
      * @param analysis
-     * @param save
+     * @param ess
      * @return
      */
     @Override
-    public String getInfo(resaver.Analysis analysis, ESS save) {
-        final StringBuilder BUILDER = new StringBuilder();
+    public String getInfo(resaver.Analysis analysis, ESS ess) {
 
-        if (this.LIGHTWEIGHT) {
-            BUILDER.append("<html><h3>LITE PLUGIN</h3>");
-            BUILDER.append("<p>Name: ").append(this.NAME).append("</p>");
-            BUILDER.append("<p>Index: FE:").append(this.INDEX).append("</p>");
-        } else {
-            BUILDER.append("<html><h3>FULL PLUGIN</h3>");
-            BUILDER.append("<p>Name: ").append(this.NAME).append("</p>");
-            BUILDER.append("<p>Index: ").append(this.INDEX).append("</p>");
-        }
-
-        PapyrusContext context = save.getPapyrus().getContext();
-        Set<Element> uniqueRefs = context.getPluginReferences(this);
+        Set<ScriptInstance> instances = this.getInstances(ess);
+        Set<ChangeForm> forms = this.getChangeForms(ess);
+        java.util.function.IntFunction<DomContent[]> DomList = n -> new DomContent[n];
+        PluginMetrics metrics = this.createPluginMetrics(ess, analysis);
         
-        int dataSize = uniqueRefs.stream().mapToInt(e -> e.calculateSize()).sum();
-            BUILDER.append("<h1>DATA SIZE: ").append(dataSize).append("</h1>");
+        List<String> instanceNames = instances.stream()
+                .limit(50)
+                .map(i -> i.toHTML(null))
+                .collect(Collectors.toList());
+        List<String> formNames = forms.stream()
+                .limit(50)
+                .map(i -> i.toLinkedString())
+                .collect(Collectors.toList());
         
-        final Set<ChangeForm> FORMS = this.getChangeForms(save);
-        final Set<ScriptInstance> INSTANCES = this.getInstances(save);
+        return html(body(
+                h2(MessageFormat.format("{0} PLUGIN", LIGHTWEIGHT ? "LITE" : "FULL")),
+                p(MessageFormat.format("Name: {0}", NAME)),
+                p(MessageFormat.format("Index: {0}", createIndexString())),
+                h3("Metrics"),
+                dl(
+                        dt("ChangeForms"),
+                        dd(makeMetric(metrics.changeFormCount, null, metrics.changeFormTotal, metrics.changeFormPercentage)),
+                        dt("ScriptInstances"),
+                        dd(makeMetric(metrics.scriptInstanceCount, null, metrics.scriptInstanceTotal, metrics.scriptInstancePercentage)),
+                        dt("Plugin-Unique Data"),
+                        dd(makeMetric(metrics.uniqueData/1024, "kb", null, metrics.changeFormPercentage)),
+                        dt("Indirect ChangeForms"),
+                        dd(makeMetric(metrics.indirectChangeFormCount, null, metrics.changeFormTotal, metrics.changeFormPercentage)),
+                        dt("Indirect ScriptInstances"),
+                        dd(makeMetric(metrics.indirectInstanceCount, null, metrics.scriptInstanceTotal, metrics.scriptInstancePercentage))
+                ),
+                h3("Mods"),
+                metrics.mod
+                        .map(mod -> p(
+                                h4(MessageFormat.format("The plugin probably came from \"{0}\".", mod.probableProvider)),
+                                h4(MessageFormat.format("{0} script files were found in the mod list.", mod.numScripts)),
+                                h4("Providers"),
+                                ul(mod.providers.stream().limit(20).map(p -> li(p)).toArray(DomList))
+                        ))
+                        .orElse(p(em(analysis == null 
+                                ? "Mod analysis is only available for Mod Organizer 2 and requires Plugin Parsing to be enabled."
+                                : "No analysis information is available for this plugin."))),
+                
+                h3(instances.size() > 50 ? "Script Instances (first 50)" : "ChangeForms"),
+                instances.isEmpty() 
+                    ? p(em("None"))
+                    : ul(each(instanceNames, name -> li(rawHtml(name)))),
+                
+                h3(forms.size() > 50 ? "ChangeForms (first 50)" : "ChangeForms"),
+                forms.isEmpty() 
+                    ? p(em("None"))
+                    : ul(each(formNames, name -> li(rawHtml(name))))
+                    //: ul(forms.stream().limit(50).map(i -> li(i.toHTML(null))).toArray(DomList))
 
-        BUILDER.append("<p>").append(FORMS.size()).append(" ChangeForms.</p>");
-        if (FORMS.size() < 100) {
-            BUILDER.append("<ul>");
-            FORMS.forEach(form -> BUILDER.append("<li>").append(form.toHTML(null)).append(" ").append(form.toLinkedString()));
-            BUILDER.append("</ul>");
-        }
-
-        BUILDER.append("<p>").append(INSTANCES.size()).append(" ScriptInstances.</p>");
-        if (INSTANCES.size() < 100) {
-            BUILDER.append("<ul>");
-            INSTANCES.forEach(instance -> BUILDER.append("<li>").append(instance.toHTML(null)));
-            BUILDER.append("</ul>");
-        }
-
-        if (null != analysis) {
-            final List<String> PROVIDERS = new ArrayList<>();
-
-            Predicate<String> espFilter = esp -> esp.equalsIgnoreCase(NAME);
-            analysis.ESPS.forEach((mod, esps) -> {
-                esps.stream().filter(espFilter).forEach(esp -> PROVIDERS.add(mod));
-            });
-
-            if (!PROVIDERS.isEmpty()) {
-                String probableProvider = PROVIDERS.get(PROVIDERS.size() - 1);
-
-                Predicate<SortedSet<String>> modFilter = e -> e.contains(probableProvider);
-                int numScripts = (int) analysis.SCRIPT_ORIGINS.values().stream().filter(modFilter).count();
-
-                BUILDER.append(String.format("<p>%d scripts.</p>", numScripts));
-                BUILDER.append(String.format("<p>The plugin probably came from mod \"%s\".</p>", probableProvider));
-
-                if (PROVIDERS.size() > 1) {
-                    BUILDER.append("<p>Full list of providers:</p><ul>");
-                    PROVIDERS.forEach(mod -> BUILDER.append(String.format("<li>%s", mod)));
-                    BUILDER.append("</ul>");
-                }
-            }
-        }
-
-        BUILDER.append("</html>");
-        return BUILDER.toString();
+        )).render();
     }
 
     /**
@@ -325,4 +340,74 @@ final public class Plugin implements AnalyzableElement, Linkable, Comparable<Plu
         }
     }
 
+    public PluginMetrics createPluginMetrics(ESS ess, Analysis analysis) {
+        Papyrus papyrus = ess.getPapyrus();
+        PapyrusContext context = papyrus.getContext();
+        Set<Element> uniqueRefs = context.getPluginReferences(this);
+        
+        PluginMetrics metrics = new PluginMetrics();
+        
+        metrics.changeFormCount = this.getChangeForms(ess).size();
+        metrics.changeFormTotal = ess.getChangeForms().size();
+        metrics.changeFormPercentage = (float)metrics.changeFormCount / (float)metrics.changeFormTotal;
+        metrics.indirectChangeFormCount = (int)uniqueRefs.stream().filter(f -> f instanceof ChangeForm).count();
+        
+        metrics.scriptInstanceCount = this.getInstances(ess).size();
+        metrics.scriptInstanceTotal = papyrus.getScriptInstances().size();
+        metrics.scriptInstancePercentage = (float)metrics.scriptInstanceCount / (float)metrics.scriptInstanceTotal;
+        metrics.indirectInstanceCount = (int)uniqueRefs.stream().filter(f -> f instanceof ScriptInstance).count();
+
+        metrics.uniqueData = uniqueRefs.stream().mapToInt(e -> e.calculateSize()).sum();
+        
+        metrics.uniqueDataPercentage = (float)metrics.uniqueData / (float)ess.getOriginalSize();
+
+        if (null == analysis) {
+            metrics.mod = Optional.empty();
+        } else {
+            ModMetrics mod = new ModMetrics();
+            mod.providers = analysis.ESPS.entrySet()
+                        .stream()
+                        .filter(e -> e.getValue().stream().anyMatch(NAME::equalsIgnoreCase))
+                        .map(e -> e.getKey())
+                        .collect(Collectors.toList());
+                
+            if (mod.providers.isEmpty()) {
+                metrics.mod = Optional.empty();
+                
+            } else {
+                metrics.mod = Optional.of(mod);
+                mod.probableProvider = mod.providers.get(mod.providers.size()-1);
+
+                Predicate<SortedSet<String>> modFilter = e -> e.contains(mod.probableProvider);
+                mod.numScripts = (int) analysis.SCRIPT_ORIGINS.values().stream().filter(modFilter).count();                
+            }
+        }
+        
+        return metrics;
+    }
+    
+    public class PluginMetrics {
+        
+        int changeFormCount;
+        int changeFormTotal;
+        int indirectChangeFormCount;
+        float changeFormPercentage;
+        
+        int scriptInstanceCount;
+        int scriptInstanceTotal;
+        int indirectInstanceCount;
+        float scriptInstancePercentage;
+        
+        int uniqueData;
+        float uniqueDataPercentage;
+        
+        Optional<ModMetrics> mod;
+        
+    }
+    
+    public class ModMetrics {
+        int numScripts;
+        String probableProvider;
+        List<String> providers;
+    }
 }

@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -34,6 +35,11 @@ import java.util.stream.Stream;
  */
 final public class PluginInfo implements Element {
 
+    /**
+     * Used to match created changeForms.
+     */
+    static final public Plugin Created = Plugin.makeCreated();
+    
     /**
      * Make an absolute formID for a plugin. Any existing plugin info in the
      * formID will be discarded.
@@ -85,8 +91,9 @@ final public class PluginInfo implements Element {
      * @param input The input stream.
      * @param supportsESL Whether to load a lightweight plugins table.
      * @throws IOException
+     * @throws PluginOverflowException
      */
-    public PluginInfo(ByteBuffer input, boolean supportsESL) throws IOException {
+    public PluginInfo(ByteBuffer input, boolean supportsESL) throws IOException, PluginOverflowException {
         Objects.requireNonNull(input);
 
         int pluginInfoSize = input.getInt();
@@ -102,8 +109,9 @@ final public class PluginInfo implements Element {
             this.PLUGINS_FULL.add(p);
         }
 
+        int numberOfLite = 0;
         if (supportsESL) {
-            int numberOfLite = input.getShort();
+            numberOfLite = input.getShort();
             if (numberOfLite < 0 || numberOfLite >= 4096) {
                 throw new IllegalArgumentException("Invalid lite plugin count: " + numberOfLite);
             }
@@ -122,6 +130,10 @@ final public class PluginInfo implements Element {
         this.PATHS = this.stream().collect(Collectors.toMap(p -> Paths.get(p.NAME), p -> p, (a,b) -> a));
         if (pluginInfoSize + 4 != this.calculateSize()) {
             throw new IllegalStateException(String.format("PluginInfoSize = %d, but read %d", pluginInfoSize, this.calculateSize()));
+        }
+        
+        if (numberOfFull < 1) {
+            throw new PluginOverflowException(this, numberOfFull, numberOfLite);
         }
     }
 
@@ -283,4 +295,20 @@ final public class PluginInfo implements Element {
     final private List<Plugin> PLUGINS_LITE;
     final private Map<Path, Plugin> PATHS;
 
+    /**
+     * Exception used to indicate that the game tried to create a savefile
+     * with 256 plugins, so the byte-overflow caused an empty full-plugin 
+     * table to be written out.
+     */
+    static public class PluginOverflowException extends ElementException {
+        
+        public PluginOverflowException(PluginInfo partial, int full, int lite) {
+            super(MessageFormat.format("Plugin overflow detected: {0} full and {1} lite.", full, lite), partial);
+            FULL = full;
+            LITE = lite;
+        }
+        
+        final public int FULL;
+        final public int LITE;
+    }
 }
