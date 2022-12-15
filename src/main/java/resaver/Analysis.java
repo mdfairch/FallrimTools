@@ -37,14 +37,16 @@ final public class Analysis extends Mod.Analysis { //implements java.io.Serializ
      * @param profileAnalysis
      * @param espInfos
      * @param strings
+     * @param hasModInfo 
      */
-    public Analysis(Mod.Analysis profileAnalysis, Map<Plugin, PluginData> espInfos, StringTable strings) {
+    public Analysis(Mod.Analysis profileAnalysis, Map<Plugin, PluginData> espInfos, StringTable strings, boolean hasModInfo) {
         this.ESP_INFOS = Objects.requireNonNull(espInfos);
         this.STRINGS = Objects.requireNonNull(strings);
         this.MODS.addAll(profileAnalysis.MODS);
         this.SCRIPTS.putAll(profileAnalysis.SCRIPTS);
         this.ESPS.putAll(profileAnalysis.ESPS);
         this.SCRIPT_ORIGINS.putAll(profileAnalysis.SCRIPT_ORIGINS);
+        this.HAS_MOD_INFO = hasModInfo;
     }
 
     public String getName(Plugin plugin, int formID) {
@@ -73,6 +75,6 @@ final public class Analysis extends Mod.Analysis { //implements java.io.Serializ
 
     final public Map<Plugin, PluginData> ESP_INFOS;
     final public StringTable STRINGS;
-
+    final public boolean HAS_MOD_INFO;
     
 }
