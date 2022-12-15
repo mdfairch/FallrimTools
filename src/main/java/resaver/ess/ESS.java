@@ -26,6 +26,7 @@ import java.nio.BufferUnderflowException;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
 import java.nio.file.*;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -122,7 +123,7 @@ final public class ESS implements Element {
         Objects.requireNonNull(ess);
         Objects.requireNonNull(saveFile);
 
-        if (ess.truncated) {
+        if (ess.isBroken()) {
             throw new IOException(String.format("%s is truncated and can't be saved.", ess.getOriginalFile().getFileName()));
         }
 
@@ -227,10 +228,12 @@ final public class ESS implements Element {
                     throw new IOException("Unknown compression type: " + COMPRESSION);
             }
 
+            ORIGINAL_SIZE = UNCOMPRESSED_LEN;
         } else {
             LOG.fine("NO FILE COMPRESSION");
             INPUT = buffer.slice();
             INPUT.order(ByteOrder.LITTLE_ENDIAN);
+            ORIGINAL_SIZE = INPUT.remaining();
         }
 
         // sanity check
@@ -252,7 +255,7 @@ final public class ESS implements Element {
 
         final mf.Counter SUM = new mf.Counter(buffer.capacity());
         SUM.addCountListener(sum -> {
-            if (!this.truncated && sum != ((Buffer) INPUT).position()) {
+            if (!this.isBroken() && sum != ((Buffer) INPUT).position()) {
                 throw new PositionException("ESS", sum, ((Buffer) INPUT).position());
             }
         });
@@ -290,7 +293,17 @@ final public class ESS implements Element {
         }
 
         // Read the PLUGIN info section.
-        this.PLUGINS = new PluginInfo(INPUT, this.supportsESL());
+        PluginInfo pluginsPartial;
+        
+        try {
+            pluginsPartial = new PluginInfo(INPUT, this.supportsESL());
+        } catch (PluginInfo.PluginOverflowException ex) {
+            this.truncated = true;
+            pluginsPartial = (PluginInfo) ex.getPartial();
+            LOG.log(Level.SEVERE, "Error while reading Plugins.", ex);
+        }
+        this.PLUGINS = pluginsPartial;
+        
         SUM.click(this.PLUGINS.calculateSize());
         LOG.fine("Reading savegame: read plugin table.");
 
@@ -322,7 +335,7 @@ final public class ESS implements Element {
                 }
             }
 
-            LOG.fine("Reading savegame: read formid array.");
+            LOG.fine(MessageFormat.format("Reading savegame: read %d formids.", formIDCount));
         } catch (ListException | IllegalArgumentException ex) {
             this.truncated = true;
             LOG.log(Level.SEVERE, "Error while reading FormID array.", ex);
@@ -386,7 +399,6 @@ final public class ESS implements Element {
         for (int changeFormIndex = 0; changeFormIndex < this.FLT.changeFormCount; changeFormIndex++) {
             try {
                 ChangeForm FORM = new ChangeForm(INPUT, context);
-                //this.CHANGEFORMS.put(FORM.getRefID(), FORM);
                 this.CHANGEFORMS.add(FORM);
             } catch (RuntimeException ex) {
                 throw new IOException(String.format("Error; read %d/%d ChangeForm definitions.", changeFormIndex, this.FLT.changeFormCount), ex);
@@ -452,7 +464,7 @@ final public class ESS implements Element {
 
         // Try to readRefID the visited worldspaces block.
         int[] visitedWorldSpaces = null;
-        assert this.FORMIDARRAY != null || this.truncated;
+        assert this.FORMIDARRAY != null || this.isBroken();
 
         try {
             // Read the worldspaces-visited table. Skip past the FormID array since
@@ -468,7 +480,7 @@ final public class ESS implements Element {
 
             LOG.fine("Reading savegame: read visited worldspace array.");
         } catch (BufferUnderflowException | IllegalArgumentException | NullPointerException ex) {
-            if (!this.truncated) {
+            if (!this.isBroken()) {
                 this.truncated = true;
                 LOG.log(Level.SEVERE, "Error reading VisitedWorldSpace array.", ex);
             }
@@ -482,7 +494,7 @@ final public class ESS implements Element {
         this.UNKNOWN3 = new byte[U3SIZE];
         INPUT.get(this.UNKNOWN3);
 
-        if (!this.truncated) {
+        if (!this.isBroken()) {
             long calculatedBodySize = this.calculateBodySize();
             long bodyPosition = ((Buffer) INPUT).position();
             if (calculatedBodySize != bodyPosition) {
@@ -664,6 +676,12 @@ final public class ESS implements Element {
         throw new UnsupportedOperationException("NEVER CALL THIS");
     }
 
+    /** 
+     * @return The original uncompressed size of the body data.
+     */
+    public int getOriginalSize() {
+        return this.ORIGINAL_SIZE;
+    }
     /**
      * @see Element#calculateSize()
      * @return
@@ -780,8 +798,10 @@ final public class ESS implements Element {
     /**
      * @return A flag indicating if the savefile has a truncation error.
      */
-    public boolean isTruncated() {
-        return this.truncated || this.PAPYRUS.isTruncated();
+    public boolean isBroken() {
+        return null != this.PAPYRUS 
+                ? this.truncated || this.pluginOverflow || this.PAPYRUS.isBroken()
+                : this.truncated || this.pluginOverflow;
     }
 
     /**
@@ -1218,6 +1238,8 @@ final public class ESS implements Element {
     final private java.util.Map<Integer, RefID> REFIDS;
     private resaver.Analysis analysis;
     private boolean truncated = false;
+    private boolean pluginOverflow = false;
+    final private int ORIGINAL_SIZE;
 
     static final private Logger LOG = Logger.getLogger(ESS.class.getCanonicalName());
 
