@@ -32,6 +32,7 @@ import javax.swing.SwingWorker;
 import resaver.ess.ESS;
 import resaver.ess.ModelBuilder;
 import resaver.ess.papyrus.Worrier;
+import static resaver.ess.ModelBuilder.SortingMethod;
 
 /**
  *
@@ -43,15 +44,17 @@ public class Opener extends SwingWorker<ESS, Double> {
      *
      * @param window
      * @param savefile
+     * @param sort
      * @param worrier
      * @param doAfter
      * 
      */
-    public Opener(SaveWindow window, Path savefile, Worrier worrier, Runnable doAfter) {
+    public Opener(SaveWindow window, Path savefile, SortingMethod sort, Worrier worrier, Runnable doAfter) {
         this.WINDOW = Objects.requireNonNull(window);
         this.SAVEFILE = Objects.requireNonNull(savefile);
         this.WORRIER = worrier;
         this.DOAFTER = doAfter;
+        this.SORT = Objects.requireNonNull(sort);
         Configurator.setPreviousSave(savefile);
     }
 
@@ -74,7 +77,7 @@ public class Opener extends SwingWorker<ESS, Double> {
             LOG.log(Level.INFO, "Reading from savegame file \"{0}\".", this.SAVEFILE); //NOI18N
 
             final ProgressModel PROGRESS = new ProgressModel();
-            final ModelBuilder MB = new ModelBuilder(PROGRESS);
+            final ModelBuilder MB = new ModelBuilder(PROGRESS, SORT, null);
             this.WINDOW.getProgressIndicator().setModel(PROGRESS);
             final ESS.Result RESULT = ESS.readESS(this.SAVEFILE, MB);
             
@@ -119,6 +122,7 @@ public class Opener extends SwingWorker<ESS, Double> {
     final private SaveWindow WINDOW;
     final private Worrier WORRIER;
     final private Runnable DOAFTER;
+    final private SortingMethod SORT;
     static final private Logger LOG = Logger.getLogger(Opener.class.getCanonicalName());
     static final private ResourceBundle I18N = ResourceBundle.getBundle("Strings");
 
