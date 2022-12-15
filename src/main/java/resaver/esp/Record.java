@@ -60,12 +60,13 @@ abstract public class Record implements Entry {
      */
     static private FieldList readFieldAux(RecordCode parentCode, ByteBuffer input, int bigSize, ESPContext ctx) throws FieldException {
         assert input.hasRemaining();
-
+        IString CODE = IString.get("null");
+        
         try {
             // Read the record identification code.
             final byte[] CODEBYTES = new byte[4];
             input.get(CODEBYTES);
-            final IString CODE = IString.get(new String(CODEBYTES));
+            CODE = IString.get(new String(CODEBYTES));
             ctx.pushContext(CODE);
 
             // Read the record size.
@@ -117,7 +118,7 @@ abstract public class Record implements Entry {
             return FIELDS;
             
         } catch (RuntimeException ex) {
-            throw new FieldException("Problem reading field", ex, ctx.toString());
+            throw new FieldException(ex, CODE.toString(), ctx.toString());
         }
     }
 
@@ -210,38 +211,55 @@ abstract public class Record implements Entry {
 
             final int PREFIX = HEADER.getInt();
             final int TYPE = HEADER.getInt();
+
             switch (TYPE) {
                 case 0:
                     final ByteBuffer TOP = ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putInt(PREFIX);
                     ((Buffer) TOP).flip();
                     String tops = new String(TOP.array());
-                    ctx.pushContext(tops);
+                    ctx.pushContext("TOP(" + tops + ")");
                     break;
-                case 4:
-                case 5:
-                    final int X = (TYPE == 4 || TYPE == 5 ? PREFIX & 0xFFFF : -1);
-                    final int Y = (TYPE == 4 || TYPE == 5 ? PREFIX >>> 4 : -1);
-                    ctx.pushContext(X + ", " + Y);
-                    break;
+                case 1:
+                    ctx.pushContext("GRUP Wrld children " + EID.pad8(PREFIX));
                 case 2:
-                    ctx.pushContext("Block " + PREFIX);
+                    ctx.pushContext("Interior Block " + PREFIX);
                     break;
                 case 3:
-                    ctx.pushContext("SubBlock " + PREFIX);
+                    ctx.pushContext("Interior SubBlock " + PREFIX);
+                    break;
+                case 4:
+                    ctx.pushContext("Exerior Block: " + grupCoords(PREFIX));
+                case 5:
+                    ctx.pushContext("Exerior SubBlock: " + grupCoords(PREFIX));
+                    break;
+                case 6:
+                    ctx.pushContext("CELL children " + EID.pad8(PREFIX));
+                    break;
+                case 7:
+                    ctx.pushContext("Children of TOPIC" + EID.pad8(PREFIX));
+                    break;
+                case 8:
+                    ctx.pushContext("CELL Persistent Children" + EID.pad8(PREFIX));
+                    break;
+                case 9:
+                    ctx.pushContext("CELL Temprorary Children" + EID.pad8(PREFIX));
                     break;
                 default:
-                    ctx.pushContext(EID.pad8(PREFIX));
+                    ctx.pushContext("UnkBlock " + EID.pad8(PREFIX));
                     break;
             }
 
             // Get the record data.
             final ByteBuffer RECORDINPUT = advancingSlice(input, DATASIZE - 24);
 
-            // Read the rest of the record.
-            while (RECORDINPUT.hasRemaining()) {
-                Record.skimRecord(RECORDINPUT, ctx);
+            try {
+                // Read the rest of the record.
+                while (RECORDINPUT.hasRemaining()) {
+                    Record.skimRecord(RECORDINPUT, ctx);
+                }
+            } finally {
+                ctx.popContext();
             }
-            ctx.popContext();
 
         } else {
             // Read the header.
@@ -337,5 +355,9 @@ abstract public class Record implements Entry {
         final public short VERSION;
         final public short UNKNOWN;
 
+    }
+    
+    static private mf.Pair<Integer, Integer>grupCoords(int code) {
+        return mf.Pair.of(code & 0xFFFF, code >>> 4);
     }
 }
