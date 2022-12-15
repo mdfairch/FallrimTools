@@ -50,7 +50,7 @@ final public class Worrier {
         final Papyrus PAPYRUS = ESS.getPapyrus();
 
         // Check the first fatal condition -- truncation.
-        if (ESS.isTruncated()) {
+        if (ESS.isBroken()) {
             BUF.append("<p><em>THIS FILE IS TRUNCATED.</em> It is corrupted and can never be recovered, not even by the pure-hearted love of a Paraguay Jaguar.");
 
             if (PAPYRUS == null) {
@@ -61,7 +61,7 @@ final public class Worrier {
                 BUF.append("<br/><strong>TRUNCATED STRING TABLE.</strong> ")
                         .append(missing)
                         .append(" strings missing. The cause of this is unknown, but sometimes involves the scripts that append to strings in a loop.");
-            } else if (PAPYRUS.isTruncated()) {
+            } else if (PAPYRUS.isBroken()) {
                 BUF.append("<br/><strong>TRUNCATED PAPYRUS BLOCK.</strong> This is usually caused by too many scripts running at once, or recursive scripts without proper boundary conditions.");
             }
             
