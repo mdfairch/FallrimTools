@@ -44,7 +44,8 @@ final public class Pair<TypeA, TypeB> {
 
     @Override
     public String toString() {
-        return "Pair{" + "A=" + A + ", B=" + B + '}';
+        //return "Pair{" + "A=" + A + ", B=" + B + '}';
+        return String.format("(%s, %s)", A, B);
     }
 
     @Override
