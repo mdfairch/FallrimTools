@@ -84,7 +84,8 @@ public class Scanner extends SwingWorker<resaver.Analysis, Double> {
         final Game GAME = this.SAVE.getHeader().GAME;
         this.WINDOW.addWindowListener(this.LISTENER);
         this.PROGRESS.accept(I18N.getString("SCANNER_INITIALIZING"));
-
+        boolean hasModInfo = false;
+        
         try {
             final PluginInfo PLUGINS = this.SAVE.getPluginInfo();
             LOG.info("Scanning plugins.");
@@ -99,6 +100,7 @@ public class Scanner extends SwingWorker<resaver.Analysis, Double> {
                 LOG.info("Checking Mod Organizer 2.");
                 final java.util.List<Mod> MOMODS = Configurator.analyzeModOrganizer2(GAME, this.MO2_INI);
                 MODS.addAll(MOMODS);
+                hasModInfo = !MOMODS.isEmpty();
             }
 
             this.PROGRESS.accept(I18N.getString("SCANNER_ORGANIZING"));
@@ -245,7 +247,7 @@ public class Scanner extends SwingWorker<resaver.Analysis, Double> {
                         LOG.log(Level.WARNING, MSG, ex);
                         ex.printStackTrace(System.err);
                     } catch (PluginException ex) {
-                        ERR_PLUGINS.add(ex.CONTEXT);
+                        ERR_PLUGINS.add(ex.PLUGIN);
                         final String MSG = MessageFormat.format("Error reading plugin: {0}.", ex.CONTEXT);
                         LOG.log(Level.WARNING, MSG, ex);
                         ex.printStackTrace(System.err);                        
@@ -255,7 +257,7 @@ public class Scanner extends SwingWorker<resaver.Analysis, Double> {
 
             this.PROGRESS.accept(I18N.getString("SCANNER_CREATING_ANALYSIS"));
 
-            final resaver.Analysis ANALYSIS = new resaver.Analysis(PROFILEANALYSIS, PLUGIN_DATA, STRINGTABLE);
+            final resaver.Analysis ANALYSIS = new resaver.Analysis(PROFILEANALYSIS, PLUGIN_DATA, STRINGTABLE, hasModInfo);
             if (null != this.SAVE) {
                 this.WINDOW.setAnalysis(ANALYSIS);
             }
