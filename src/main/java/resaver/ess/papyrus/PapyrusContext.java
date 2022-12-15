@@ -248,7 +248,7 @@ public class PapyrusContext extends resaver.ess.ESS.ESSContext {
                 .findAny().orElse(null);
     }
 
-    public void precache() {
+    synchronized public void precache() {
         pluginsCrossreferenceCache = crossreferencePlugins();
     }
     

@@ -840,11 +840,13 @@ final public class Papyrus implements PapyrusElement, GlobalDataBlock {
         final ReferrentMap REFERRENTS = new ReferrentMap();
 
         REFERRENTS.put(ScriptInstance.class, this.getScriptInstances().values().stream()
+                .filter(v -> !id.equals(v.getID()))
                 .filter(v -> v.getData() != null)
                 .filter(v -> v.getVariables().stream().anyMatch(m -> m.hasRef(id)))
                 .collect(Collectors.toSet()));
 
         REFERRENTS.put(Reference.class, this.getReferences().values().stream()
+                .filter(v -> !id.equals(v.getID()))
                 .filter(v -> v.getVariables().stream().anyMatch(m -> m.hasRef(id)))
                 .collect(Collectors.toSet()));
 
@@ -853,6 +855,7 @@ final public class Papyrus implements PapyrusElement, GlobalDataBlock {
                 .collect(Collectors.toSet()));
 
         REFERRENTS.put(ActiveScript.class, this.getActiveScripts().values().stream()
+                .filter(v -> !id.equals(v.getID()))
                 .filter(v -> v.getAttached() == id)
                 .collect(Collectors.toSet()));
 
@@ -867,6 +870,7 @@ final public class Papyrus implements PapyrusElement, GlobalDataBlock {
                 .collect(Collectors.toSet()));
 
         REFERRENTS.put(StructInstance.class, this.getStructInstances().values().stream()
+                .filter(v -> !id.equals(v.getID()))
                 .filter(v -> v.getVariables().stream().anyMatch(m -> m.hasRef(id)))
                 .collect(Collectors.toSet()));
 
@@ -924,7 +928,7 @@ final public class Papyrus implements PapyrusElement, GlobalDataBlock {
     /**
      * @return A flag indicating if the papyrus block has a truncation error.
      */
-    public boolean isTruncated() {
+    public boolean isBroken() {
         return this.truncated || this.getStringTable().isTruncated();
     }
 
