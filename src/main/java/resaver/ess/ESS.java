@@ -508,6 +508,7 @@ final public class ESS implements Element {
                     throw new IllegalStateException(String.format("Missing data, calculated file size size is %d but actual file size is %d.", calculatedSize, fileSize));
                 }
             }
+            
         }
     }
 

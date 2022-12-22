@@ -562,7 +562,7 @@ abstract public class Configurator {
      */
     static public boolean validateGameDirectory(Game game, Path dir) {
         return validDir(dir) 
-                && dir.getFileName().equals(game.GAME_DIRECTORY) 
+                /*&& dir.getFileName().equals(game.GAME_DIRECTORY)*/
                 && Files.exists(dir.resolve(game.EXECUTABLE));
     }
 
@@ -636,7 +636,7 @@ abstract public class Configurator {
             }
 
             Game.VALUES.stream()
-                    .filter(game -> GAME_PATH.endsWith(game.GAME_DIRECTORY))
+                    .filter(game -> Files.exists(GAME_PATH.resolve(game.EXECUTABLE)))
                     .findFirst()
                     .ifPresent(game -> {
                         setMO2Ini(game, mo2Ini);

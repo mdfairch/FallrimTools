@@ -85,6 +85,10 @@ public class Opener extends SwingWorker<ESS, Double> {
 
             this.WINDOW.setESS(RESULT.SAVE_FILE, RESULT.ESS, RESULT.MODEL, WORRIER.shouldDisableSaving());
 
+            if (this.DOAFTER != null) {
+                SwingUtilities.invokeLater(DOAFTER);
+            }
+            
             if (WORRIER.shouldWorry() || WORRIER.shouldDisableSaving()) {
                 new Thread((Runnable) java.awt.Toolkit.getDefaultToolkit().getDesktopProperty("win.sound.exclamation")).start(); //NOI18N
                 final String TITLE = I18N.getString("OPENER_SUCCESS");
@@ -97,10 +101,6 @@ public class Opener extends SwingWorker<ESS, Double> {
                     new javax.swing.Timer(5000, e -> DIALOG.setVisible(false)).start();
                 }
                 DIALOG.setVisible(true);
-            }
-            
-            if (this.DOAFTER != null) {
-                SwingUtilities.invokeLater(DOAFTER);
             }
             
             return RESULT.ESS;

@@ -1019,7 +1019,6 @@ final public class SaveWindow extends JFrame {
 
             final Runnable DOAFTER = () -> {
                 updateFilters(false);
-                new Precacher(this, this.save, this::onScanProgress).execute();
                 if (parse) {
                     scanESPs(false);
                 }                

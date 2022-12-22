@@ -30,6 +30,7 @@ import java.util.function.Predicate;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import javax.swing.tree.TreePath;
+import mf.ConsoleProgress;
 import resaver.ess.Plugin;
 
 /**
@@ -51,8 +52,16 @@ final public class FilterTreeModel implements TreeModel {
      * 
      * @param elements 
      */
+    mf.ConsoleProgress progress = new mf.ConsoleProgress();
     public void deleteElements(Set<? extends Element> elements) {
-        this.deleteElements(this.root, elements);
+        boolean bulkRefresh = elements.size() > 50;
+        progress.reset("Deleting path", elements);
+        this.deleteElements(this.root, elements, bulkRefresh);
+        
+        if (bulkRefresh) {
+            this.root.countLeaves();
+            this.refresh();
+        }
     }
 
     /**
@@ -60,7 +69,7 @@ final public class FilterTreeModel implements TreeModel {
      * @param node
      * @param elements 
      */
-    private void deleteElements(Node node, Set<? extends Element> elements) {
+    private void deleteElements(Node node, Set<? extends Element> elements, boolean bulkRefresh) {
         assert !node.isLeaf();
 
         if (!node.isLeaf()) {
@@ -68,13 +77,19 @@ final public class FilterTreeModel implements TreeModel {
             while (iterator.hasNext()) {
                 Node child = iterator.next();
                 if (child.hasElement() && elements.contains(child.getElement())) {
-                    TreePath path = this.getPath(child);
-                    iterator.remove();
-                    node.countLeaves();
-                    this.fireTreeNodesRemoved(new TreeModelEvent(this, path));
-                    LOG.info(String.format("Deleting treepath: %s", path));
+                    if (bulkRefresh) {
+                        progress.inc();
+                        iterator.remove();
+                    } else {
+                        TreePath path = this.getPath(child);
+                        iterator.remove();
+                        node.countLeaves();
+                        this.fireTreeNodesRemoved(new TreeModelEvent(this, path));                        
+                        LOG.info(String.format("Deleting treepath: %s", path));
+                    }
+                    
                 } else if (!child.isLeaf()) {
-                    this.deleteElements(child, elements);
+                    this.deleteElements(child, elements, bulkRefresh);
                 }
             }
         }
@@ -530,9 +545,9 @@ final public class FilterTreeModel implements TreeModel {
      * @param event
      */
     private void fireTreeNodesChanged(TreeModelEvent event) {
-        this.LISTENERS.forEach(listener -> {
+        for (TreeModelListener listener : this.LISTENERS) {
             listener.treeNodesChanged(event);
-        });
+        }
     }
 
     /**
@@ -541,9 +556,9 @@ final public class FilterTreeModel implements TreeModel {
      * @param event
      */
     private void fireTreeNodesInserted(TreeModelEvent event) {
-        this.LISTENERS.forEach(listener -> {
+        for (TreeModelListener listener : this.LISTENERS) {
             listener.treeNodesInserted(event);
-        });
+        }
     }
 
     /**
@@ -551,9 +566,9 @@ final public class FilterTreeModel implements TreeModel {
      * @param event
      */
     private void fireTreeNodesRemoved(TreeModelEvent event) {
-        this.LISTENERS.forEach(listener -> {
+        for (TreeModelListener listener : this.LISTENERS) {
             listener.treeNodesRemoved(event);
-        });
+        }
     }
 
     private Node root;

@@ -29,7 +29,6 @@ import java.util.stream.Collectors;
 import resaver.ess.Linkable;
 import resaver.ess.ModelBuilder;
 import resaver.ess.PositionException;
-import resaver.gui.DataAnalyzer;
 
 /**
  * Describes a the data for a <code>GlobalData</code> when it is the Papyrus
@@ -399,6 +398,9 @@ final public class Papyrus implements PapyrusElement, GlobalDataBlock {
             this.truncated = true;
             final String MSG = String.format("Error while reading the Papyrus section of %s: %s.", context.getPath().getFileName(), ex.getMessage());
             throw new PapyrusException(MSG, ex, this);
+            
+        } finally {
+            this.CONTEXT.buildCrossreferences();
         }
     }
 
