@@ -141,36 +141,54 @@ final public class Worrier {
 
         int numStacks = PAPYRUS.getActiveScripts().size();
 
-        Stream<Script> active = PAPYRUS.getActiveScripts().values().parallelStream()
+        Stream<Script> activeThreads = PAPYRUS.getActiveScripts().values().parallelStream()
+                .filter(as -> as.hasStack() && !as.getStackFrames().isEmpty())
+                .map(as -> as.getStackFrames().get(0))
+                .map(f -> f.getScript());
+                
+        Stream<Script> activeStacks = PAPYRUS.getActiveScripts().values().parallelStream()
                 .filter(as -> as.hasStack())
                 .flatMap(as -> as.getStackFrames().stream())
                 .map(f -> f.getScript());
 
-        Stream<Script> suspended = PAPYRUS.getSuspendedStacks().values().parallelStream()
+        Stream<Script> suspendedThreads = PAPYRUS.getSuspendedStacks().values().parallelStream()
                 .filter(ss -> ss.getScript() != null)
                 .map(ss -> ss.getScript());
 
-        Map<Script, Long> frameCounts = Stream.concat(active, suspended)
+        Stream<Script> suspendedStacks = PAPYRUS.getSuspendedStacks().values().parallelStream()
+                .filter(ss -> ss.getScript() != null)
+                .map(ss -> ss.getScript());
+
+        Map<Script, Long> threadCounts = Stream.concat(activeThreads, suspendedThreads)
+                .filter(s -> s != null)
+                .collect(Collectors.groupingBy(f -> f, Collectors.counting()));
+                
+        Map<Script, Long> frameCounts = Stream.concat(activeStacks, suspendedStacks)
                 .filter(s -> s != null)
                 .collect(Collectors.groupingBy(f -> f, Collectors.counting()));
 
+        List<Script> threads = new ArrayList<>(threadCounts.keySet());
         List<Script> frames = new ArrayList<>(frameCounts.keySet());
-        frames.sort((a, b) -> frameCounts.get(b).compareTo(frameCounts.get(a)));
 
         if (!frames.isEmpty()) {
-            Script most = frames.get(0);
+            threads.sort((a, b) -> threadCounts.get(b).compareTo(threadCounts.get(a)));
+            frames.sort((a, b) -> frameCounts.get(b).compareTo(frameCounts.get(a)));
+
+            Script most1 = threads.get(0);
+            Script most2 = frames.get(0);
 
             long numFrames = frameCounts.values().stream().mapToLong(v -> v).sum();
 
             if (numStacks > 200 || numFrames > 1000) {
                 BUF.append(String.format("<p>There are %d stacks and %d frames, which probably indicates a problem.<br/>", numStacks, numFrames));
-                BUF.append(String.format("%s occurs the most often (%d occurrences)</p>", most.toHTML(null), frameCounts.get(most)));
+                BUF.append(String.format("%s occurs the most often as a stack frame (%d occurrences)</p>", most2.toHTML(null), frameCounts.get(most2)));
+                //BUF.append(String.format("%s occurs the most often as a thread (%d occurrences)</p>", most1.toHTML(null), threadCounts.get(most1)));
 
                 this.shouldWorry = true;
 
             } else if (numStacks > 50 || numFrames > 150) {
                 BUF.append(String.format("<p>There are %d stacks and %d frames, which may indicate a problem.</p>", numStacks, numFrames));
-                BUF.append(String.format("%s occurs the most often (%d occurrences)</p>", most.toHTML(null), frameCounts.get(most)));
+                //BUF.append(String.format("%s occurs the most often (%d occurrences)</p>", most2.toHTML(null), frameCounts.get(most2)));
 
                 this.shouldWorry = true;
             }
