@@ -369,7 +369,7 @@ final public class Papyrus implements PapyrusElement, GlobalDataBlock {
                     : Optional.empty();
 
             Map<EID, SuspendedStack> stacks = this.getSuspendedStacks();
-            this.getActiveScripts().values().forEach(script -> script.resolveStack(stacks));
+            this.getActiveScripts().values().forEach(script -> script.resolveStack(stacks, getFunctionMessages()));
 
             // Stuff the remaining data into a buffer.
             int remaining = input.limit() - input.position();

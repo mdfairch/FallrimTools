@@ -55,6 +55,7 @@ final public class ActiveScript implements AnalyzableElement, HasID, SeparateDat
         this.TYPE = input.get();
         this.owner = null;
         this.suspendedStack = null;
+        this.message = null;
     }
 
     /**
@@ -175,8 +176,7 @@ final public class ActiveScript implements AnalyzableElement, HasID, SeparateDat
      *
      */
     public boolean isTerminated() {
-        // Suspended stacks aren't terminated.
-        if (this.isSuspended() || !this.hasStack()) {
+        if (this.isSuspended() || !this.hasStack() || this.hasMessage()) {
             return false;
         }
 
@@ -193,6 +193,14 @@ final public class ActiveScript implements AnalyzableElement, HasID, SeparateDat
         return this.suspendedStack != null;
     }
 
+    /**
+     * @return A flag indicating if the <code>ActiveScript</code> has a function
+     * message.
+     */
+    public boolean hasMessage() {
+        return this.message != null;
+    }
+    
     /**
      * @see resaver.ess.Linkable#toHTML(Element)
      * @param target A target within the <code>Linkable</code>.
@@ -217,13 +225,16 @@ final public class ActiveScript implements AnalyzableElement, HasID, SeparateDat
             BUILDER.append("#");
         }
 
-        if (this.hasStack()) {
+        if (this.getStackFrames() != null && !this.getStackFrames().isEmpty()) {
             StackFrame topFrame = this.getStackFrames().get(0);
             TString scriptName = topFrame.getScriptName();
             BUILDER.append(scriptName).append(" ");
 
         } else if (this.suspendedStack != null && this.suspendedStack.getMessage() != null) {
             BUILDER.append(this.suspendedStack.getMessage().toString());
+
+        } else if (this.message != null && this.message.getMessage() != null) {
+            BUILDER.append(this.message.getMessage().toString());
 
         } else {
         }
@@ -264,6 +275,10 @@ final public class ActiveScript implements AnalyzableElement, HasID, SeparateDat
             BUILDER.append("<html><h3>ACTIVESCRIPT (SUSPENDED)</h3>");
             BUILDER.append("<p><em>WARNING: SCRIPT SUSPENDED!</em><br/>This script has been suspended. Terminating it may have unpredictable results.</p>");
             BUILDER.append("<p>Suspended stack: ").append(this.suspendedStack.toHTML(null)).append("</p>");
+        } else if (this.hasMessage()) {
+            BUILDER.append("<html><h3>ACTIVESCRIPT (EXECUTING CALL)</h3>");
+            BUILDER.append("<p><em>WARNING: SCRIPT IS EXECUTING A FUNCTION CALL!</em><br/>Terminating it may have unpredictable results.</p>");
+            BUILDER.append("<p>Function: ").append(this.message.toHTML(null)).append("</p>");
         } else {
             BUILDER.append("<html><h3>ACTIVESCRIPT</h3>");
         }
@@ -372,8 +387,9 @@ final public class ActiveScript implements AnalyzableElement, HasID, SeparateDat
 
     /**
      * @param stacks The SuspendedStacks.
+     * @param messages The FunctionMessages.
      */
-    public void resolveStack(java.util.Map<EID, SuspendedStack> stacks) {
+    public void resolveStack(java.util.Map<EID, SuspendedStack> stacks, java.util.List<FunctionMessage> messages) {
         if (this.hasStack()) {
             Variable ref = this.getStackFrames().get(0).getOwner();
             if (ref instanceof Variable.Ref) {
@@ -384,6 +400,10 @@ final public class ActiveScript implements AnalyzableElement, HasID, SeparateDat
         }
 
         this.suspendedStack = stacks.getOrDefault(this.ID, null);
+        this.message = messages
+                .stream()
+                .filter(msg -> this.ID.equals(msg.getID()))
+                .findFirst().orElse(null);
     }
 
     /**
@@ -487,6 +507,7 @@ final public class ActiveScript implements AnalyzableElement, HasID, SeparateDat
     private ActiveScriptData data;
     private AnalyzableElement owner;
     private SuspendedStack suspendedStack;
+    private FunctionMessage message;
     static final private Logger LOG = Logger.getLogger(ActiveScript.class.getCanonicalName());
 
     final public class ActiveScriptData implements PapyrusDataFor<ActiveScript> {

@@ -25,6 +25,7 @@ import resaver.IString;
 import java.nio.ByteBuffer;
 import resaver.Analysis;
 import resaver.ess.ESS;
+import resaver.ess.Flags;
 
 /**
  * Describes a function message data in a Skyrim savegame.
@@ -47,7 +48,7 @@ public class FunctionMessageData implements PapyrusElement, AnalyzableElement, H
         Objects.requireNonNull(input);
         Objects.requireNonNull(context);
 
-        this.UNKNOWN = input.get();
+        this.FN_FLAGS = Flags.readByteFlags(input);
         this.SCRIPTNAME = context.readTString(input);
         this.SCRIPT = context.findScript(this.SCRIPTNAME);
 
@@ -68,7 +69,7 @@ public class FunctionMessageData implements PapyrusElement, AnalyzableElement, H
      */
     @Override
     public void write(ByteBuffer output) {
-        output.put(this.UNKNOWN);
+        this.FN_FLAGS.write(output);
         this.SCRIPTNAME.write(output);
         this.EVENT.write(output);
         this.UNKNOWNVAR.write(output);
@@ -129,7 +130,9 @@ public class FunctionMessageData implements PapyrusElement, AnalyzableElement, H
      */
     @Override
     public List<MemberDesc> getDescriptors() {
-        return this.getScript().getExtendedMembers();
+        return this.SCRIPT == null
+                ? Collections.emptyList()
+                : this.getScript().getExtendedMembers();
     }
 
     /**
@@ -170,6 +173,14 @@ public class FunctionMessageData implements PapyrusElement, AnalyzableElement, H
     }
 
     /**
+     * @return A flag indicating if the <code>StackFrame</code> is running a
+     * native method.
+     */
+    public boolean isNative() {
+        return (null != this.FN_FLAGS ? this.FN_FLAGS.getFlag(0) : false);
+    }
+
+    /**
      * @see AnalyzableElement#getInfo(resaver.Analysis, resaver.ess.ESS)
      * @param analysis
      * @param save
@@ -206,7 +217,7 @@ public class FunctionMessageData implements PapyrusElement, AnalyzableElement, H
         }
 
         BUILDER.append(String.format("Event: %s<br/>", this.EVENT));
-        BUILDER.append(String.format("Unknown: %02x<br/>", this.UNKNOWN));
+        BUILDER.append(String.format("Flags: %s<br/>", this.FN_FLAGS));
 
         if (null != this.UNKNOWNVAR) {
             BUILDER.append(String.format("Unknown variable: %s<br/>", this.UNKNOWNVAR.toHTML(null)));
@@ -245,14 +256,12 @@ public class FunctionMessageData implements PapyrusElement, AnalyzableElement, H
      *
      */
     public boolean isUndefined() {
-        if (null != this.SCRIPT) {
-            return this.SCRIPT.isUndefined();
-        }
-
-        return !Script.NATIVE_SCRIPTS.contains(this.SCRIPTNAME.toWString());
+        if (this.isNative()) return false;
+        else if (null != this.SCRIPT) return this.SCRIPT.isUndefined();
+        else return !Script.NATIVE_SCRIPTS.contains(this.SCRIPTNAME.toWString());
     }
 
-    final private byte UNKNOWN;
+    final private Flags.Byte FN_FLAGS;
     final private TString SCRIPTNAME;
     final private Script SCRIPT;
     final private TString EVENT;

@@ -24,6 +24,7 @@ import resaver.Analysis;
 import resaver.IString;
 import resaver.ess.ESS;
 import resaver.ess.Element;
+import resaver.ess.Flags;
 import resaver.ess.Linkable;
 
 /**
@@ -45,14 +46,14 @@ final public class FunctionMessage implements PapyrusElement, AnalyzableElement,
         Objects.requireNonNull(input);
         Objects.requireNonNull(context);
 
-        this.UNKNOWN = input.get();
-        this.ID = this.UNKNOWN <= 2 ? context.readEID32(input) : null;
         this.FLAG = input.get();
+        this.ID = this.FLAG <= 2 ? context.readEID32(input) : null;
+        this.FLAGS = Flags.readByteFlags(input);
 
         this.THREAD = this.ID == null ? null : context.findActiveScript(this.ID);
         assert this.THREAD != null;
 
-        if (this.FLAG == 0) {
+        if (this.FLAGS.FLAGS == 0) {
             this.MESSAGE = null;
         } else {
             FunctionMessageData message = null;
@@ -78,13 +79,13 @@ final public class FunctionMessage implements PapyrusElement, AnalyzableElement,
      */
     @Override
     public void write(ByteBuffer output) {
-        output.put(this.UNKNOWN);
+        output.put(this.FLAG);
 
         if (this.ID != null) {
             this.ID.write(output);
         }
 
-        output.put(this.FLAG);
+        this.FLAGS.write(output);
 
         if (this.MESSAGE != null) {
             this.MESSAGE.write(output);
@@ -164,22 +165,22 @@ final public class FunctionMessage implements PapyrusElement, AnalyzableElement,
             TString scriptName = this.MESSAGE.getScriptName();
 
             if (this.isUndefined()) {
-                if (this.UNKNOWN <= 2) {
+                if (this.FLAG <= 2) {
                     return "MSG #" + scriptName + "# (" + this.ID + ")";
                 } else {
                     return "MSG #" + scriptName;
                 }
-            } else if (this.UNKNOWN <= 2) {
+            } else if (this.FLAG <= 2) {
                 return "MSG " + scriptName + " (" + this.ID + ")";
             } else {
                 return "MSG " + scriptName;
             }
 
         } else if (this.ID != null) {
-            return "MSG " + this.FLAG + "," + EID.pad8(this.UNKNOWN) + " (" + this.ID + ")";
+            return "MSG " + this.FLAGS + "," + EID.pad8(this.FLAG) + " (" + this.ID + ")";
 
         } else {
-            return "MSG " + this.FLAG + "," + EID.pad8(this.UNKNOWN);
+            return "MSG " + this.FLAGS + "," + EID.pad8(this.FLAG);
         }
     }
 
@@ -216,8 +217,8 @@ final public class FunctionMessage implements PapyrusElement, AnalyzableElement,
             BUILDER.append("ActiveScript: NONE<br/>");
         }
 
-        BUILDER.append(String.format("Flag: %s<br/>", this.FLAG));
-        BUILDER.append(String.format("Unknown: %d<br/>", this.UNKNOWN));
+        BUILDER.append(String.format("Flag: %s<br/>", this.FLAGS));
+        BUILDER.append(String.format("Unknown: %d<br/>", this.FLAG));
         BUILDER.append("</p>");
 
         if (this.hasMessage()) {
@@ -251,9 +252,9 @@ final public class FunctionMessage implements PapyrusElement, AnalyzableElement,
         return this.hasMessage() && this.MESSAGE.isUndefined();
     }
 
-    final private byte UNKNOWN;
-    final private EID ID;
     final private byte FLAG;
+    final private EID ID;
+    final private Flags.Byte FLAGS;
     final private FunctionMessageData MESSAGE;
     final private ActiveScript THREAD;
 
