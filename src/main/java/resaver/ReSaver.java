@@ -83,7 +83,7 @@ public class ReSaver implements Callable<Integer> {
                 });
 
         // Set up logging stuff.
-        LOG.getParent().getHandlers()[0].setFormatter(new java.util.logging.Formatter() {
+        /*LOG.getParent().getHandlers()[0].setFormatter(new java.util.logging.Formatter() {
             @Override
             public String format(LogRecord record) {
                 final java.util.logging.Level LEVEL = record.getLevel();
@@ -92,9 +92,9 @@ public class ReSaver implements Callable<Integer> {
                 final String LOG = String.format("%s: %s: %s\n", SRC, LEVEL, MSG);
                 return LOG;
             }
-        });
+        });*/
 
-        LOG.getParent().getHandlers()[0].setLevel(Level.INFO);
+        //LOG.getParent().getHandlers()[0].setLevel(Level.INFO);
 
         // Check the autoparse setting.
         final Path PREVIOUS = Configurator.getPreviousSave();
