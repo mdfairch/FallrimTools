@@ -100,12 +100,12 @@ final public class SaveWindow extends JFrame {
         this.FILTERFIELD = new JTreeFilterField(() -> updateFilters(false), PREFS.get("settings.regex", ""));
         this.FILTERPANEL = new JPanel(new FlowLayout(FlowLayout.LEADING));
         this.MAINPANEL = new JPanel(new BorderLayout());
+        this.STATUSPANEL2 = new JPanel();
+        
         this.PROGRESSPANEL = new JPanel();
+        this.PROGRESSPANEL.setLayout(new BoxLayout(this.PROGRESSPANEL, BoxLayout.Y_AXIS));
         
-        this.PROGRESS = new JPanel();
-        this.PROGRESS.setLayout(new BoxLayout(this.PROGRESS, BoxLayout.Y_AXIS));
-        
-        this.STATUSPANEL = new JPanel(new BorderLayout());
+        this.STATUSPANEL1 = new JPanel(new BorderLayout());
         this.TREEHISTORY = new JTreeHistory(this.TREE);
 
         this.TABLE = new VariableTable(this);
@@ -213,13 +213,13 @@ final public class SaveWindow extends JFrame {
         AutoCompletion.enable(this.PLUGINCOMBO);
         AutoCompletion.enable(this.MODCOMBO);
 
-        this.PROGRESSPANEL.add(this.LBL_MEMORY);
-        this.PROGRESSPANEL.add(this.LBL_WATCHING);
-        this.PROGRESSPANEL.add(this.LBL_SCANNING);
-        this.PROGRESSPANEL.add(this.PROGRESS);
+        this.STATUSPANEL2.add(this.LBL_MEMORY);
+        this.STATUSPANEL2.add(this.LBL_WATCHING);
+        this.STATUSPANEL2.add(this.LBL_SCANNING);
+        this.STATUSPANEL2.add(this.PROGRESSPANEL);
 
-        this.STATUSPANEL.add(this.PROGRESSPANEL, BorderLayout.LINE_START);
-        this.STATUSPANEL.add(this.TREEHISTORY, BorderLayout.LINE_END);
+        this.STATUSPANEL1.add(this.STATUSPANEL2, BorderLayout.LINE_START);
+        this.STATUSPANEL1.add(this.TREEHISTORY, BorderLayout.LINE_END);
 
         //this.TREESCROLLER.getViewport().putClientProperty("EnableWindowBlit", Boolean.TRUE);
         this.TREESCROLLER.getViewport().setScrollMode(JViewport.BACKINGSTORE_SCROLL_MODE);
@@ -239,7 +239,7 @@ final public class SaveWindow extends JFrame {
 
         this.MAINPANEL.add(this.TREESCROLLER, BorderLayout.CENTER);
         this.MAINPANEL.add(this.TOPPANEL, BorderLayout.PAGE_START);
-        this.MAINPANEL.add(this.STATUSPANEL, BorderLayout.PAGE_END);
+        this.MAINPANEL.add(this.STATUSPANEL1, BorderLayout.PAGE_END);
 
         this.MENU_FILE.setMnemonic('f');
         fillMenu(MENU_FILE, 
@@ -582,7 +582,7 @@ final public class SaveWindow extends JFrame {
      * @return
      */
     ProgressIndicator createProgressIndicator(String title, ProgressModel model) {
-        return ProgressIndicator.create(this.PROGRESS, title, model);
+        return ProgressIndicator.create(this.PROGRESSPANEL, title, model);
     }
 
     /**
@@ -2390,10 +2390,10 @@ final public class SaveWindow extends JFrame {
     final private JPanel FILTERPANEL;
     final private JTreeFilterField FILTERFIELD;
     final private JPanel TOPPANEL;
-    final private JPanel STATUSPANEL;
+    final private JPanel STATUSPANEL1;
     final private JTreeHistory TREEHISTORY;
+    final private JPanel STATUSPANEL2;
     final private JPanel PROGRESSPANEL;
-    final private JPanel PROGRESS;
     final private JMenuBar MENUBAR;
     final private JMenu MENU_FILE;
     final private JMenu MENU_FILTER;
