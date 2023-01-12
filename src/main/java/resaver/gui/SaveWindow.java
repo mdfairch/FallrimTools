@@ -101,7 +101,10 @@ final public class SaveWindow extends JFrame {
         this.FILTERPANEL = new JPanel(new FlowLayout(FlowLayout.LEADING));
         this.MAINPANEL = new JPanel(new BorderLayout());
         this.PROGRESSPANEL = new JPanel();
-        this.PROGRESS = new ProgressIndicator();
+        
+        this.PROGRESS = new JPanel();
+        this.PROGRESS.setLayout(new BoxLayout(this.PROGRESS, BoxLayout.Y_AXIS));
+        
         this.STATUSPANEL = new JPanel(new BorderLayout());
         this.TREEHISTORY = new JTreeHistory(this.TREE);
 
@@ -578,8 +581,17 @@ final public class SaveWindow extends JFrame {
      *
      * @return
      */
-    ProgressIndicator getProgressIndicator() {
-        return this.PROGRESS;
+    ProgressIndicator createProgressIndicator(String title, ProgressModel model) {
+        return ProgressIndicator.create(this.PROGRESS, title, model);
+    }
+
+    /**
+     * Makes the <code>ProgressIndicator</code> component available to subtasks.
+     *
+     * @return
+     */
+    ProgressIndicator createProgressIndicator(String title) {
+        return createProgressIndicator(title, new ProgressModel(1));
     }
 
     /**
@@ -683,53 +695,68 @@ final public class SaveWindow extends JFrame {
      * @param model The model to which the filters should be applied.
      */
     private boolean createFilter(FilterTreeModel model) {
-        LOG.info("Creating filters.");
-        final Mod MOD = this.MODCOMBO.getItemAt(this.MODCOMBO.getSelectedIndex());
-        final Plugin PLUGIN = (Plugin) this.PLUGINCOMBO.getSelectedItem();
-        final String TXT = this.FILTERFIELD.getText();
+        ProgressIndicator PROGRESS = createProgressIndicator("Creating filters");
+        
+        try {
+            LOG.info("Creating filters.");
+            final Mod MOD = this.MODCOMBO.getItemAt(this.MODCOMBO.getSelectedIndex());
+            final Plugin PLUGIN = (Plugin) this.PLUGINCOMBO.getSelectedItem();
+            final String TXT = this.FILTERFIELD.getText();
 
-        Predicate<Node> mainfilter = null;
-        if (this.save != null) {
-            FilterFactory factory = new FilterFactory(this.save, this.analysis);
-            
-            if (this.MI_SHOWUNDEFINED.isSelected()) factory.addUndefinedSubfilter();
-            if (this.MI_SHOWUNATTACHED.isSelected()) factory.addUnattachedSubfilter();
-            if (this.MI_SHOWNULLREFS.isSelected()) factory.addNullRefSubfilter();
-            if (this.MI_SHOWMEMBERLESS.isSelected()) factory.addMemberlessSubfilter();
-            if (this.MI_SHOWCANARIES.isSelected()) factory.addCanarySubfilter();
-            if (this.MI_SHOWNONEXISTENTCREATED.isSelected()) factory.addNonexistentSubfilter();
-            if (this.MI_SHOWLONGSTRINGS.isSelected()) factory.addLongStringSubfilter();
-            if (this.MI_SHOWDELETED.isSelected()) factory.addDeletedSubfilter();
-            if (this.MI_SHOWEMPTY.isSelected()) factory.addVoidSubfilter();
-            if (this.MI_SHOWSCRIPTATTACHED.isSelected()) factory.addHasScriptFilter();
-            
-            if (this.MI_SHOWPARSED1.isSelected()) factory.addUnparsedFilter(ParseLevel.PARSED);
-            if (this.MI_SHOWPARSED2.isSelected()) factory.addUnparsedFilter(ParseLevel.PARTIAL);
-            if (this.MI_SHOWPARSED3.isSelected()) factory.addUnparsedFilter(ParseLevel.UNPARSED);
-           
-            Duad<Integer> changeFilter = this.MI_CHANGEFILTER.getValue();
-            Duad<Integer> changeFormFilter = this.MI_CHANGEFORMFILTER.getValue();
-            String fieldCodes = this.MI_CHANGEFORMCONTENTFILTER.getValue();
-            
-            if (changeFilter != null) factory.addChangeFlagFilter(changeFilter.A, changeFilter.B);
-            if (changeFormFilter != null) factory.addChangeFormFlagFilter(changeFormFilter.A, changeFormFilter.B);
-            if (fieldCodes != null && !fieldCodes.isBlank()) factory.addChangeFormContentFilter(fieldCodes);
-            
-            if (MOD != null) factory.addModFilter(MOD);
-            if (PLUGIN != null) factory.addPluginFilter(PLUGIN);
-            if (!TXT.isEmpty()) factory.addRegexFilter(TXT);
-            
-            mainfilter = factory.generate();
-        }
+            Predicate<Node> mainfilter = null;
+            if (this.save != null) {
+                LOG.info("Creating FilterFactory.");
+                FilterFactory factory = new FilterFactory(this.save, this.analysis);
 
-        if (null == mainfilter) {
-            this.filter = null;
-            model.removeFilter();
-            return true;
-        } else {
-            this.filter = mainfilter;
-            model.setFilter(this.filter);
-            return true;
+                LOG.info("Adding filters.");
+                if (this.MI_SHOWUNDEFINED.isSelected()) factory.addUndefinedSubfilter();
+                if (this.MI_SHOWUNATTACHED.isSelected()) factory.addUnattachedSubfilter();
+                if (this.MI_SHOWNULLREFS.isSelected()) factory.addNullRefSubfilter();
+                if (this.MI_SHOWMEMBERLESS.isSelected()) factory.addMemberlessSubfilter();
+                if (this.MI_SHOWCANARIES.isSelected()) factory.addCanarySubfilter();
+                if (this.MI_SHOWNONEXISTENTCREATED.isSelected()) factory.addNonexistentSubfilter();
+                if (this.MI_SHOWLONGSTRINGS.isSelected()) factory.addLongStringSubfilter();
+                if (this.MI_SHOWDELETED.isSelected()) factory.addDeletedSubfilter();
+                if (this.MI_SHOWEMPTY.isSelected()) factory.addVoidSubfilter();
+                if (this.MI_SHOWSCRIPTATTACHED.isSelected()) factory.addHasScriptFilter();
+
+                if (this.MI_SHOWPARSED1.isSelected()) factory.addUnparsedFilter(ParseLevel.PARSED);
+                if (this.MI_SHOWPARSED2.isSelected()) factory.addUnparsedFilter(ParseLevel.PARTIAL);
+                if (this.MI_SHOWPARSED3.isSelected()) factory.addUnparsedFilter(ParseLevel.UNPARSED);
+
+                Duad<Integer> changeFilter = this.MI_CHANGEFILTER.getValue();
+                Duad<Integer> changeFormFilter = this.MI_CHANGEFORMFILTER.getValue();
+                String fieldCodes = this.MI_CHANGEFORMCONTENTFILTER.getValue();
+
+                if (changeFilter != null) factory.addChangeFlagFilter(changeFilter.A, changeFilter.B);
+                if (changeFormFilter != null) factory.addChangeFormFlagFilter(changeFormFilter.A, changeFormFilter.B);
+                if (fieldCodes != null && !fieldCodes.chars().allMatch(Character::isWhitespace)) factory.addChangeFormContentFilter(fieldCodes);
+
+                if (MOD != null) factory.addModFilter(MOD);
+                if (PLUGIN != null) factory.addPluginFilter(PLUGIN);
+                if (!TXT.isEmpty()) factory.addRegexFilter(TXT);
+
+                mainfilter = factory.generate();
+            }
+
+            if (null == mainfilter) {
+                LOG.warning("No filters generated.");
+                this.filter = null;
+                model.removeFilter();
+                return true;
+            } else {
+                LOG.fine("Applying filters to model.");
+                this.filter = mainfilter;
+                model.setFilter(this.filter);
+                return true;
+            }                       
+        } catch (Throwable ex) {
+            LOG.log(Level.WARNING, "Error creating filters.", ex);
+            throw ex;
+        } finally {
+            TIMER.stop();
+            PROGRESS.stop();
+            LOG.info(String.format("Done creating, took %s.", TIMER.getFormattedTime()));
         }
     }
 
@@ -740,47 +767,12 @@ final public class SaveWindow extends JFrame {
      * the setFilter settings.
      */
     private void updateFilters(boolean clear) {
-        PREFS.put("settings.regex", this.FILTERFIELD.getText());
-        PREFS.put("settings.cfc_filter", this.MI_CHANGEFORMCONTENTFILTER.getValue());
-
-        if (null == this.save) {
-            SwingUtilities.invokeLater(() -> {
-                try {
-                    TIMER.restart();
-                    LOG.info("Updating filters.");
-
-                    if (clear) {
-                        this.MI_SHOWPARSED0.setSelected(true);
-                        this.MI_SHOWNONEXISTENTCREATED.setSelected(false);
-                        this.MI_SHOWNULLREFS.setSelected(false);
-                        this.MI_SHOWUNDEFINED.setSelected(false);
-                        this.MI_SHOWUNATTACHED.setSelected(false);
-                        this.MI_SHOWMEMBERLESS.setSelected(false);
-                        this.MI_SHOWCANARIES.setSelected(false);
-                        this.MI_SHOWLONGSTRINGS.setSelected(false);
-                        this.MI_SHOWDELETED.setSelected(false);
-                        this.MI_SHOWEMPTY.setSelected(false);
-                        this.FILTERFIELD.setText("");
-                        this.MODCOMBO.setSelectedItem(null);
-                        this.MI_CHANGEFILTER.setValue(null);
-                        this.MI_CHANGEFORMFILTER.setValue(null);
-                        this.MI_CHANGEFORMCONTENTFILTER.setValue("");
-                        this.PLUGINCOMBO.setSelectedItem(null);
-                    }
-
-                    this.createFilter(this.TREE.getModel());
-
-                } finally {
-                    TIMER.stop();
-                    LOG.info(String.format("Filter updated, took %s.", TIMER.getFormattedTime()));
-                }
-            });
-
-        } else {
+        try {
+            PREFS.put("settings.regex", this.FILTERFIELD.getText());
+            PREFS.put("settings.cfc_filter", this.MI_CHANGEFORMCONTENTFILTER.getValue());
 
             final ProgressModel MODEL = new ProgressModel(10);
-            this.PROGRESS.start("Updating");
-            this.PROGRESS.setModel(MODEL);
+            final ProgressIndicator PROGRESS = createProgressIndicator("Updating", MODEL);
 
             SwingUtilities.invokeLater(() -> {
                 try {
@@ -810,7 +802,7 @@ final public class SaveWindow extends JFrame {
                     MODEL.setValue(2);
 
                     boolean result = this.createFilter(this.TREE.getModel());
-                    if (!result) {
+                    if (!result || this.save == null) {
                         return;
                     }
 
@@ -831,12 +823,16 @@ final public class SaveWindow extends JFrame {
                     }
                     MODEL.setValue(10);
 
+                } catch (Throwable ex) {
+                    LOG.log(Level.WARNING, "Error updating filters.", ex);
                 } finally {
                     TIMER.stop();
                     PROGRESS.stop();
-                    LOG.info(String.format("Filter updated, took %s.", TIMER.getFormattedTime()));
+                    LOG.info(String.format("Filters updated, took %s.", TIMER.getFormattedTime()));
                 }
             });
+        } catch (Throwable ex) {
+            LOG.log(Level.WARNING, "Error updating filters.", ex);
         }
     }
 
@@ -2397,7 +2393,7 @@ final public class SaveWindow extends JFrame {
     final private JPanel STATUSPANEL;
     final private JTreeHistory TREEHISTORY;
     final private JPanel PROGRESSPANEL;
-    final private ProgressIndicator PROGRESS;
+    final private JPanel PROGRESS;
     final private JMenuBar MENUBAR;
     final private JMenu MENU_FILE;
     final private JMenu MENU_FILTER;

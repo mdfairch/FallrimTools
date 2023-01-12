@@ -31,6 +31,14 @@ import java.util.ResourceBundle;
 @SuppressWarnings("serial")
 final public class ProgressIndicator extends JPanel {
 
+    static public ProgressIndicator create(JPanel container, String title, ProgressModel model) {
+        final ProgressIndicator PROGRESS = new ProgressIndicator();
+        container.add(PROGRESS);
+        PROGRESS.start(title);
+        PROGRESS.setModel(model);
+        return PROGRESS;
+    }
+    
     /**
      * Creates a new <code>ProgressIndicator</code>.
      *
@@ -113,6 +121,9 @@ final public class ProgressIndicator extends JPanel {
             this.BAR.setVisible(false);
             stopWaitCursor(this.getRootPane());
         }
+        
+        this.setEnabled(false);
+        this.getParent().remove(this);
     }
 
     /**

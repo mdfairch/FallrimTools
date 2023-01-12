@@ -60,15 +60,15 @@ public class Saver extends SwingWorker<ESS, Double> {
             return null;
         }
 
-        this.WINDOW.getProgressIndicator().start(I18N.getString("SAVER_SAVING"));
+        ProgressIndicator PROGRESS = this.WINDOW.createProgressIndicator("Saving");
         this.WINDOW.addWindowListener(this.LISTENER);
 
         try {
             LOG.info("================"); //NOI18N
             LOG.log(Level.INFO, "Writing to savegame file \"{0}\".", this.SAVEFILE); //NOI18N
 
-            final ProgressModel MODEL = new ProgressModel();
-            this.WINDOW.getProgressIndicator().setModel(MODEL);
+            final ProgressModel PM = new ProgressModel();
+            PROGRESS.setModel(PM);
 
             boolean watcherRunning = WINDOW.getWatcher().isRunning();
             WINDOW.getWatcher().stop();
@@ -111,7 +111,7 @@ public class Saver extends SwingWorker<ESS, Double> {
 
         } finally {
             this.WINDOW.removeWindowListener(this.LISTENER);
-            this.WINDOW.getProgressIndicator().stop();
+            PROGRESS.stop();
         }
     }
 

@@ -15,6 +15,7 @@
  */
 package resaver.gui;
 
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -79,7 +80,7 @@ public class FilterFactory {
      */
     public FilterFactory addPluginFilter(Plugin plugin) {
         Objects.requireNonNull(plugin);
-        LOG.info(String.format("Filtering: plugin = \"%s\"", plugin));
+        //LOG.info(String.format("Filtering: plugin = \"%s\"", plugin));
         return addFilter(createPluginFilter(plugin));
     }
     
@@ -90,7 +91,7 @@ public class FilterFactory {
      */
     public FilterFactory addModFilter(Mod mod) {
         Objects.requireNonNull(mod);
-        LOG.info(String.format("Filtering: mod = \"%s\"", mod));
+        //LOG.info(String.format("Filtering: mod = \"%s\"", mod));
         return addFilter(createModFilter(mod));
     }
     
@@ -101,7 +102,7 @@ public class FilterFactory {
      */
     public FilterFactory addRegexFilter(String regex) {
         Objects.requireNonNull(regex);
-        LOG.info(String.format("Filtering: regex = \"%s\"", regex));
+        //LOG.info(String.format("Filtering: regex = \"%s\"", regex));
         return addFilter(createRegexFilter(regex));
     }
     
@@ -155,6 +156,7 @@ public class FilterFactory {
      * @return
      */
     public FilterFactory addUnattachedSubfilter() {
+        
         return addSubFilter(createUnattachedFilter());
     }
     
@@ -225,7 +227,7 @@ public class FilterFactory {
     }
     
     public FilterFactory addChangeFormContentFilter(String fieldCodes) {
-        if (fieldCodes == null || fieldCodes.isBlank()) {
+        if (fieldCodes == null || fieldCodes.chars().allMatch(Character::isWhitespace)) {
             return this;
         } else {
             return addFilter(createChangeFormContentFilter(fieldCodes));
@@ -244,6 +246,7 @@ public class FilterFactory {
      * @return
      */
     private Predicate<Node> createModFilter(Mod mod) {
+        LOG.info(MessageFormat.format("Creating 'Mod' filter for {0}", mod));
         final PluginInfo PLUGINS = ESS.getPluginInfo();
         final String MODNAME = mod.getName();
         
@@ -267,8 +270,9 @@ public class FilterFactory {
      * @return
      */
     private Predicate<Node> createPluginFilter(Plugin... plugins) {
+        LOG.info(MessageFormat.format("Creating 'Plugin' filter for {0}", (Object[]) plugins));
         Objects.requireNonNull(plugins);
-        LOG.info(String.format("Filtering: plugins = \"%s\"", Arrays.toString(plugins)));
+        //LOG.info(String.format("Filtering: plugins = \"%s\"", Arrays.toString(plugins)));
 
         Set<Plugin> pluginSet = new HashSet<>(Arrays.asList(plugins));
         
@@ -305,6 +309,7 @@ public class FilterFactory {
      * @return
      */
     private Predicate<Node> createRegexFilter(String regex) {
+        LOG.info("Creating 'Regex' filter.");
         if (!regex.isEmpty()) {
             try {
                 LOG.info(String.format("Filtering: regex = \"%s\"", regex));
@@ -323,6 +328,7 @@ public class FilterFactory {
      * @return
      */
     private Predicate<Node> createUndefinedFilter() {
+        LOG.info("Creating 'Undefined' filter.");
         return node -> {
             if (node.hasElement()) {
                 Element e = node.getElement();
@@ -356,6 +362,7 @@ public class FilterFactory {
      * @return
      */
     private Predicate<Node> createUnattachedFilter() {
+        LOG.info("Creating 'Unattached' filter.");
         return node -> {
             if (node.hasElement() && node.getElement() instanceof ScriptInstance) {
                 return ((ScriptInstance) node.getElement()).isUnattached();
@@ -370,6 +377,7 @@ public class FilterFactory {
      * @return
      */
     private Predicate<Node> createMemberlessFilter() {
+        LOG.info("Creating 'Memberless' filter.");
         return node -> {
             if (node.hasElement() && node.getElement() instanceof ScriptInstance) {
                 return ((ScriptInstance) node.getElement()).hasMemberlessError();
@@ -384,6 +392,7 @@ public class FilterFactory {
      * @return
      */
     private Predicate<Node> createCanaryFilter() {
+        LOG.info("Creating 'Canary' filter.");
         return node -> {
             if (node.hasElement() && node.getElement() instanceof ScriptInstance) {
                 ScriptInstance instance = (ScriptInstance) node.getElement();
@@ -401,6 +410,7 @@ public class FilterFactory {
      * @return
      */
     private Predicate<Node> createNullRefFilter() {
+        LOG.info("Creating 'NullRef' filter.");
         return node -> {
             if (!node.hasElement() || !(node.getElement() instanceof ChangeForm)) {
                 return false;
@@ -426,6 +436,7 @@ public class FilterFactory {
      * @return
      */
     private Predicate<Node> createNonExistentFilter() {
+        LOG.info("Creating 'NonExistent' filter.");
         return node -> {
             if (node.hasElement() && node.getElement() instanceof ScriptInstance) {
                 ScriptInstance instance = (ScriptInstance) node.getElement();
@@ -442,6 +453,7 @@ public class FilterFactory {
      * @return
      */
     private Predicate<Node> createLongStringFilter() {
+        LOG.info("Creating 'LongString' filter.");
         return node -> {
             if (node.hasElement() && node.getElement() instanceof TString) {
                 TString str = (TString) node.getElement();
@@ -459,6 +471,7 @@ public class FilterFactory {
      * @return
      */
     private Predicate<Node> createDeletedFilter() {
+        LOG.info("Creating 'Deleted' filter.");
         return node -> {
             if (!node.hasElement()) {
                 return false;
@@ -511,6 +524,7 @@ public class FilterFactory {
      * @return
      */
     private Predicate<Node> createVoidFilter() {
+        LOG.info("Creating 'Void' filter.");
         return node -> {
             if (!node.hasElement()) {
                 return false;
@@ -574,6 +588,7 @@ public class FilterFactory {
      * @return
      */
     private Predicate<Node> createChangeFlagFilter(int mask, int filter) {
+        LOG.info(MessageFormat.format("Creating 'ChangeFlag' filter {0} ({1})", new Flags.Int(filter), new Flags.Int(mask)));
         if (mask == 0) {
             return node -> true;
         } else {
@@ -605,6 +620,7 @@ public class FilterFactory {
      * @return
      */
     private Predicate<Node> createChangeFormFlagFilter(int mask, int filter) {
+        LOG.info(MessageFormat.format("Creating 'ChangeFormFlag' filter {0} ({1})", new Flags.Int(filter), new Flags.Int(mask)));
         if (mask == 0) {
             return node -> true;
         } else {
@@ -652,6 +668,7 @@ public class FilterFactory {
      * @return
      */
     private Predicate<Node> createUnparsedDataFilter(ParseLevel level) {
+        LOG.info("Creating 'Unparsed' filter.");
         return node -> {
             if (!node.hasElement() || !(node.getElement() instanceof ChangeForm)) {
                 return false;
@@ -686,6 +703,7 @@ public class FilterFactory {
      * @return
      */
     private Predicate<Node> createHasScriptFilter() {
+        LOG.info("Creating 'HasScript' filter.");
         final Set<RefID> CACHE = ESS.getPapyrus()
                 .getScriptInstances()
                 .values()
@@ -720,11 +738,12 @@ public class FilterFactory {
      * @return
      */
     private Predicate<Node> createChangeFormContentFilter(String fieldCodesStringsString) {
+        LOG.info("Creating 'ChangeFormContent' filter.");
         final String AND = ";";
         final String OR = ",";
         final String NOT = "!";
-        
-        if (fieldCodesStringsString == null || fieldCodesStringsString.isBlank()) {
+
+        if (fieldCodesStringsString == null || fieldCodesStringsString.chars().allMatch(Character::isWhitespace)) {
             return n -> true;
         }
         

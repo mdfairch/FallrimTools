@@ -65,7 +65,7 @@ public class BatchCleaner extends SwingWorker<Boolean, Double> {
      */
     @Override
     protected Boolean doInBackground() throws Exception {
-        this.WINDOW.getProgressIndicator().start("Batch cleaning");
+        ProgressIndicator PROGRESS = this.WINDOW.createProgressIndicator("Batch cleaning");
         this.WINDOW.addWindowListener(this.LISTENER);
 
         try {
@@ -194,7 +194,7 @@ public class BatchCleaner extends SwingWorker<Boolean, Double> {
 
         } finally {
             this.WINDOW.removeWindowListener(this.LISTENER);
-            this.WINDOW.getProgressIndicator().stop();
+            PROGRESS.stop();
         }
     }
 

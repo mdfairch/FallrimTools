@@ -1444,7 +1444,8 @@ public class GeneralElement implements AnalyzableElement {
 
         String field = pattern[index];
         assert field != null;
-        assert !field.isBlank();
+        assert !field.isEmpty();
+        assert !field.chars().allMatch(Character::isWhitespace);
 
         if (index < pattern.length - 2) {
             return searchMatch_recurse(pattern, expected, cursor, index, field);

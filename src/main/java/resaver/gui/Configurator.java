@@ -81,7 +81,7 @@ abstract public class Configurator {
             }
 
         } catch (InterruptedException | ExecutionException ex) {
-            LOG.logrb(Level.SEVERE, I18N, "CONFIG_LOG_MODAL_INTERRUPTED", ex); //NOI18N
+            LOG.log(Level.SEVERE, "Interrupted while displaying FileChooser.", ex);
             return null;
         }
     }
@@ -248,7 +248,7 @@ abstract public class Configurator {
                 // Append the file extension if necessary.
                 Path selection = game.FILTER.accept(selected)
                         ? selected.toPath()
-                        : selected.toPath().resolveSibling(selected.getName() + "." + game.SAVE_EXT); //NOI18N //NOI18N
+                        : selected.toPath().resolveSibling(selected.getName() + "." + game.SAVE_EXT); //NOI18N
 
                 if (Files.exists(selection) && !Files.isWritable(selection)) {
                     final String MSG = MessageFormat.format(I18N.getString("CONFIG_UNWRITEABLE"), selection);

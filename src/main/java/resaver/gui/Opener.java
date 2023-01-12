@@ -68,7 +68,7 @@ public class Opener extends SwingWorker<ESS, Double> {
             return null;
         }
 
-        this.WINDOW.getProgressIndicator().start(I18N.getString("OPENER_OPENING"));
+        ProgressIndicator PROGRESS = this.WINDOW.createProgressIndicator("Opening");
         this.WINDOW.addWindowListener(this.LISTENER);
         this.WINDOW.clearESS();
 
@@ -76,13 +76,12 @@ public class Opener extends SwingWorker<ESS, Double> {
             LOG.info("================"); //NOI18N
             LOG.log(Level.INFO, "Reading from savegame file \"{0}\".", this.SAVEFILE); //NOI18N
 
-            final ProgressModel PROGRESS = new ProgressModel();
-            final ModelBuilder MB = new ModelBuilder(PROGRESS, SORT, null);
-            this.WINDOW.getProgressIndicator().setModel(PROGRESS);
+            final ProgressModel PM = new ProgressModel();
+            final ModelBuilder MB = new ModelBuilder(PM, SORT, null);
+            PROGRESS.setModel(PM);
             final ESS.Result RESULT = ESS.readESS(this.SAVEFILE, MB);
             
             WORRIER.check(RESULT);
-
             this.WINDOW.setESS(RESULT.SAVE_FILE, RESULT.ESS, RESULT.MODEL, WORRIER.shouldDisableSaving());
 
             if (this.DOAFTER != null) {
@@ -114,7 +113,7 @@ public class Opener extends SwingWorker<ESS, Double> {
 
         } finally {
             this.WINDOW.removeWindowListener(this.LISTENER);
-            this.WINDOW.getProgressIndicator().stop();
+            PROGRESS.stop();
         }
     }
 
