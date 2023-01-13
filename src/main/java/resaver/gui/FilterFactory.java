@@ -571,7 +571,7 @@ public class FilterFactory {
                     if (ROOT.hasVal("EXTRADATA")) {
                         final GeneralElement EXTRA = ROOT.getGeneralElement("EXTRADATA");
                         VSVal count = (VSVal) EXTRA.getVal("DATA_COUNT");
-                        return count.getValue() == 0;
+                        return count != null && count.getValue() == 0;
                     }
                 }
             }

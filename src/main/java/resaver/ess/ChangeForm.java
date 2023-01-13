@@ -359,6 +359,7 @@ final public class ChangeForm implements Element, AnalyzableElement, Linkable {
         } catch (ElementException ex) {
             if (bestEffort && ex.getPartial() instanceof ChangeFormData) {
                 LOG.warning(ex.getMessage());
+                //LOG.log(Level.WARNING, "FAIL", ex);
                 this.parsedData = (ChangeFormData) ex.getPartial();
             } else {
                 return null;
