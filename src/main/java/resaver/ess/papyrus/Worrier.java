@@ -15,6 +15,7 @@
  */
 package resaver.ess.papyrus;
 
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -23,6 +24,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.function.Function;
 import resaver.Game;
 import resaver.ess.ESS;
 import resaver.ess.Header;
@@ -248,15 +250,16 @@ final public class Worrier {
                     this.shouldWorry = true;
                 }
 
-                List<Script> canaryErrors = this.previousCanaries.keySet().stream()
+                List<mf.Pair<Script,Integer>> canaryErrors = this.previousCanaries.keySet().stream()
                         .filter(script -> currentCanaries.containsKey(script))
                         .filter(script -> previousCanaries.get(script) != 0)
                         .filter(script -> currentCanaries.get(script) == 0)
+                        .map(mf.Pair.mapper(s->s, s->previousCanaries.get(s)))
                         .collect(Collectors.toList());
 
                 if (!canaryErrors.isEmpty()) {
                     String msg = "This savefile has %d zeroed canaries.";
-                    BUF.append(makeHTMLList(msg, canaryErrors, LIMIT, i -> i.toHTML(null)));
+                    BUF.append(makeHTMLList(msg, canaryErrors, LIMIT, CanaryErrorFormatter));
                     this.shouldWorry = true;
                 }                
             }
@@ -269,7 +272,7 @@ final public class Worrier {
 
         if (!memberless.isEmpty()) {
             String msg = "This savefile has %d script instances whose data is missing.";
-            BUF.append(makeHTMLList(msg, memberless, LIMIT, i -> i.getScript().toHTML(null)));
+            BUF.append(makeHTMLList(msg, memberless, LIMIT, MemberlessFormatter));
             this.shouldWorry = true;
         }
 
@@ -280,7 +283,7 @@ final public class Worrier {
 
         if (!definitionErrors.isEmpty()) {
             String msg = "This savefile has %d script instances with mismatched member data.";
-            BUF.append(makeHTMLList(msg, definitionErrors, LIMIT, i -> i.getScript().toHTML(null)));
+            BUF.append(makeHTMLList(msg, definitionErrors, LIMIT, DefinitionErrorFormatter));
             this.shouldWorry = true;
         }
 
@@ -354,4 +357,9 @@ final public class Worrier {
     //static final private Logger LOG = Logger.getLogger(Worrier.class.getCanonicalName());
     //static final private PathMatcher MATCHER = FileSystems.getDefault().getPathMatcher("glob:**.{fos,ess}");
     static final private int LIMIT = 12;
+    
+    static final private Function<mf.Pair<Script,Integer>,String> CanaryErrorFormatter = i -> MessageFormat.format("{0} ({1}->0)", i.A.toHTML(null), i.B);    
+    static final private Function<ScriptInstance,String> MemberlessFormatter = i -> MessageFormat.format("{0} ({1})", i.toHTML(null), i.getScript().getExtendedMembers().size());
+    static final private Function<ScriptInstance,String> DefinitionErrorFormatter = i -> MessageFormat.format("{0}", i.toHTML(null));
+
 }
