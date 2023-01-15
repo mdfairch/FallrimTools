@@ -62,10 +62,16 @@ final class BSAHeader {
         this.TOTAL_FILENAME_LENGTH = input.getInt();
         this.FILE_FLAGS = input.getInt();
         
-        this.INCLUDE_DIRECTORYNAMES = (this.ARCHIVE_FLAGS & 0x1) != 0;
-        this.INCLUDE_FILENAMES = (this.ARCHIVE_FLAGS & 0x2) != 0;
-        this.ISCOMPRESSED = (this.ARCHIVE_FLAGS & 0x4) != 0;
-        this.EMBED_FILENAME = (this.ARCHIVE_FLAGS & 0x100) != 0;
+        this.INCLUDE_DIRECTORYNAMES = (this.ARCHIVE_FLAGS & FLAG_INCLUDE_DIRECTORYNAMES) != 0;
+        this.INCLUDE_FILENAMES = (this.ARCHIVE_FLAGS & FLAG_INCLUDE_FILENAMES) != 0;
+        this.ISCOMPRESSED = (this.ARCHIVE_FLAGS & FLAG_ISCOMPRESSED) != 0;
+        this.EMBED_FILENAME = (this.ARCHIVE_FLAGS & FLAG_EMBED_FILENAME) != 0;
+        
+        this.RETAIN_DIRNAMES = (this.ARCHIVE_FLAGS & FLAG_RETAIN_DIRNAMES) != 0;
+        this.RETAIN_FILENAMES = (this.ARCHIVE_FLAGS & FLAG_RETAIN_FILENAMES) != 0;
+        this.RETAIN_OFFSETS = (this.ARCHIVE_FLAGS & FLAG_RETAIN_OFFSETS) != 0;
+        this.XBOX360 = (this.ARCHIVE_FLAGS & FLAG_XBOX360) != 0;
+        this.XMEM_CODEC = (this.ARCHIVE_FLAGS & FLAG_XMEM_CODEC) != 0;
     }
 
     @Override
@@ -90,5 +96,22 @@ final class BSAHeader {
     final public boolean INCLUDE_FILENAMES;
     final public boolean ISCOMPRESSED;
     final public boolean EMBED_FILENAME;
+    
+    final public boolean RETAIN_DIRNAMES;
+    final public boolean RETAIN_FILENAMES;
+    final public boolean RETAIN_OFFSETS;
+    final public boolean XBOX360;
+    final public boolean XMEM_CODEC;
 
+    static final public int FLAG_INCLUDE_DIRECTORYNAMES = 0x1;
+    static final public int FLAG_INCLUDE_FILENAMES = 0x2;
+    static final public int FLAG_ISCOMPRESSED = 0x4;
+    static final public int FLAG_RETAIN_DIRNAMES = 0x08;
+    static final public int FLAG_RETAIN_FILENAMES = 0x10;
+    static final public int FLAG_RETAIN_OFFSETS = 0x20;
+    static final public int FLAG_XBOX360 = 0x40;
+    static final public int FLAG_RETAIN_STRINGS = 0x80;
+    static final public int FLAG_EMBED_FILENAME = 0x100;
+    static final public int FLAG_XMEM_CODEC = 0x200;
+    
 }
