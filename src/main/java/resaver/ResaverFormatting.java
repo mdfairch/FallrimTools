@@ -56,15 +56,15 @@ abstract public class ResaverFormatting {
         }
     }
     
-    static public <T> CharSequence makeHTMLList(String msg, List<T> items, int limit) {
+    static public <T> CharSequence makeHTMLList(String msg, java.util.Collection<T> items, int limit) {
         return makeHTMLList(msg, items, limit, s -> s.toString());
     }
     
-    static public <T> CharSequence makeTextList(String msg, List<T> items, int limit) {
+    static public <T> CharSequence makeTextList(String msg, java.util.Collection<T> items, int limit) {
         return makeTextList(msg, items, limit, s -> s.toString());
     }
     
-    static public <T> CharSequence makeHTMLList(String msg, List<T> items, int limit, Function<T, CharSequence> namer) {
+    static public <T> CharSequence makeHTMLList(String msg, java.util.Collection<T> items, int limit, Function<T, ? extends CharSequence> namer) {
         int excess = items.size() - limit;
         List<String> names = items.stream()
                 .limit(limit)
@@ -83,7 +83,7 @@ abstract public class ResaverFormatting {
         ).toString();
     }
 
-    static public <T> CharSequence makeTextList(String msg, List<T> items, int limit, Function<T, CharSequence> namer) {
+    static public <T> CharSequence makeTextList(String msg, java.util.Collection<T> items, int limit, Function<T, ? extends CharSequence> namer) {
         final StringBuilder BUF = new StringBuilder();
         BUF.append(String.format(msg, items.size()));
 
