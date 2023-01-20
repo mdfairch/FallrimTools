@@ -34,7 +34,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 import resaver.Game;
 import resaver.ProgressModel;
 import resaver.ess.papyrus.Papyrus;
-import static resaver.ess.SortingMethod.*;
 
 
 /**
@@ -100,7 +99,7 @@ public class ESSTest {
             final ESS.Result IN_RESULT = ESS.readESS(path, MODEL_ORIGINAL);
             final ESS ORIGINAL = IN_RESULT.ESS;
 
-            if (ORIGINAL.isTruncated() || ORIGINAL.getPapyrus().getStringTable().hasSTB()) {                
+            if (ORIGINAL.isBroken() || ORIGINAL.getPapyrus().getStringTable().hasSTB()) {                
                 System.out.println("\tCorruption detected");
                 return;
             }
