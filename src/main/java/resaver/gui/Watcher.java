@@ -39,7 +39,7 @@ import java.util.stream.Collectors;
 import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
 import resaver.Game;
-import resaver.ess.ModelBuilder.SortingMethod;
+import resaver.ess.SortingMethod;
 import resaver.ess.papyrus.Worrier;
 
 /**

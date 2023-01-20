@@ -268,6 +268,7 @@ public class PapyrusContext extends resaver.ess.ESS.ESSContext {
 
     public void search(BiConsumer<Element, Element> consumer) {
         final mf.ConsoleProgress PROGRESS = new mf.ConsoleProgress();
+        PROGRESS.toggleQuiet();
 
         PROGRESS.reset("ChangeForms", this.getESS().getChangeForms().size());
         this.getESS().getChangeForms().stream().filter(PROGRESS::inc).filter(Objects::nonNull).forEach(form -> {
@@ -460,7 +461,7 @@ public class PapyrusContext extends resaver.ess.ESS.ESSContext {
         int pass = 0;
         while (true) {
             pass++;
-            System.out.println("Cross-referencing plugins: pass " + pass);
+            //System.out.println("Cross-referencing plugins: pass " + pass);
             boolean removedIntersections = cleanReachability(REACHABILITY, ELIMINATED, KERNEL);
             boolean extendedReachability = extendReachability(REACHABILITY, ELIMINATED, KERNEL);
             if (!removedIntersections && !extendedReachability) {
@@ -469,6 +470,7 @@ public class PapyrusContext extends resaver.ess.ESS.ESSContext {
         }
 
         final mf.ConsoleProgress PROGRESS = new mf.ConsoleProgress();
+        PROGRESS.toggleQuiet();
 
         PROGRESS.reset("Collecting plugin forms", this.getESS().getChangeForms());
         this.getESS().getChangeForms().stream().filter(PROGRESS::inc).filter(Objects::nonNull).forEach(form -> {
@@ -496,6 +498,7 @@ public class PapyrusContext extends resaver.ess.ESS.ESSContext {
         boolean extendedReach = false;
 
         final mf.ConsoleProgress PROGRESS = new mf.ConsoleProgress();
+        PROGRESS.toggleQuiet();
         PROGRESS.reset("\tExtending reachability", kernel);
         
         for (T kern : kernel) {
@@ -522,6 +525,7 @@ public class PapyrusContext extends resaver.ess.ESS.ESSContext {
         final java.util.HashSet<T> intersection = new java.util.HashSet<>(2000);
 
         final mf.ConsoleProgress PROGRESS = new mf.ConsoleProgress();
+        PROGRESS.toggleQuiet();
         PROGRESS.reset("\tCleaning reachability", kernel);
         
         for (int i = 0; i < kernel.length; i++) {

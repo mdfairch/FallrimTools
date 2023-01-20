@@ -140,7 +140,7 @@ public class ModelBuilder {
             NODE.addAll(plugins.getFullPlugins().stream().map(p -> new PluginNode(p)).collect(Collectors.toList()));
             PROGRESS.modifyValue(1);
             NODE.sort();
-            System.out.println("Plugins-Full sorted.");
+            //System.out.println("Plugins-Full sorted.");
             PROGRESS.modifyValue(1);
             return NODE;
         }));
@@ -150,7 +150,7 @@ public class ModelBuilder {
             NODE.addAll(plugins.getLitePlugins().stream().map(p -> new PluginNode(p)).collect(Collectors.toList()));
             PROGRESS.modifyValue(1);
             NODE.sort();
-            System.out.println("Plugins-Lite sorted.");
+            //System.out.println("Plugins-Lite sorted.");
             PROGRESS.modifyValue(1);
             return NODE;
         }));
@@ -542,7 +542,6 @@ public class ModelBuilder {
 
 
 
-    static public enum SortingMethod { ALPHA, SIZE, MASS, NONE };
     static public Comparator<Node> byCount = (n1, n2) -> Integer.compare(n1.countLeaves(), n2.countLeaves());
     static public Comparator<Object> byName = (o1, o2) -> o1.toString().compareToIgnoreCase(o2.toString());
     static public Comparator<Element> bySize = (e1, e2) -> Integer.compare(e1.calculateSize(), e2.calculateSize());

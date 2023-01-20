@@ -1,7 +1,17 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Copyright 2022 Mark.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package mf;
 
@@ -13,6 +23,12 @@ final public class ConsoleProgress {
 
     public ConsoleProgress() {
         reset(null, 1);
+    }
+    
+    public boolean toggleQuiet()
+    {
+        this.quiet = !this.quiet;
+        return this.quiet;
     }
     
     public <T> void reset(String newLabel, java.util.Collection<T> collection) {
@@ -42,11 +58,13 @@ final public class ConsoleProgress {
     }
     
     public void inc() {
-        if (current == 0 && label != null) {
+        current += 1;
+        
+        if (quiet) return;
+        
+        if (current == 1 && label != null) {
             System.out.print(label);            
         }
-        
-        current += 1;
         
         if (current == total) {
             System.out.println(timer.getFormattedTime());            
@@ -62,4 +80,5 @@ final public class ConsoleProgress {
     private String label;
     private int total;
     private int division;
+    private boolean quiet;
 }

@@ -52,7 +52,6 @@ import mf.Duad;
 import mf.JValueMenuItem;
 import resaver.*;
 import resaver.ess.*;
-import static resaver.ess.ModelBuilder.SortingMethod;
 import resaver.ess.papyrus.*;
 import resaver.gui.FilterTreeModel.Node;
 import resaver.pex.AssemblyLevel;

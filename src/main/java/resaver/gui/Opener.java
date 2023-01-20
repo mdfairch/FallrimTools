@@ -31,8 +31,8 @@ import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import resaver.ess.ESS;
 import resaver.ess.ModelBuilder;
+import resaver.ess.SortingMethod;
 import resaver.ess.papyrus.Worrier;
-import static resaver.ess.ModelBuilder.SortingMethod;
 
 /**
  *
