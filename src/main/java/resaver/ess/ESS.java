@@ -142,7 +142,7 @@ final public class ESS implements Element {
             if (Files.exists(COSAVE_FILE)) {
                 makeBackupFile(COSAVE_FILE);
             }
-            Files.write(COSAVE_FILE, ess.COSAVE);
+            Files.write(COSAVE_FILE, ess.COSAVE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
         }
 
         try ( FileChannel channel = FileChannel.open(saveFile, StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING)) {
