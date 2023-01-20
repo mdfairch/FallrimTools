@@ -77,7 +77,7 @@ final public class SaveWindow extends JFrame {
     public SaveWindow(Path path, boolean autoParse) {
         super.setExtendedState(PREFS.getInt("settings.extendedState", JFrame.MAXIMIZED_BOTH));
 
-        this.JFXPANEL = PREFS.getBoolean("settings.javafx", false)
+        this.JFXPANEL = PREFS.getBoolean("settings.javafx", true)
                 ? this.initializeJavaFX()
                 : null;
 
@@ -851,10 +851,7 @@ final public class SaveWindow extends JFrame {
             this.LBL_MEMORY.terminate();
             this.setVisible(false);
             this.dispose();
-
-            if (this.JFXPANEL != null) {
-                this.terminateJavaFX();
-            }
+            this.terminateJavaFX();
         });
     }
 
@@ -2309,7 +2306,7 @@ final public class SaveWindow extends JFrame {
      * @return Indicates whether JavaFX was found or not.
      */
     public boolean isJavaFXAvailable() {
-        return this.JFXPANEL != null && PREFS.getBoolean("settings.javafx", false);
+        return this.JFXPANEL != null && PREFS.getBoolean("settings.javafx", true);
     }
 
     /**
