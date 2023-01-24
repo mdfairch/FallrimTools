@@ -587,8 +587,8 @@ final public class ActiveScript implements AnalyzableElement, HasID, SeparateDat
                 throw new PapyrusElementException("Failed to read StackFrame data.", ex, this);
             }
 
-            //if (this.FLAG != 0) {
-            if (!this.STACKFRAMES.isEmpty()) {
+            boolean fo4SpecialCondition = (this.FLAG == 0 && context.getGame().isFO4());
+            if (!this.STACKFRAMES.isEmpty() && !fo4SpecialCondition) {
                 this.UNKNOWN5 = input.get();
             } else {
                 this.UNKNOWN5 = null;
