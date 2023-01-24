@@ -587,7 +587,12 @@ final public class ActiveScript implements AnalyzableElement, HasID, SeparateDat
                 throw new PapyrusElementException("Failed to read StackFrame data.", ex, this);
             }
 
+            // As far as I can tell, this condition has something to do with
+            // native calls that do not originate from a papyrus function.
+            // It suggests that unknown5 is related to presence of papyrus 
+            // functions in the stack. 
             boolean fo4SpecialCondition = (this.FLAG == 0 && context.getGame().isFO4());
+            
             if (!this.STACKFRAMES.isEmpty() && !fo4SpecialCondition) {
                 this.UNKNOWN5 = input.get();
             } else {
