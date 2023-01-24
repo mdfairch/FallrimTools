@@ -31,12 +31,6 @@ import java.util.regex.Pattern;
 @SuppressWarnings("serial")
 public class IString implements CharSequence, java.io.Serializable, Comparable<IString> {
 
-    static public int getCacheSize() {
-        return CACHE.size();
-    }
-    
-    static private WeakHashMap<String, IString> CACHE = new WeakHashMap<>(10000);
-
     /**
      * A re-usable blank <code>IString</code>.
      */
@@ -93,9 +87,10 @@ public class IString implements CharSequence, java.io.Serializable, Comparable<I
     }
 
     /**
-     * @see java.lang.String#isEmpty()
      * @return True if the <code>IString</code> is empty, false otherwise.
+     * @see java.lang.String#isEmpty()
      */
+    @Override
     public boolean isEmpty() {
         return this.STRING.isEmpty();
     }
@@ -189,11 +184,17 @@ public class IString implements CharSequence, java.io.Serializable, Comparable<I
      * Tests for case-insensitive value-equality with an <code>IString</code>.
      *
      * @param other The <code>IString</code> to which to compare.
-     * @return 
+     * @return <code>true</code> if the string are a case-insensitive match.
      * @see java.lang.String#equalsIgnoreCase(java.lang.String)
      */
     public boolean equals(IString other) {
-        return this.HASHCODE == other.hashCode() && this.STRING.equalsIgnoreCase(other.STRING);
+        // IStrings end up in hashmaps a lot, so we cache their hashcodes.
+        // Calculating the hashcodes is comparitively slow so this pays off.
+        // And that provides a very convenient way to short-circuit this
+        // equality.
+        return this.HASHCODE != other.hashCode() 
+                ? false
+                : this.STRING.equalsIgnoreCase(other.STRING);
     }
 
     /**
@@ -230,11 +231,24 @@ public class IString implements CharSequence, java.io.Serializable, Comparable<I
         return new IString(String.format(format, args));
     }
 
-    final private String STRING;
-    final private int HASHCODE;
-
+    
+    /**
+     * Comparator for <code>IString</code> which ignores case.
+     * @param s1 The first string
+     * @param s2 The second string
+     * @return The order code.
+     */
     static public int compare(IString s1, IString s2) {
         return Objects.compare(s1.STRING, s2.STRING, String::compareToIgnoreCase);
     }
+    
+    final private String STRING;
+    final private int HASHCODE;
+
+    /**
+     * Stores all <code>IString</code> instances for re-use, because they 
+     * do get reused a LOT. This saves a massive amount of memory.
+     */
+    static private WeakHashMap<String, IString> CACHE = new WeakHashMap<>(60_000);
 
 }
