@@ -34,7 +34,7 @@ final public class RefID implements Element, Linkable, Comparable<RefID> {
      * @param newData
      * @param ess The savefile for context.
      */
-    RefID(int newData, ESS ess) {
+    RefID(int newData, ESS ess, boolean overflow) {
         this.DATA = newData;
 
         if (this.isZero()) {
@@ -45,7 +45,7 @@ final public class RefID implements Element, Linkable, Comparable<RefID> {
 
             switch (this.getType()) {
                 case DEFAULT:
-                    this.PLUGIN = PLUGINS.getFullPlugins().get(0);
+                    this.PLUGIN = overflow ? null : PLUGINS.getFullPlugins().get(0);
                     this.FORMID = this.getValPart();
                     break;
                 case CREATED:
