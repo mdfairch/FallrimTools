@@ -528,12 +528,10 @@ final public class SaveWindow extends JFrame {
      *
      */
     void setAnalysis(Analysis newAnalysis) {
-        if (newAnalysis != this.analysis) {
-            this.analysis = newAnalysis;
-            this.updateContextInformation();
-            this.save.addNames(analysis);
-            this.refreshTree();
-        }
+        this.analysis = newAnalysis;
+        this.updateContextInformation();
+        this.save.addNames(analysis);
+        this.refreshTree();
 
         if (null != this.analysis) {
             this.MI_LOOKUPID.setEnabled(true);
@@ -1011,7 +1009,7 @@ final public class SaveWindow extends JFrame {
 
             final Runnable DOAFTER = () -> {
                 updateFilters(false);
-                if (parse) {
+                if (parse) {                    
                     scanESPs(false);
                 }                
             };
@@ -1051,30 +1049,54 @@ final public class SaveWindow extends JFrame {
             this.scanner.cancel(true);
             this.scanner = null;
         }
+        
+        if (this.analysis != null && this.analysis.PLUGINS.equals(this.save.getPluginInfo()))
+        {
+            LOG.info("Reusing analysis.");
+            this.setAnalysis(this.analysis);
+            
+        } else {
+            final Game GAME = this.save.getHeader().GAME;
 
-        final Game GAME = this.save.getHeader().GAME;
+            final Path GAME_DIR = Configurator.choosePathModal(this,
+                    () -> Configurator.getGameDirectory(GAME),
+                    () -> Configurator.selectGameDirectory(SaveWindow.this, GAME),
+                    path -> Configurator.validateGameDirectory(GAME, path),
+                    interactive);
 
-        final Path GAME_DIR = Configurator.choosePathModal(this,
-                () -> Configurator.getGameDirectory(GAME),
-                () -> Configurator.selectGameDirectory(SaveWindow.this, GAME),
-                path -> Configurator.validateGameDirectory(GAME, path),
-                interactive);
+            final Path MO2_INI = this.MI_USEMO2.isSelected()
+                    ? Configurator.choosePathModal(this,
+                            () -> Configurator.getMO2Ini(GAME),
+                            () -> Configurator.selectMO2Ini(this, GAME),
+                            path -> Configurator.validateMO2Ini(path),
+                            interactive)
+                    : null;
 
-        final Path MO2_INI = this.MI_USEMO2.isSelected()
-                ? Configurator.choosePathModal(this,
-                        () -> Configurator.getMO2Ini(GAME),
-                        () -> Configurator.selectMO2Ini(this, GAME),
-                        path -> Configurator.validateMO2Ini(path),
-                        interactive)
-                : null;
+            if (GAME_DIR != null) {
+                this.scanner = new Scanner(this, this.save, GAME_DIR, MO2_INI, 
+                    this::onScanComplete, 
+                    this::onScanProgress);
 
-        if (GAME_DIR != null) {
-            this.scanner = new Scanner(this, this.save, GAME_DIR, MO2_INI, this::onScanComplete, this::onScanProgress);
-            this.scanner.execute();
-            this.setScanning(true);
+                this.scanner.execute();
+                this.setScanning(true);
+            }            
         }
     }
 
+    private void onScanProgress(String msg) {
+        this.LBL_SCANNING.setText(msg);
+    }
+
+    
+    /**
+     * Called when scan-esps is complete.
+     */
+    private void onScanComplete() {
+        this.setScanning(false);
+        this.updateFilters(false);
+    }
+    
+    
     /**
      * Display the settings dialogbox.
      */
@@ -1553,10 +1575,6 @@ final public class SaveWindow extends JFrame {
         }
     }
 
-    private void onScanProgress(String msg) {
-        this.LBL_SCANNING.setText(msg);
-    }
-
     /**
      * Begin the watcher service.
      */
@@ -1570,14 +1588,6 @@ final public class SaveWindow extends JFrame {
         }
     }
 
-    /**
-     * Called when scan-esps is complete.
-     */
-    private void onScanComplete() {
-        this.setScanning(false);
-        this.updateFilters(false);
-    }
-    
     /**
      *
      */

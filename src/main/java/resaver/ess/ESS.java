@@ -215,12 +215,12 @@ final public class ESS implements Element {
 
             switch (COMPRESSION) {
                 case ZLIB:
-                    LOG.fine("ZLIB DECOMPRESSION");
+                    LOG.info("ZLIB DECOMPRESSION");
                     INPUT = BufferUtil.inflateZLIB(COMPRESSED, UNCOMPRESSED_LEN, COMPRESSED_LEN);
                     INPUT.order(ByteOrder.LITTLE_ENDIAN);
                     break;
                 case LZ4:
-                    LOG.fine("LZ4 DECOMPRESSION");
+                    LOG.info("LZ4 DECOMPRESSION");
                     INPUT = BufferUtil.inflateLZ4(COMPRESSED, UNCOMPRESSED_LEN);
                     INPUT.order(ByteOrder.LITTLE_ENDIAN);
                     break;
@@ -230,7 +230,7 @@ final public class ESS implements Element {
 
             ORIGINAL_SIZE = UNCOMPRESSED_LEN;
         } else {
-            LOG.fine("NO FILE COMPRESSION");
+            LOG.info("NO FILE COMPRESSION");
             INPUT = buffer.slice();
             INPUT.order(ByteOrder.LITTLE_ENDIAN);
             ORIGINAL_SIZE = INPUT.remaining();
@@ -298,7 +298,7 @@ final public class ESS implements Element {
         try {
             pluginsPartial = new PluginInfo(INPUT, this.supportsESL());
         } catch (PluginInfo.PluginOverflowException ex) {
-            this.truncated = true;
+            this.pluginOverflow = true;
             pluginsPartial = (PluginInfo) ex.getPartial();
             LOG.log(Level.SEVERE, "Error while reading Plugins.", ex);
         }
@@ -424,7 +424,7 @@ final public class ESS implements Element {
 
             } catch (PapyrusException ex) {
                 LOG.log(Level.SEVERE, "Error reading GlobalData 1001 (Papyrus).", ex);
-                this.truncated = true;
+                this.papyrusError = true;
                 ex.printStackTrace(System.err);
                 papyrusPartial = ex.getPartial();
 
@@ -800,9 +800,24 @@ final public class ESS implements Element {
      * @return A flag indicating if the savefile has a truncation error.
      */
     public boolean isBroken() {
-        return null != this.PAPYRUS 
-                ? this.truncated || this.pluginOverflow || this.PAPYRUS.isBroken()
-                : this.truncated || this.pluginOverflow;
+        return papyrusError
+                || isPluginOverflow() 
+                || isTruncated() 
+                || (null != this.PAPYRUS && this.PAPYRUS.isBroken());
+    }
+
+    /**
+     * @return A flag indicating if the savefile has a plugin overflow error.
+     */
+    public boolean isPluginOverflow() {
+        return this.pluginOverflow;
+    }
+
+    /**
+     * @return A flag indicating if the savefile has a truncation error.
+     */
+    public boolean isTruncated() {
+        return this.truncated;
     }
 
     /**
@@ -1088,16 +1103,27 @@ final public class ESS implements Element {
     }
 
     /**
+     * Returns a <code>RefID</code> for the specified 3-byte value, creating
+     * a new one if necessary.
+     *
+     * @param val The 3-byte value with which to create the <code>RefID</code>.
+     * @return The <code>RefID</code>.
+     */
+    public RefID make(int val) {
+        //RefID r = new RefID(val, this);
+        return this.REFIDS.computeIfAbsent(val, this::makeNew);
+    }
+
+    /**
      * Creates a new <code>RefID</code> directly.
      *
      * @param val The 3-byte value with which to create the <code>RefID</code>.
      * @return The new <code>RefID</code>.
      */
-    public RefID make(int val) {
-        //RefID r = new RefID(val, this);
-        return this.REFIDS.computeIfAbsent(val, v -> new RefID(val, this));
+    private RefID makeNew(int val) {
+        return new RefID(val, this, this.pluginOverflow);
     }
-
+    
     /**
      * @return String representation.
      */
@@ -1240,6 +1266,7 @@ final public class ESS implements Element {
     private resaver.Analysis analysis;
     private boolean truncated = false;
     private boolean pluginOverflow = false;
+    private boolean papyrusError = false;
     final private int ORIGINAL_SIZE;
 
     static final private Logger LOG = Logger.getLogger(ESS.class.getCanonicalName());

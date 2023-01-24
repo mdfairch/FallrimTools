@@ -257,7 +257,13 @@ public class Scanner extends SwingWorker<resaver.Analysis, Double> {
 
             this.PROGRESS.accept(I18N.getString("SCANNER_CREATING_ANALYSIS"));
 
-            final resaver.Analysis ANALYSIS = new resaver.Analysis(PROFILEANALYSIS, PLUGIN_DATA, STRINGTABLE, hasModInfo);
+            final resaver.Analysis ANALYSIS = new resaver.Analysis(
+                    this.SAVE.getPluginInfo(), 
+                    PROFILEANALYSIS, 
+                    PLUGIN_DATA, 
+                    STRINGTABLE, 
+                    hasModInfo);
+            
             if (null != this.SAVE) {
                 this.WINDOW.setAnalysis(ANALYSIS);
             }

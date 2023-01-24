@@ -23,6 +23,7 @@ import resaver.esp.PluginData;
 import resaver.esp.RecordCode;
 import resaver.esp.StringTable;
 import resaver.ess.Plugin;
+import resaver.ess.PluginInfo;
 
 /**
  * Combines the results of script analysis and ESP analysis.
@@ -34,12 +35,14 @@ final public class Analysis extends Mod.Analysis { //implements java.io.Serializ
     /**
      * Creates a new <code>Analysis</code>.
      *
-     * @param profileAnalysis
+     * @param plugins The <code>Plugininfo</code> structure of the savefile.
+     * @param profileAnalysis 
      * @param espInfos
      * @param strings
      * @param hasModInfo 
      */
-    public Analysis(Mod.Analysis profileAnalysis, Map<Plugin, PluginData> espInfos, StringTable strings, boolean hasModInfo) {
+    public Analysis(PluginInfo plugins, Mod.Analysis profileAnalysis, Map<Plugin, PluginData> espInfos, StringTable strings, boolean hasModInfo) {
+        this.PLUGINS = plugins;
         this.ESP_INFOS = Objects.requireNonNull(espInfos);
         this.STRINGS = Objects.requireNonNull(strings);
         this.MODS.addAll(profileAnalysis.MODS);
@@ -73,6 +76,7 @@ final public class Analysis extends Mod.Analysis { //implements java.io.Serializ
         return this.ESP_INFOS.values().stream().mapToLong(i -> i.getScriptDataSize()).sum();
     }
 
+    final public PluginInfo PLUGINS;
     final public Map<Plugin, PluginData> ESP_INFOS;
     final public StringTable STRINGS;
     final public boolean HAS_MOD_INFO;
