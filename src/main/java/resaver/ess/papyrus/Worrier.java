@@ -29,6 +29,7 @@ import resaver.Game;
 import resaver.ess.ESS;
 import resaver.ess.Header;
 import static resaver.ResaverFormatting.makeHTMLList;
+import resaver.ess.RefID;
 import resaver.ess.WStringElement;
 
 /**
@@ -53,28 +54,43 @@ final public class Worrier {
 
         // Check the first fatal condition -- truncation.
         if (ESS.isBroken()) {
-            BUF.append("<p><em>THIS FILE IS TRUNCATED.</em> It is corrupted and can never be recovered, not even by the pure-hearted love of a Paraguay Jaguar.");
+            BUF.append("<p><em>THIS FILE IS BROKEN.</em> It is corrupted and can never be recovered, not even by the pure-hearted love of a Paraguay Jaguar.");
 
+            if (ESS.isPluginOverflow()) {
+                BUF.append("<br/><strong>PLUGIN OVERFLOW ERROR.</strong> This is caused by having exactly 255 or 256 plugins installed.");
+            }
+
+            if (ESS.isTruncated()) {
+                BUF.append("<br/><strong>TRUNCATED SAVEFILE.</strong> This is usually caused by too many scripts running at once, recursive scripts without proper boundary conditions, excessive size, or multithreading problems.");
+            }
+                
             if (PAPYRUS == null) {
                 BUF.append("<br/><strong>No Papyrus section.</strong>");
+            } else {
+                if (PAPYRUS.getStringTable().isTruncated()) {
+                    int missing = PAPYRUS.getStringTable().getMissingCount();
+                    BUF.append("<br/><strong>TRUNCATED STRING TABLE.</strong> ")
+                            .append(missing)
+                            .append(" strings missing. The cause of this is unknown, but sometimes involves the scripts that append to strings in a loop.");
+                } 
                 
-            } else if (PAPYRUS.getStringTable().isTruncated()) {
-                int missing = PAPYRUS.getStringTable().getMissingCount();
-                BUF.append("<br/><strong>TRUNCATED STRING TABLE.</strong> ")
-                        .append(missing)
-                        .append(" strings missing. The cause of this is unknown, but sometimes involves the scripts that append to strings in a loop.");
-            } else if (PAPYRUS.isBroken()) {
-                BUF.append("<br/><strong>TRUNCATED PAPYRUS BLOCK.</strong> This is usually caused by too many scripts running at once, or recursive scripts without proper boundary conditions.");
-            }
-            
-            if (Arrays.stream(ESS.getFormIDs()).anyMatch(i -> i == 0)) {
-                int present = 0;
-                while (present < ESS.getFormIDs().length && ESS.getFormIDs()[present] != 0) {
-                    present++;
+                if (PAPYRUS.isTruncated()) {
+                    BUF.append("<br/><strong>TRUNCATED PAPYRUS BLOCK.</strong> This is usually caused by too many scripts running at once, or recursive scripts without proper boundary conditions.");
                 }
-                BUF.append("<br/><strong>TRUNCATED FORMID ARRAY</strong>. ")
-                        .append(present).append('/').append(ESS.getFormIDs().length)
-                        .append(" formIDs read. This is sometimes caused by updating mods without following their proper updating procedure.");
+                
+                if (Arrays.stream(ESS.getFormIDs()).anyMatch(i -> i == 0)) {
+                    int present = 0;
+                    while (present < ESS.getFormIDs().length && ESS.getFormIDs()[present] != 0) {
+                        present++;
+                    }
+                    long zeroes = Arrays.stream(ESS.getFormIDs()).filter(i -> i == 0).count();
+                    
+                    BUF.append("<br/><strong>TRUNCATED FORMID ARRAY</strong>. ")
+                            .append(present).append('/').append(ESS.getFormIDs().length)
+                            .append(" formIDs read and ")
+                            .append(zeroes)
+                            .append(" null values in total.\nThis is sometimes caused by updating mods without following their proper updating procedure.");
+                }
             }
             BUF.append("</p>");
 
