@@ -919,7 +919,7 @@ final public class Papyrus implements PapyrusElement, GlobalDataBlock {
             builder.append(String.format("<p>There are %s %s %s this %s.</p>", ls.size(), lname, relationship, myname));
         }
 
-        if (0 < ls.size() && ls.size() < 50) {
+        if (!ls.isEmpty() && ls.size() < 50) {
             builder.append("<ul>");
             ls.forEach(i -> builder.append("<li>").append(i.toHTML(ref)).append("</a>"));
             builder.append("</ul>");
@@ -932,6 +932,13 @@ final public class Papyrus implements PapyrusElement, GlobalDataBlock {
      */
     public boolean isBroken() {
         return this.truncated || this.getStringTable().isTruncated();
+    }
+
+    /**
+     * @return A flag indicating if the Papyrus block has a truncation error.
+     */
+    public boolean isTruncated() {
+        return this.truncated;
     }
 
     private boolean truncated = false;
