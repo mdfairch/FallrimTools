@@ -18,7 +18,6 @@ package resaver.pex;
 import java.nio.ByteBuffer;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -26,7 +25,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import resaver.Game;
 import resaver.IString;
-import resaver.Scheme;
 import resaver.pex.StringTable.TString;
 
 /**
@@ -49,7 +47,6 @@ final public class Pex {
         Objects.requireNonNull(input);
         this.GAME = game;
         this.USERFLAGDEFS = Objects.requireNonNull(flags);
-        this.STRINGS = Objects.requireNonNull(strings);
 
         this.NAME = strings.read(input);
         this.size = input.getInt();
@@ -347,7 +344,6 @@ final public class Pex {
     final private Map<Property, Variable> AUTOVARMAP;
 
     final private List<UserFlag> USERFLAGDEFS;
-    final private StringTable STRINGS;
 
     /**
      * Describes a Struct from a PEX file.
@@ -1339,50 +1335,6 @@ final public class Pex {
                 return String.format(FORMAT, this.OPCODE, this.ARGS);
             }
 
-            /**
-             * Checks for instruction arguments that are in a replacement
-             * scheme, and replaces them.
-             *
-             * @param scheme The replacement scheme.
-             *
-             */
-            public void remapVariables(Scheme scheme) {
-                int firstArg;
-
-                // These five instruction types include identifiers to
-                // properties or functions, which are separate 
-                // namespaces. We use firstArg to skip over those 
-                // identifiers
-                switch (this.OPCODE) {
-                    case CALLSTATIC:
-                        firstArg = 2;
-                        break;
-                    case CALLMETHOD:
-                    case CALLPARENT:
-                    case PROPGET:
-                    case PROPSET:
-                        firstArg = 1;
-                        break;
-                    default:
-                        firstArg = 0;
-                        break;
-                }
-
-                // Remap identifiers 
-                for (int i = firstArg; i < this.ARGS.size(); i++) {
-                    VData arg = this.ARGS.get(i);
-
-                    if (arg.getType() == DataType.IDENTIFIER) {
-                        VData.ID id = (VData.ID) arg;
-                        if (scheme.containsKey(id.getValue())) {
-                            IString newValue = scheme.get(id.getValue());
-                            TString newStr = Pex.this.STRINGS.addString(newValue);
-                            id.setValue(newStr);
-                        }
-                    }
-                }
-            }
-
             final public byte OP;
             final public Opcode OPCODE;
             final public List<VData> ARGS;
@@ -1516,6 +1468,4 @@ final public class Pex {
         final public byte CONST;
     }
 
-    static final private IString[] _EXCLUDED = new IString[]{IString.get("player"), IString.get("playerref")};
-    static final java.util.Set<IString> EXCLUDED = new java.util.HashSet<>(Arrays.asList(_EXCLUDED));
 }
