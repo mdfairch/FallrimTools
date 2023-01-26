@@ -43,7 +43,7 @@ import resaver.Game;
 import resaver.Mod;
 import resaver.ResaverFormatting;
 import resaver.esp.ESP;
-import resaver.esp.PluginData;
+import resaver.esp.PluginNameData;
 import resaver.esp.PluginException;
 import resaver.esp.StringsFile;
 import resaver.ess.ESS;
@@ -137,26 +137,6 @@ public class Scanner extends SwingWorker<resaver.Analysis, Double> {
                         .forEach(map -> PLUGIN_MOD_MAP.putAll(map));
             }
             
-//            try {
-//                this.PROGRESS.accept(MessageFormat.format(I18N.getString("SCANNER_READ_STORED"), GAME.NAME));
-//                final Analysis STORED = readAnalysis();
-//                if (null != STORED) {
-//                    this.PROGRESS.accept(MessageFormat.format(I18N.getString("SCANNER_VERIFY_STORED"), GAME.NAME));
-//                    boolean valid = PLUGINFILEMAP
-//                            .entrySet()
-//                            .stream()
-//                            .allMatch(e -> CheckPlugin(e.getKey(), e.getValue(), STORED));
-//                    if (valid) {
-//                        Log.info("The stored analysis was valid.");
-//                        return STORED;
-//                    } else {
-//                        Log.info("The stored analysis was invalid, moving on.");                        
-//                    }
-//                }
-//            } catch(RuntimeException ex) {
-//                LOG.log(Level.WARNING, "Failed to read stored analysis.", ex);
-//            }
-            
             // The language. Eventually make this selectable?
             final String LANGUAGE = (GAME.isSkyrim() ? "english" : "en"); //NOI18N
 
@@ -211,7 +191,7 @@ public class Scanner extends SwingWorker<resaver.Analysis, Double> {
             final List<String> MISSING_PLUGINS = java.util.Collections.synchronizedList(new java.util.LinkedList<>());
             final List<String> ERR_PLUGINS = java.util.Collections.synchronizedList(new java.util.LinkedList<>());
 
-            final Map<Plugin, PluginData> PLUGIN_DATA = new HashMap<>();
+            final Map<Plugin, PluginNameData> PLUGIN_DATA = new HashMap<>();
             final Map<Plugin, Long> SIZES = new HashMap<>();
 
             COUNTER.reset(PLUGINS.getSize());
@@ -225,7 +205,7 @@ public class Scanner extends SwingWorker<resaver.Analysis, Double> {
 
                 } else {
                     try {
-                        final PluginData INFO = ESP.skimPlugin(PLUGINFILEMAP.get(plugin), GAME, plugin, PLUGINS);
+                        final PluginNameData INFO = ESP.skimPlugin(PLUGINFILEMAP.get(plugin), GAME, plugin, PLUGINS, new PluginNameData(plugin));                            
                         PLUGIN_DATA.put(plugin, INFO);
 
                         final String MSG = String.format(I18N.getString("SCANNER_LOG_PLUGINDATA"), INFO.getNameCount(), INFO.getScriptDataSize() / 1024.0f, plugin.indexName());
@@ -368,18 +348,4 @@ public class Scanner extends SwingWorker<resaver.Analysis, Double> {
         }
     };
 
-    /**
-     * Keep this around for debugging.
-     */
-    @SuppressWarnings("unused")
-    private boolean CheckPlugin(Plugin plugin, Path path, Analysis analysis) {
-        try {
-            if (!analysis.ESP_INFOS.containsKey(plugin)) return false;
-            long storedTimeStamp = analysis.ESP_INFOS.get(plugin).TIMESTAMP;
-            long currentTimeStamp = Files.getLastModifiedTime(path).toMillis();
-            return storedTimeStamp == currentTimeStamp;
-        } catch (IOException ex) {
-            return false;
-        }
-    }
 }
