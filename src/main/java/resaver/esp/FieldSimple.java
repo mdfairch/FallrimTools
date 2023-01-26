@@ -44,7 +44,6 @@ public class FieldSimple implements Field, java.io.Serializable {
         this.BIG = big;
         this.DATA = new byte[size];
         input.get(this.DATA);
-
     }
 
     /**

@@ -49,14 +49,16 @@ final public class ESP implements Entry {
      * @param plugin The <code>Plugin</code> corresponding to the
      * <code>ESP</code>.
      * @param plugins The list of plugins, for correcting FormIDs.
+     * @param data The <code>PluginData</code> to populate.
      * @return The PluginData.
+     * @param <T> The type of <code>PluginData</code>.
      *
      * @throws PluginException
      * @throws FileNotFoundException
      * @throws ClosedByInterruptException
-     *
+     * 
      */
-    static public PluginData skimPlugin(Path path, Game game, Plugin plugin, PluginInfo plugins) throws PluginException, FileNotFoundException, ClosedByInterruptException {
+    static public <T extends PluginData> T skimPlugin(Path path, Game game, Plugin plugin, PluginInfo plugins, T data) throws PluginException, FileNotFoundException, ClosedByInterruptException {
         Objects.requireNonNull(path);
         assert Files.isReadable(path);
         assert Files.isRegularFile(path);
@@ -70,10 +72,8 @@ final public class ESP implements Entry {
             ((Buffer) BUFFER).flip();
           
             try {
-                long timestamp = 0; //Files.getLastModifiedTime(path).toMillis()
-                final PluginData DATA = new PluginData(plugin, timestamp);
-                final RecordTes4 TES4 = new RecordTes4(BUFFER, plugin, plugins, new ESPContext(game, plugin, DATA, null));
-                final ESPContext CTX = new ESPContext(game, plugin, DATA, TES4);
+                final RecordTes4 TES4 = new RecordTes4(BUFFER, plugin, plugins, new ESPContext(game, plugin, data, null));
+                final ESPContext<T> CTX = new ESPContext<>(game, plugin, data, TES4);
 
                 while (BUFFER.hasRemaining()) {
                     Record.skimRecord(BUFFER, CTX);
@@ -116,8 +116,10 @@ final public class ESP implements Entry {
         assert input.hasRemaining();
         this.RECORDS = new LinkedList<>();
 
-        final RecordTes4 TES4 = new RecordTes4(input, plugin, plugins, new ESPContext(game, plugin, null));
-        final ESPContext CTX = new ESPContext(game, plugin, TES4);
+        PluginData nullHandler = new PluginData(){};
+        
+        final RecordTes4 TES4 = new RecordTes4(input, plugin, plugins, new ESPContext(game, plugin, nullHandler, null));
+        final ESPContext CTX = new ESPContext(game, plugin, nullHandler, TES4);
         CTX.pushContext(plugin.NAME);
         this.RECORDS.add(TES4);
 

@@ -19,7 +19,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
-import resaver.esp.PluginData;
+import resaver.esp.PluginNameData;
 import resaver.esp.RecordCode;
 import resaver.esp.StringTable;
 import resaver.ess.Plugin;
@@ -41,7 +41,7 @@ final public class Analysis extends Mod.Analysis { //implements java.io.Serializ
      * @param strings
      * @param hasModInfo 
      */
-    public Analysis(PluginInfo plugins, Mod.Analysis profileAnalysis, Map<Plugin, PluginData> espInfos, StringTable strings, boolean hasModInfo) {
+    public Analysis(PluginInfo plugins, Mod.Analysis profileAnalysis, Map<Plugin, PluginNameData> espInfos, StringTable strings, boolean hasModInfo) {
         this.PLUGINS = plugins;
         this.ESP_INFOS = Objects.requireNonNull(espInfos);
         this.STRINGS = Objects.requireNonNull(strings);
@@ -77,7 +77,7 @@ final public class Analysis extends Mod.Analysis { //implements java.io.Serializ
     }
 
     final public PluginInfo PLUGINS;
-    final public Map<Plugin, PluginData> ESP_INFOS;
+    final public Map<Plugin, PluginNameData> ESP_INFOS;
     final public StringTable STRINGS;
     final public boolean HAS_MOD_INFO;
     

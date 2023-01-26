@@ -29,9 +29,10 @@ import resaver.ess.Plugin;
         ctx.check("Skyrim.esm", "MGEF", "0010fc14", "VMAD");
         
  * 
+ * @param <T> The type of <code>PluginData</code> to store.
  * @author Mark Fairchild
  */
-final public class ESPContext {
+final public class ESPContext<T extends PluginData> {
 
     /**
      * Create a new <code>ESSContext</code> from an ESS <code>Header</code>.
@@ -41,7 +42,7 @@ final public class ESPContext {
      * @param data
      * @param tes4
      */
-    public ESPContext(Game game, Plugin plugin, PluginData data, RecordTes4 tes4) {
+    public ESPContext(Game game, Plugin plugin, T data, RecordTes4 tes4) {
         Objects.requireNonNull(plugin);
         this.GAME = Objects.requireNonNull(game);
         this.TES4 = tes4;
@@ -51,20 +52,16 @@ final public class ESPContext {
     }
 
     /**
-     * Create a new <code>ESSContext</code> from an ESS <code>Header</code>.
-     *
-     * @param game
-     * @param plugin
-     * @param tes4
+     * Adds a context layer.
+     * @param ctx 
      */
-    public ESPContext(Game game, Plugin plugin, RecordTes4 tes4) {
-        this(game, plugin, new PluginData(plugin, 0), tes4);
-    }
-
     public void pushContext(CharSequence ctx) {
         this.CONTEXT.addLast(IString.get(ctx.toString()));
     }
 
+    /**
+     * Removes a context layer.
+     */
     public void popContext() {
         this.CONTEXT.removeLast();
     }
@@ -103,7 +100,7 @@ final public class ESPContext {
     final public Game GAME;
     final public RecordTes4 TES4;
     final private LinkedList<IString> CONTEXT;
-    final public PluginData PLUGIN_INFO;
+    final public T PLUGIN_INFO;
     final private int[] RECORD_COUNTS = new int[256];
     
     public void incrementRecord(RecordCode code) {
