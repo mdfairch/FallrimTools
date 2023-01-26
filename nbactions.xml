@@ -13,7 +13,7 @@
                 <exec.args>${exec.vmArgs} -classpath %classpath ${exec.mainClass} ${exec.appArgs}</exec.args>
                 <exec.executable>java</exec.executable>
                 <jpda.listen>true</jpda.listen>
-                <exec.appArgs></exec.appArgs>
+                <exec.appArgs>-r</exec.appArgs>
                 <exec.vmArgs>-ea -agentlib:jdwp=transport=dt_socket,server=n,address=${jpda.address}</exec.vmArgs>
                 <exec.mainClass>resaver.ReSaver</exec.mainClass>
             </properties>
@@ -30,7 +30,7 @@
             <properties>
                 <exec.args>${exec.vmArgs} -classpath %classpath ${exec.mainClass} ${exec.appArgs}</exec.args>
                 <exec.executable>java</exec.executable>
-                <exec.appArgs></exec.appArgs>
+                <exec.appArgs>-r</exec.appArgs>
                 <exec.vmArgs>-ea</exec.vmArgs>
                 <exec.mainClass>resaver.ReSaver</exec.mainClass>
             </properties>
@@ -47,7 +47,7 @@
             <properties>
                 <exec.args>${exec.vmArgs} -classpath %classpath ${exec.mainClass} ${exec.appArgs}</exec.args>
                 <exec.executable>java</exec.executable>
-                <exec.appArgs></exec.appArgs>
+                <exec.appArgs>-r</exec.appArgs>
                 <exec.vmArgs>-ea</exec.vmArgs>
                 <exec.mainClass>resaver.ReSaver</exec.mainClass>
             </properties>
