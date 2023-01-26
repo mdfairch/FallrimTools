@@ -183,7 +183,7 @@ abstract public class Record implements Entry {
     /**
      * Reads a record from an ESP file input and returns it.
      *
-     * @param input The LittleEndianInput to readFully.
+     * @param input The LittleEndianInput to read.
      * @param ctx The mod descriptor.
      * @throws RecordException
 	 * @throws FieldException
