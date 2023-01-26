@@ -43,9 +43,7 @@ public class IString implements CharSequence, java.io.Serializable, Comparable<I
      * @return The new <code>IString</code>.
      */
     static public IString get(String val) {
-        //return CACHE.computeIfAbsent(val, v -> new IString(v.intern()));
-        return CACHE.computeIfAbsent(val, v -> new IString(v));
-        //return new IString(val);
+        return CACHE.computeIfAbsent(val.toLowerCase(), v -> new IString(v));
     }
 
     /**
