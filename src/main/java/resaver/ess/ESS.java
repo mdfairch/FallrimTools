@@ -215,12 +215,12 @@ final public class ESS implements Element {
 
             switch (COMPRESSION) {
                 case ZLIB:
-                    LOG.info("ZLIB DECOMPRESSION");
+                    LOG.info(MessageFormat.format("ZLIB DECOMPRESSION {0}->{1} bytes", COMPRESSED_LEN, UNCOMPRESSED_LEN));
                     INPUT = BufferUtil.inflateZLIB(COMPRESSED, UNCOMPRESSED_LEN, COMPRESSED_LEN);
                     INPUT.order(ByteOrder.LITTLE_ENDIAN);
                     break;
                 case LZ4:
-                    LOG.info("LZ4 DECOMPRESSION");
+                    LOG.info(MessageFormat.format("LZ4 DECOMPRESSION {0}->{1} bytes", COMPRESSED_LEN, UNCOMPRESSED_LEN));
                     INPUT = BufferUtil.inflateLZ4(COMPRESSED, UNCOMPRESSED_LEN);
                     INPUT.order(ByteOrder.LITTLE_ENDIAN);
                     break;
@@ -238,6 +238,7 @@ final public class ESS implements Element {
 
         // sanity check
         int headerSize = this.HEADER.calculateSize();
+        LOG.info(MessageFormat.format("Header {0} bytes", headerSize));
         if (headerSize != startingOffset) {
             throw new PositionException("Header", headerSize, startingOffset);
         }
@@ -525,7 +526,8 @@ final public class ESS implements Element {
         final CompressionType COMPRESSION = this.HEADER.getCompression();
 
         // Write the header, with a litte of extra room for compression prefixes.
-        ByteBuffer headerBlock = ByteBuffer.allocate(this.HEADER.calculateSize() + 8).order(ByteOrder.LITTLE_ENDIAN);
+        int headerSize = this.HEADER.calculateSize();
+        ByteBuffer headerBlock = ByteBuffer.allocate(headerSize + 8).order(ByteOrder.LITTLE_ENDIAN);
         this.HEADER.write(headerBlock);
 
         ((Buffer) headerBlock).flip();
@@ -544,9 +546,11 @@ final public class ESS implements Element {
             switch (COMPRESSION) {
                 case ZLIB:
                     COMPRESSED = BufferUtil.deflateZLIB(UNCOMPRESSED, UNCOMPRESSED_LEN);
+                    LOG.info(MessageFormat.format("ZLIB COMPRESSION {0}->{1} bytes", UNCOMPRESSED_LEN, COMPRESSED.limit()));
                     break;
                 case LZ4:
                     COMPRESSED = BufferUtil.deflateLZ4(UNCOMPRESSED, UNCOMPRESSED_LEN);
+                    LOG.info(MessageFormat.format("LZ4 COMPRESSION {0}->{1} bytes", UNCOMPRESSED_LEN, COMPRESSED.limit()));
                     break;
                 default:
                     throw new IOException("Unknown compression type: " + COMPRESSION);
