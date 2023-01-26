@@ -20,10 +20,13 @@ import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import java.util.Objects;
+import java.util.logging.Logger;
 import net.jpountz.lz4.LZ4Compressor;
 import net.jpountz.lz4.LZ4Factory;
 import net.jpountz.lz4.LZ4FastDecompressor;
 import org.mozilla.universalchardet.UniversalDetector;
+import resaver.ess.ESS;
 
 /**
  *
@@ -298,9 +301,15 @@ public class BufferUtil {
         try {
             INFLATER.setInput(COMPRESSED_BYTES);
             int bytesInflated = INFLATER.inflate(UNCOMPRESSED_BYTES);
-            if (bytesInflated != uncompressedSize) {
+            //if (bytesInflated != uncompressedSize) {
+                //throw new IllegalStateException(String.format("Inflated %d bytes but expecting %d bytes.", bytesInflated, uncompressedSize));
+            //}
+            if (bytesInflated > uncompressedSize) {
                 throw new IllegalStateException(String.format("Inflated %d bytes but expecting %d bytes.", bytesInflated, uncompressedSize));
+            } else if (bytesInflated < uncompressedSize) {
+                LOG.warning(String.format("Inflated %d bytes but expecting %d bytes.", bytesInflated, uncompressedSize));                
             }
+            
             return ByteBuffer.wrap(UNCOMPRESSED_BYTES);
         } finally {
             INFLATER.end();
@@ -368,6 +377,30 @@ public class BufferUtil {
         return COMPRESSED;
     }
 
+    /**
+     * Dynamic counterpart to the <code>PeekAtBuffer</code> method.
+     * @see mf.BufferUtil.PeekAtBuffer(java.nio.ByteBuffer)
+     */
+    static public class Peeker {
+        public Peeker(ByteBuffer buf) {
+            BUF = Objects.requireNonNull(buf);
+        }
+        
+        @Override
+        public String toString() {
+            return PeekAtBuffer(BUF);
+        }
+        
+        final private ByteBuffer BUF;
+    }
+    
+    /**
+     * Returns a string containing a hexadecimal byte formatted view of the
+     * next 2048 bytes of a buffer.
+     * 
+     * @param buf
+     * @return 
+     */
     static public String PeekAtBuffer(ByteBuffer buf) {
         final StringBuilder peek = new StringBuilder();
         ByteBuffer slice = buf.remaining() > 2048 
@@ -397,4 +430,5 @@ public class BufferUtil {
 
     static final private java.util.Set<Charset> CHARSET_LOG = new java.util.HashSet<>();
 
+    static final private Logger LOG = Logger.getLogger(ESS.class.getCanonicalName());
 }
