@@ -38,23 +38,27 @@ public class ChangeFormExtraDataData extends GeneralElement {
         if (TYPE < 0 || TYPE >= 256) {
             throw new IllegalArgumentException("Invalid extraData type: " + TYPE);
         }
+        
+        //mf.BufferUtil.Peeker peeker = new mf.BufferUtil.Peeker(input);       
 
         switch (TYPE) {
             case 4:
-                this.NAME = "Unknown04";
+                this.NAME = "ExtraExtraData1";
                 this.BRIEF = true;
                 super.readElement(input, "SUB_DATA", in -> new ChangeFormExtraDataData(in, context));
-                //super.readBytes(input, "UNK", 1);
                 break;
             case 8:
-                this.NAME = "Unknown08";
+                this.NAME = "ExtraExtraData2";
                 this.BRIEF = true;
-                super.readBytes(input, "UNK", 9);
+                super.readElement(input, "SUB_DATA1", in -> new ChangeFormExtraDataData(in, context));
+                super.readElement(input, "SUB_DATA2", in -> new ChangeFormExtraDataData(in, context));
                 break;
             case 12:
-                this.NAME = "Unknown12";
+                this.NAME = "ExtraExtraData3";
                 this.BRIEF = true;
-                super.readBytes(input, "UNK", 13);
+                super.readElement(input, "SUB_DATA1", in -> new ChangeFormExtraDataData(in, context));
+                super.readElement(input, "SUB_DATA2", in -> new ChangeFormExtraDataData(in, context));
+                super.readElement(input, "SUB_DATA3", in -> new ChangeFormExtraDataData(in, context));
                 break;
             case 22:
                 this.NAME = "Worn";
@@ -306,7 +310,13 @@ public class ChangeFormExtraDataData extends GeneralElement {
                 this.NAME = "CombatStyle";
                 this.BRIEF = true;
                 super.readRefID(input, "REF", context);
-                break;                
+                break;
+            case 102:
+                this.NAME = "MYSTERIOUS";
+                this.BRIEF = false;
+                super.readRefID(input, "REF1", context);
+                super.readRefID(input, "REF2", context);
+                break;
             case 104:
                 this.NAME = "OpenCloseActivateRef";
                 this.BRIEF = true;
@@ -377,7 +387,9 @@ public class ChangeFormExtraDataData extends GeneralElement {
             case 152:
                 this.NAME = "AttachedArrows3D";
                 this.BRIEF = false;
-                super.readVSElemArray(input, "ARROWS", in -> new AttachedArrow(in));
+                super.readVSElemArray(input, "ARROWS", in -> new AttachedArrow(in, context));
+                super.readShort(input, "UNK1");
+                super.readShort(input, "UNK2");                
                 break;
             case 153:
                 this.NAME = "TextDisplayData";
@@ -500,10 +512,19 @@ public class ChangeFormExtraDataData extends GeneralElement {
     }
 
     static class AttachedArrow extends GeneralElement {
-        AttachedArrow(ByteBuffer input) throws ElementException {
-            super.readShort(input, "VAL1");
-            super.readShort(input, "VAL2");
+        AttachedArrow(ByteBuffer input, ESS.ESSContext context) throws ElementException {
+            REF = super.readRefID(input, "REF", context);
+            if (!REF.isZero()) {
+                short unknU16 = super.readShort(input, "unknU16");
+                
+                if (unknU16 != -1) {
+                    super.readInt(input, "UNK2");
+                    super.readFloats(input, "LOCATION", 8);
+                }
+            }
         }
+        
+        final public RefID REF;
     }
 
     static class TextDisplayData extends GeneralElement {
