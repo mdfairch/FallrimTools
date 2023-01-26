@@ -92,7 +92,9 @@ public class ChangeFormACHR extends GeneralElement implements ChangeFormData {
             }
 
             if (changeFlags.getFlags(CHANGE_REFR_INVENTORY, CHANGE_REFR_LEVELED_INVENTORY)) {
-                super.readVSElemArray(input, "INVENTORY", in -> new ChangeFormInventoryItem(in, context));
+                INVENTORY = super.readVSElemArray(input, "INVENTORY", in -> new ChangeFormInventoryItem(in, context));
+            } else {
+                INVENTORY = null;
             }
 
             if (changeFlags.getFlag(CHANGE_REFR_ANIMATION)) {
@@ -154,5 +156,7 @@ public class ChangeFormACHR extends GeneralElement implements ChangeFormData {
         BUILDER.append("</code></pre>");
         return BUILDER.toString();
     }
+    
+    final public Element[] INVENTORY;
 
 }
