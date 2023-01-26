@@ -16,6 +16,7 @@
 package resaver;
 
 import java.awt.Color;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.concurrent.Callable;
 import java.util.logging.*;
@@ -27,6 +28,7 @@ import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
+import resaver.ess.ElementException;
 import resaver.gui.Configurator;
 import resaver.gui.SaveWindow;
 
@@ -82,38 +84,49 @@ public class ReSaver implements Callable<Integer> {
                     UIManager.put(key, biggerFont);
                 });
 
-        // Set up logging stuff.
-        /*LOG.getParent().getHandlers()[0].setFormatter(new java.util.logging.Formatter() {
-            @Override
-            public String format(LogRecord record) {
-                final java.util.logging.Level LEVEL = record.getLevel();
-                final String MSG = record.getMessage();
-                final String SRC = record.getSourceClassName() + "." + record.getSourceMethodName();
-                final String LOG = String.format("%s: %s: %s\n", SRC, LEVEL, MSG);
-                return LOG;
-            }
-        });*/
-
-        //LOG.getParent().getHandlers()[0].setLevel(Level.INFO);
-
         // Check the autoparse setting.
+        Path selection = null;
+        
         final Path PREVIOUS = Configurator.getPreviousSave();
-        final SaveWindow WINDOW;
-
-        if (PATH_PARAMETER != null && !PATH_PARAMETER.isEmpty() && Configurator.validateSavegame(PATH_PARAMETER.get(0))) {
-            WINDOW = new SaveWindow(PATH_PARAMETER.get(0), AUTOPARSE_OPTION);
+        if (PATH_PARAMETER != null && !PATH_PARAMETER.isEmpty() && Configurator.validateSavegame(PATH_PARAMETER.get(0))) {            
+            selection = PATH_PARAMETER.get(0);
         } else if (REOPEN_OPTION && Configurator.validateSavegame(PREVIOUS)) {
-            WINDOW = new SaveWindow(PREVIOUS, AUTOPARSE_OPTION);
+            selection = PREVIOUS;
+        }
+        
+        if (selection != null && INGR_OPTION) {
+            try {
+                resaver.ess.ESS.Result result = resaver.ess.ESS.readESS(selection, new resaver.ess.ModelBuilder(new resaver.ProgressModel(1)));
+                resaver.ess.ESS save = result.ESS;
+                resaver.ess.RefID playerID = save.make(0x400014);
+                resaver.ess.ChangeForm form = save.getChangeForms().getChangeForm(playerID);
+                resaver.ess.ChangeFormACHR achr = (resaver.ess.ChangeFormACHR) form.getData(null, save.getContext(), true);
+                resaver.ess.Element[] inventory = achr.INVENTORY;
+                
+                for (resaver.ess.Element e : inventory) {
+                    resaver.ess.ChangeFormInventoryItem item = (resaver.ess.ChangeFormInventoryItem) e;
+                    int count = item.COUNT;
+                    resaver.ess.RefID ref = item.ITEM;
+                    String plugin = ref.PLUGIN.NAME;
+                    int formID = ref.FORMID & (ref.PLUGIN.LIGHTWEIGHT ? 0xFFF : 0xFFFFFF);
+                    String formKeyCount = String.format("%06x:%s,%d", formID, plugin, count);
+                    System.out.println(formKeyCount);
+                }
+                
+            } catch (IOException | ElementException ex) {
+                ex.printStackTrace(System.err);
+            }
+            return 0;
+            
         } else {
-            WINDOW = new SaveWindow(null, false);
-        }
+            final SaveWindow WINDOW = new SaveWindow(selection, AUTOPARSE_OPTION && selection != null);
+            if (WATCH_OPTION) {
+                WINDOW.setWatching(true);
+            }
 
-        if (WATCH_OPTION) {
-            WINDOW.setWatching(true);
+            java.awt.EventQueue.invokeLater(() -> WINDOW.setVisible(true));
+            return 0;
         }
-
-        java.awt.EventQueue.invokeLater(() -> WINDOW.setVisible(true));
-        return 0;
     }
 
     /**
@@ -163,6 +176,9 @@ public class ReSaver implements Callable<Integer> {
 
     @Option(names = {"-c", "--clear"}, description = "Clear all stored FallrimTools settings.")
     private boolean CLEAR_OPTION;
+
+    @Option(names = {"-i", "--inventory"}, description = "Output player inventory (requires --reopen or a save filename.")
+    private boolean INGR_OPTION;
 
     @Parameters(description = "The savefile to open (optional).")
     private java.util.List<Path> PATH_PARAMETER;
