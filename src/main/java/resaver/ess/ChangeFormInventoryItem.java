@@ -54,12 +54,15 @@ public class ChangeFormInventoryItem extends GeneralElement {
     }
     @Override
     protected String toStringFlat(String name) {
-        return new StringBuilder()
-                .append(this.ITEM.toHTML(null))
-                .append(" (count = ")
-                .append(this.COUNT)
-                .append(")")
-                .toString();
+        return this.ITEM == null 
+                ? "NULL"
+                : new StringBuilder()
+                        .append(this.ITEM.toHTML(null))
+                        .append(" (count = ")
+                        .append(this.COUNT)
+                        .append(")")
+                        .toString();
+        
     }
 
     @Override
@@ -72,8 +75,8 @@ public class ChangeFormInventoryItem extends GeneralElement {
     }
     
     
-    final private RefID ITEM;
-    final private int COUNT;
+    final public RefID ITEM;
+    final public int COUNT;
     final private ChangeFormExtraData EXTRA;
     
 
