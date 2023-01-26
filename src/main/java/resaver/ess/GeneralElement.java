@@ -393,7 +393,7 @@ public class GeneralElement implements AnalyzableElement {
         try {
             if (count < 0) {
                 throw new IllegalArgumentException("Negative array count: " + count);
-            } else if (256 < count) {
+            } else if (2048 < count) {
                 throw new IllegalArgumentException("Excessive array count: " + count);
             }
 
@@ -554,7 +554,7 @@ public class GeneralElement implements AnalyzableElement {
         try {
             if (count < 0) {
                 throw new IllegalArgumentException("Negative array count: " + count);
-            } else if (256 < count) {
+            } else if (1024 < count) {
                 throw new IllegalArgumentException("Excessive array count: " + count);
             }
 
