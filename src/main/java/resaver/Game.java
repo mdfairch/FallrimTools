@@ -70,8 +70,8 @@ public enum Game {
             "Unofficial Fallout 4 Patch.esp"),
     FALLOUT_VR("Fallout 4 VR",
             "Fallout 4 VR Savefile",
-            "ess",
-            "skse",
+            "fos",
+            "f4se",
             Paths.get("Fallout 4 VR"),
             Paths.get("Fallout4VR/Saves"),
             Paths.get("fallout4vr.exe"));
