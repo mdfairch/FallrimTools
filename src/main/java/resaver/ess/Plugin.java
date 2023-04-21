@@ -34,7 +34,6 @@ import j2html.tags.DomContent;
 import static resaver.ResaverFormatting.makeMetric;
 import java.text.MessageFormat;
 import java.util.Optional;
-import resaver.ess.papyrus.ScriptInstanceMap;
 
 /**
  * Abstraction for plugins.

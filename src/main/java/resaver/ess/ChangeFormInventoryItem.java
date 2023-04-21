@@ -36,6 +36,7 @@ public class ChangeFormInventoryItem extends GeneralElement {
     public ChangeFormInventoryItem(ByteBuffer input, ESS.ESSContext context) throws ElementException {
         
         try {
+            //mf.BufferUtil.Peeker peeker = new mf.BufferUtil.Peeker(input);       
             this.ITEM = super.readRefID(input, "ITEM", context);
             this.COUNT = super.readInt(input, "COUNT");
             this.EXTRA = super.readElement(input, "EXTRA", in -> new ChangeFormExtraData(in, context));

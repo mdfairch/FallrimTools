@@ -16,6 +16,7 @@
 package resaver.ess;
 
 import java.nio.ByteBuffer;
+import java.text.MessageFormat;
 import java.util.Objects;
 import resaver.Analysis;
 import static resaver.ess.ChangeFlagConstantsAchr.*;
@@ -106,10 +107,13 @@ public class ChangeFormACHR extends GeneralElement implements ChangeFormData {
             }
             
         } catch (UnparsedException ex) {
-            throw new ElementException("Unparsed data in ACHR", ex, this);            
+            //ex.printStackTrace(System.err);
+            throw new ElementException(MessageFormat.format("Unparsed data in ACHR {0}", refid), ex, this);            
         } catch (RuntimeException | ElementException ex) {
             super.readUnparsed(input);
-            throw new ElementException("Failed to read ACHR", ex, this);
+            //System.err.println(MessageFormat.format("Failed to read ACHR {0}", refid));
+            //ex.printStackTrace(System.err);
+            throw new ElementException(MessageFormat.format("Failed to read ACHR {0}", refid), ex, this);
         }
     }
 

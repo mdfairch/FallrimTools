@@ -46,6 +46,7 @@ public class ESSTest {
 
     final static public Path WORK_DIR = Paths.get(System.getProperty("user.dir"));
     final static public Path TESTSAVES_DIR = WORK_DIR.resolve("src/test/resources/TestSaves");
+    //final static public Path TESTSAVES_DIR = WORK_DIR.resolve("src/test/resources/TestSaves/sse");
     static final private Logger LOG = Logger.getLogger(ESSTest.class.getCanonicalName());
     
     public ESSTest() {
@@ -108,7 +109,7 @@ public class ESSTest {
             final String EXT = "." + ORIGINAL.getHeader().GAME.SAVE_EXT;
 
             final Path F2 = Files.createTempFile("ess_test", EXT);
-            ESS.writeESS(ORIGINAL, F2, true);
+            ESS.writeESS(ORIGINAL, F2, false);
             System.out.println("\tWrite complete");
 
             ModelBuilder MODEL_RESAVE = new ModelBuilder(new ProgressModel(1));

@@ -550,11 +550,11 @@ public class GeneralElement implements AnalyzableElement {
         Objects.requireNonNull(input);
         Objects.requireNonNull(name);
         Objects.requireNonNull(reader);
-
+        
         try {
             if (count < 0) {
                 throw new IllegalArgumentException("Negative array count: " + count);
-            } else if (1024 < count) {
+            } else if (count > input.remaining()) {
                 throw new IllegalArgumentException("Excessive array count: " + count);
             }
 

@@ -2056,10 +2056,28 @@ final public class SaveWindow extends JFrame {
                 final Document DOC = this.INFOPANE.getDocument();
                 final int ICONWIDTH = this.INFOPANE.getWidth() * 95 / 100;
                 final ImageIcon IMAGE = this.save.getHeader().getImage(ICONWIDTH);
+                
                 if (null != IMAGE) {
                     final Style STYLE = new StyleContext().getStyle(StyleContext.DEFAULT_STYLE);
-                    StyleConstants.setComponent(STYLE, new JLabel(this.save.getHeader().getImage(ICONWIDTH)));
+                    final JLabel IMAGELABEL = new JLabel(this.save.getHeader().getImage(ICONWIDTH));
+                    StyleConstants.setComponent(STYLE, IMAGELABEL);
                     DOC.insertString(DOC.getLength(), "Ignored", STYLE);
+                    
+                    IMAGELABEL.addMouseListener(new MouseAdapter() {
+                        @Override public void mousePressed(MouseEvent e) {
+                            if (e.isPopupTrigger()) doPop(e);
+                        }
+                        @Override public void mouseReleased(MouseEvent e) {
+                            if (e.isPopupTrigger()) doPop(e);
+                        }
+                        private void doPop(MouseEvent e) {
+                            JMenuItem copy = new JMenuItem("Copy to Clipboard");
+                            JPopupMenu menu = new JPopupMenu();
+                            menu.add(copy);
+                            copy.addActionListener(ae -> ImageTransferable.CopyToClipboard(IMAGE.getImage()));
+                            menu.show(e.getComponent(), e.getX(), e.getY());
+                        }                        
+                    });
                 }
             } catch (javax.swing.text.BadLocationException ex) {
                 LOG.log(Level.WARNING, "Error displaying ESS context information.", ex);

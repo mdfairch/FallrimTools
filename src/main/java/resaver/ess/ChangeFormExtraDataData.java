@@ -39,9 +39,18 @@ public class ChangeFormExtraDataData extends GeneralElement {
             throw new IllegalArgumentException("Invalid extraData type: " + TYPE);
         }
         
-        //mf.BufferUtil.Peeker peeker = new mf.BufferUtil.Peeker(input);       
+        /*mf.BufferUtil.Peeker peeker;
+        if (TYPE == 135) {
+            int k = 0;
+            peeker = new mf.BufferUtil.Peeker(input);
+        }*/
+        
 
         switch (TYPE) {
+            case 0:
+                this.NAME = "NULL";
+                this.BRIEF = true;
+                break;
             case 4:
                 this.NAME = "ExtraExtraData1";
                 this.BRIEF = true;
@@ -60,6 +69,7 @@ public class ChangeFormExtraDataData extends GeneralElement {
                 super.readElement(input, "SUB_DATA2", in -> new ChangeFormExtraDataData(in, context));
                 super.readElement(input, "SUB_DATA3", in -> new ChangeFormExtraDataData(in, context));
                 break;
+            //case 16:
             case 22:
                 this.NAME = "Worn";
                 this.BRIEF = true;
@@ -352,6 +362,14 @@ public class ChangeFormExtraDataData extends GeneralElement {
                 this.NAME = "AshPileRef";
                 this.BRIEF = true;
                 super.readRefID(input, "REF", context);
+                break;
+            case 135:
+                this.NAME = "TEST";
+                RefID r1 = super.readRefID(input, "R1", context);
+                RefID r2 = super.readRefID(input, "R2", context);
+                RefID r3 = super.readRefID(input, "R3", context);
+                RefID r4 = super.readRefID(input, "R4", context);
+                this.BRIEF = true;
                 break;
             case 136:
                 this.NAME = "AliasInstanceArray";
