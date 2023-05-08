@@ -30,7 +30,6 @@ import java.util.function.Predicate;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import javax.swing.tree.TreePath;
-import mf.ConsoleProgress;
 import resaver.ess.Plugin;
 
 /**
@@ -356,8 +355,14 @@ final public class FilterTreeModel implements TreeModel {
             Predicate<Node> childFilter = filterChildren ? filter : n -> true;
             
             node.getChildren().parallelStream().forEach(child -> this.setFilter(child, childFilter));
-            boolean hasVisibleChildren = node.getChildren().stream().anyMatch(c -> c.isVisible());                
+            boolean hasVisibleChildren = node.getChildren().stream().anyMatch(c -> c.isVisible());
+            boolean hasHiddenChildren = node.getChildren().stream().anyMatch(c -> !c.isVisible());
             node.setVisible(nodeVisible || hasVisibleChildren);
+            
+            if (!filterChildren && hasVisibleChildren && hasHiddenChildren)
+            {
+                node.getChildren().parallelStream().forEach(child -> this.setFilter(child, n->true));
+            }
         }
     }
 
