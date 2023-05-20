@@ -18,6 +18,7 @@ package resaver.ess.papyrus;
 /**
  *
  * @author Mark
+ * @param T The class of the separate data.
  */
 public interface SeparateData {
 
@@ -25,4 +26,6 @@ public interface SeparateData {
 
     void writeData(java.nio.ByteBuffer input);
 
+    public PapyrusElement getData();
+    
 }

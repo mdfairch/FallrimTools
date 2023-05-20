@@ -96,6 +96,15 @@ final public class ActiveScript implements AnalyzableElement, HasID, SeparateDat
     }
 
     /**
+     * @see SeparateData#getData()
+     * @return 
+     */    
+    @Override
+    public PapyrusElement getData() {
+        return this.data;
+    }
+    
+    /**
      * @see resaver.ess.Element#calculateSize()
      * @return The size of the <code>Element</code> in bytes.
      */

@@ -47,6 +47,7 @@ import resaver.ListException;
 import resaver.ess.papyrus.Papyrus;
 import resaver.ess.papyrus.PapyrusElement;
 import resaver.ess.papyrus.PapyrusException;
+import resaver.ess.papyrus.SeparateData;
 import resaver.gui.FilterTreeModel;
 
 /**
@@ -926,19 +927,26 @@ final public class ESS implements Element {
      *
      */
     public java.util.Set<Element> removeElements(java.util.Collection<? extends Element> elements) {
-        final Set<ChangeForm> ELEM1 = elements.stream()
+        final Set<ChangeForm> ELEM_CHANGEFORMS = elements.stream()
                 .filter(v -> v instanceof ChangeForm)
                 .map(v -> (ChangeForm) v)
                 .collect(Collectors.toSet());
 
-        final Set<PapyrusElement> ELEM2 = elements.stream()
+        final Set<PapyrusElement> ELEM_PAPYRUS_ELEMENTS = elements.stream()
                 .filter(v -> v instanceof PapyrusElement)
                 .map(v -> (PapyrusElement) v)
                 .collect(Collectors.toSet());
 
+        final Set<PapyrusElement> ELEM_PAPYRUS_DATA = elements.stream()
+                .filter(v -> v instanceof SeparateData)
+                .map(v -> ((SeparateData)v).getData())
+                .filter(v -> !ELEM_PAPYRUS_ELEMENTS.contains(v))
+                .collect(Collectors.toSet());
+        
         final Set<Element> REMOVED = new java.util.HashSet<>();
-        REMOVED.addAll(this.removeChangeForms(ELEM1));
-        REMOVED.addAll(this.getPapyrus().removeElements(ELEM2));
+        REMOVED.addAll(this.removeChangeForms(ELEM_CHANGEFORMS));
+        REMOVED.addAll(this.getPapyrus().removeElements(ELEM_PAPYRUS_ELEMENTS));
+        REMOVED.addAll(this.getPapyrus().removeElements(ELEM_PAPYRUS_DATA));
         return REMOVED;
     }
 
