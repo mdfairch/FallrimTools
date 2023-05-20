@@ -99,6 +99,52 @@ abstract public class Variable implements PapyrusElement, Linkable {
     }
 
     /**
+     * Creates a new <code>Variable</code> from a <code>Type</code> that is 
+     * initially zeroed.
+     *
+     * @param type The type.
+     * @param refType The reference type, for ref and refarray variables.
+     * @param context The <code>PapyrusContext</code> info.
+     * @return The new <code>Variable</code>.
+     * 
+     */
+    static public Variable create(Type type, TString refType, PapyrusContext context) {
+        Objects.requireNonNull(type, "Variable type must not be null.");
+        Objects.requireNonNull(context, "PapyrusContext must not be null.");
+        if (type.isRefType() && refType == null) throw new NullPointerException("refType must not be null for ref-type variables.");
+        if (!type.isRefType() && refType != null) throw new IllegalArgumentException("refType must be null for non-ref-type variables.");
+
+        switch (type) {
+            case NULL:
+                return new Null();
+            case REF:
+                return new Ref(refType, context.makeEID(0), context);
+            case STRING:
+                return new Str("", context);
+            case INTEGER:
+                return new Int(0);
+            case FLOAT:
+                return new Flt(0.0f);
+            case BOOLEAN:
+                return new Bool(false);
+            case VARIANT:
+                return new Variant();
+            case STRUCT:
+                return new StructRef(refType, context.makeEID(0), context);
+            case REF_ARRAY:
+            case STRING_ARRAY:
+            case INTEGER_ARRAY:
+            case FLOAT_ARRAY:
+            case BOOLEAN_ARRAY:
+            case VARIANT_ARRAY:
+            case STRUCT_ARRAY:
+                return new Array(type, refType, context);
+            default:
+                throw new PapyrusException("Illegal typecode for variable", null, null);
+        }
+    }
+
+    /**
      * @return The EID of the papyrus element.
      */
     abstract public Type getType();
@@ -171,6 +217,10 @@ abstract public class Variable implements PapyrusElement, Linkable {
 
         public Null(ByteBuffer input) {
             this.VALUE = input.getInt();
+        }
+
+        protected Null() {
+            this.VALUE = 0;
         }
 
         @Override
@@ -311,7 +361,7 @@ abstract public class Variable implements PapyrusElement, Linkable {
             super(input, context);
         }
 
-        public Ref(TString type, EID id, PapyrusContext context) {
+        protected Ref(TString type, EID id, PapyrusContext context) {
             super(type, id, context);
         }
 
@@ -337,6 +387,10 @@ abstract public class Variable implements PapyrusElement, Linkable {
             Objects.requireNonNull(input);
             final Variable var = Variable.read(input, context);
             this.VALUE = var;
+        }
+
+        public Variant() {
+            this.VALUE = new Null();
         }
 
         public Variable getValue() {
@@ -630,6 +684,14 @@ abstract public class Variable implements PapyrusElement, Linkable {
             this.REFTYPE = this.TYPE.isRefType() ? context.readTString(input) : null;
             this.ARRAYID = context.readEID(input);
             this.ARRAY = context.findArray(this.ARRAYID);
+        }
+
+        protected Array(Type type, TString refType, PapyrusContext context) {
+            Objects.requireNonNull(type);
+            this.TYPE = type;
+            this.REFTYPE = this.TYPE.isRefType() ? refType : null;
+            this.ARRAYID = context.makeEID(0);
+            this.ARRAY = null;
         }
 
         public EID getArrayID() {
