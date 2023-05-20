@@ -39,10 +39,16 @@ public class VariableTable extends JTable {
      * Creates a new <code>VariableTable</code>.
      *
      * @param window
+     *
      */
     public VariableTable(SaveWindow window) {
+        this.context = null;
         this.WINDOW = Objects.requireNonNull(window);
         this.MI_FIND = new JMenuItem(I18N.getString("VARTABLE_FIND"), KeyEvent.VK_F);
+        this.MI_ADD = new JMenuItem("Add Entry");
+        this.MI_REM = new JMenuItem("Remove Entry");
+        this.MI_SHIFTUP = new JMenuItem("Shift Up");
+        this.MI_SHIFTDOWN = new JMenuItem("Shift Down");
         this.TABLE_POPUP_MENU = new JPopupMenu(I18N.getString("VARTABLE_MENU"));
         this.initComponent();
     }
@@ -53,7 +59,62 @@ public class VariableTable extends JTable {
     private void initComponent() {
         this.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         this.getModel().addTableModelListener(e -> this.WINDOW.setModified());
+
         this.TABLE_POPUP_MENU.add(this.MI_FIND);
+        this.TABLE_POPUP_MENU.add(this.MI_ADD);
+        this.TABLE_POPUP_MENU.add(this.MI_REM);
+        this.TABLE_POPUP_MENU.add(this.MI_SHIFTUP);
+        this.TABLE_POPUP_MENU.add(this.MI_SHIFTDOWN);
+
+        this.MI_ADD.addActionListener(e -> {
+            try {
+                if (this.getModel() instanceof ArrayTableModel) {
+                    ArrayTableModel model = (ArrayTableModel) this.getModel();
+                    model.addElement(context);
+                }
+            } catch (RuntimeException ex) {
+                JOptionPane.showMessageDialog(this, ex.getMessage());
+            }
+        });
+
+        this.MI_REM.addActionListener(e -> {
+            try {
+                if (this.getModel() instanceof ArrayTableModel) {
+                    int viewRow = getSelectedRow();
+                    int modelRow = convertRowIndexToModel(viewRow);
+                    ArrayTableModel model = (ArrayTableModel) this.getModel();
+                    model.removeElement(modelRow);
+                }
+            } catch (RuntimeException ex) {
+                JOptionPane.showMessageDialog(this, ex.getMessage());
+            }
+        });
+
+        this.MI_SHIFTUP.addActionListener(e -> {
+            try {
+                if (this.getModel() instanceof ArrayTableModel) {
+                    int viewRow = getSelectedRow();
+                    int modelRow = convertRowIndexToModel(viewRow);
+                    ArrayTableModel model = (ArrayTableModel) this.getModel();
+                    model.shiftUp(modelRow);
+                }
+            } catch (RuntimeException ex) {
+                JOptionPane.showMessageDialog(this, ex.getMessage());
+            }
+        });
+
+        this.MI_SHIFTDOWN.addActionListener(e -> {
+            try {
+                if (this.getModel() instanceof ArrayTableModel) {
+                    int viewRow = getSelectedRow();
+                    int modelRow = convertRowIndexToModel(viewRow);
+                    ArrayTableModel model = (ArrayTableModel) this.getModel();
+                    model.shiftDown(modelRow);
+                }
+            } catch (RuntimeException ex) {
+                JOptionPane.showMessageDialog(this, ex.getMessage());
+            }
+        });
 
         this.MI_FIND.addActionListener(e -> {
             int viewRow = getSelectedRow();
@@ -84,12 +145,15 @@ public class VariableTable extends JTable {
                     int modelRow = convertRowIndexToModel(row);
                     int column = getModel().getColumnCount() - 1;
                     Object o = getModel().getValueAt(modelRow, column);
-                    assert o instanceof Variable;
-                    Variable var = (Variable) o;
 
-                    if (var.hasRef() && !var.getRef().isZero()) {
-                        TABLE_POPUP_MENU.show(e.getComponent(), e.getX(), e.getY());
+                    if (o instanceof Variable) {
+                        Variable var = (Variable) o;
+                        boolean findable = var.hasRef() && !var.getRef().isZero();
+                        MI_FIND.setEnabled(findable);
+                    } else {
+                        MI_FIND.setEnabled(false);
                     }
+                    TABLE_POPUP_MENU.show(e.getComponent(), e.getX(), e.getY());
                 }
             }
         });
@@ -122,7 +186,8 @@ public class VariableTable extends JTable {
      * @return
      */
     public boolean isSupported(AnalyzableElement element) {
-        return element instanceof ScriptInstance
+        return element instanceof Script
+                || element instanceof ScriptInstance
                 || element instanceof StructInstance
                 || element instanceof Struct
                 || element instanceof StackFrame
@@ -130,7 +195,8 @@ public class VariableTable extends JTable {
                 || element instanceof FunctionMessageData
                 || element instanceof SuspendedStack
                 || element instanceof FunctionMessage
-                || element instanceof Reference;
+                || element instanceof Reference
+                || element instanceof QueuedUnbind;
     }
 
     /**
@@ -138,15 +204,18 @@ public class VariableTable extends JTable {
      */
     public void clearTable() {
         this.setModel(new DefaultTableModel());
+        this.context = null;
     }
 
     /**
      * Displays a <code>AnalyzableElement</code> using an appropriate model.
      *
      * @param element The <code>PapyrusElement</code> to display.
-     * @param context The <code>PapyrusContext</code> info.
+     * @param newContext The <code>PapyrusContext</code> info.
      */
-    public void displayElement(AnalyzableElement element, PapyrusContext context) {
+    public void displayElement(AnalyzableElement element, PapyrusContext newContext) {
+        this.context = Objects.requireNonNull(newContext, "The PapyrusContext must not be null.");
+                
         if (element instanceof ArrayInfo) {
             this.displayArray((ArrayInfo) element, context);
 
@@ -185,11 +254,16 @@ public class VariableTable extends JTable {
      * @param context The <code>PapyrusContext</code> info.
      */
     private void displayDefinition(Definition def, PapyrusContext context) {
-        this.setDefaultRenderer(Variable.class, new VariableCellRenderer());
-        this.setDefaultEditor(Variable.class, new VariableCellEditor(context));
         this.setModel(new DefinitionTableModel(def));
         this.getColumn(this.getColumnName(0)).setMinWidth(25);
         this.getColumn(this.getColumnName(0)).setMaxWidth(25);
+        this.setDefaultRenderer(Variable.class, new VariableCellRenderer());
+        this.setDefaultEditor(Variable.class, new VariableCellEditor(context));
+
+        this.MI_ADD.setEnabled(false);
+        this.MI_REM.setEnabled(false);
+        this.MI_SHIFTUP.setEnabled(false);
+        this.MI_SHIFTDOWN.setEnabled(false);
     }
 
     /**
@@ -206,6 +280,11 @@ public class VariableTable extends JTable {
         this.getColumn(this.getColumnName(0)).setMaxWidth(25);
         this.getColumn(this.getColumnName(1)).setMinWidth(120);
         this.getColumn(this.getColumnName(1)).setMaxWidth(120);
+
+        this.MI_ADD.setEnabled(false);
+        this.MI_REM.setEnabled(false);
+        this.MI_SHIFTUP.setEnabled(false);
+        this.MI_SHIFTDOWN.setEnabled(false);
     }
 
     /**
@@ -222,10 +301,20 @@ public class VariableTable extends JTable {
         this.getColumn(this.getColumnName(0)).setMaxWidth(25);
         this.getColumn(this.getColumnName(1)).setMinWidth(120);
         this.getColumn(this.getColumnName(1)).setMaxWidth(120);
+
+        this.MI_ADD.setEnabled(true);
+        this.MI_REM.setEnabled(true);
+        this.MI_SHIFTUP.setEnabled(true);
+        this.MI_SHIFTDOWN.setEnabled(true);
     }
 
+    private PapyrusContext context;
     final private JPopupMenu TABLE_POPUP_MENU;
     final private JMenuItem MI_FIND;
+    final private JMenuItem MI_ADD;
+    final private JMenuItem MI_REM;
+    final private JMenuItem MI_SHIFTUP;
+    final private JMenuItem MI_SHIFTDOWN;
     final private SaveWindow WINDOW;
     static final private ResourceBundle I18N = ResourceBundle.getBundle("Strings");
 

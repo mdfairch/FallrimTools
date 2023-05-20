@@ -15,6 +15,7 @@
  */
 package resaver.gui;
 
+import java.text.MessageFormat;
 import java.util.List;
 import java.util.Objects;
 import javax.swing.event.TableModelEvent;
@@ -122,6 +123,31 @@ public class ArrayTableModel implements javax.swing.table.TableModel {
         this.LISTENERS.remove(l);
     }
 
+    public void shiftUp(int index) {
+        this.DATA.shiftUp(index);
+        TableModelEvent event = new TableModelEvent(this);
+        this.LISTENERS.forEach(l -> l.tableChanged(event));
+    }
+    
+    public void shiftDown(int index) {
+        this.DATA.shiftDown(index);
+        TableModelEvent event = new TableModelEvent(this);
+        this.LISTENERS.forEach(l -> l.tableChanged(event));
+    }
+    
+    public void addElement(PapyrusContext context) {
+        Variable newVar = Variable.create(DATA.getType(), DATA.getRefType(), context);
+        DATA.addElement(newVar);
+        TableModelEvent event = new TableModelEvent(this);
+        this.LISTENERS.forEach(l -> l.tableChanged(event));
+    }
+    
+    public void removeElement(int index) {
+        DATA.removeElement(index);
+        TableModelEvent event = new TableModelEvent(this);
+        this.LISTENERS.forEach(l -> l.tableChanged(event));
+    }
+    
     final private List<TableModelListener> LISTENERS;
     final private ArrayInfo DATA;
     final private String[] COLUMNNAMES = new String[]{"#", "Type", "Value"};

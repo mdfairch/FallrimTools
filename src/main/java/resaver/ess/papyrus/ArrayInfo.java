@@ -22,6 +22,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.SortedSet;
 import java.nio.ByteBuffer;
+import java.text.MessageFormat;
 import java.util.Collections;
 import java.util.List;
 import resaver.Analysis;
@@ -97,6 +98,15 @@ final public class ArrayInfo implements AnalyzableElement, Linkable, HasID, Sepa
         this.data.write(output);
     }
 
+    /**
+     * @see SeparateData#getData()
+     * @return 
+     */    
+    @Override
+    public PapyrusElement getData() {
+        return this.data;
+    }
+    
     /**
      * @see resaver.ess.Element#calculateSize()
      * @return The size of the <code>Element</code> in bytes.
@@ -295,7 +305,7 @@ final public class ArrayInfo implements AnalyzableElement, Linkable, HasID, Sepa
         if (this.data == null || this.data.VARIABLES == null) {
             throw new NullPointerException("The variable list is missing.");
         }
-        if (index <= 0 || index >= this.data.VARIABLES.size()) {
+        if (index < 0 || index >= this.data.VARIABLES.size()) {
             throw new IllegalArgumentException("Invalid variable index: " + index);
         }
         
@@ -305,9 +315,71 @@ final public class ArrayInfo implements AnalyzableElement, Linkable, HasID, Sepa
     final private EID ID;
     final private Type TYPE;
     final private TString REFTYPE;
-    final private int LENGTH;
+    private int LENGTH;
     private ArrayData data;
 
+    public void shiftUp(int index)
+    {
+        if (this.data == null || this.data.VARIABLES == null)
+        {
+            throw new IllegalStateException("ArrayInfo not fully loaded, can't edit.");
+        }
+        if (index <= 0 || index >= this.data.VARIABLES.size())
+        {
+            throw new IllegalArgumentException(MessageFormat.format("Invalid index {0}; size is {1}.", index, this.data.VARIABLES.size()));
+        }
+        
+        Variable first = this.data.VARIABLES.get(index-1);
+        Variable second = this.data.VARIABLES.get(index);
+        this.data.VARIABLES.set(index, first);
+        this.data.VARIABLES.set(index-1, second);
+    }
+    
+    public void shiftDown(int index)
+    {
+       shiftUp(index+1) ;
+    }
+            
+    public int removeElement(int index) {
+        if (this.data == null || this.data.VARIABLES == null)
+        {
+            throw new IllegalStateException("ArrayInfo not fully loaded, can't edit.");
+        }
+        if (index < 0 || index >= this.data.VARIABLES.size())
+        {
+            throw new IllegalArgumentException(MessageFormat.format("Invalid index {0}; size is {1}.", index, this.data.VARIABLES.size()));
+        }
+        
+        this.data.VARIABLES.remove(index);
+        this.LENGTH = this.data.VARIABLES.size();
+        return index;
+    }
+    
+    public int addElement(Variable newVar) {
+        if (this.data == null || this.data.VARIABLES == null)
+        {
+            throw new IllegalStateException("ArrayInfo not fully loaded, can't edit.");
+        }
+        
+        if (newVar.getType() != this.getType())
+        {
+            throw new IllegalArgumentException(MessageFormat.format("Invalid variable type: found {0} but should be {1}.", newVar.getType(), this.getType()));
+        }
+        if (newVar instanceof Variable.Ref) 
+        {
+            Variable.Ref newRef = (Variable.Ref) newVar;
+            if (newRef.getRefType() != this.getRefType())
+            {
+                throw new IllegalArgumentException(MessageFormat.format("Invalid reference type: found {0} but should be {1}.", newRef.getRefType(), this.getRefType()));
+            }
+        }
+        
+        int index = this.data.VARIABLES.size();
+        this.data.VARIABLES.add(newVar);
+        this.LENGTH = this.data.VARIABLES.size();
+        return index;
+    }
+            
     static final private List<Type> VALID_TYPES = Arrays.asList(
             Type.NULL,
             Type.REF,
