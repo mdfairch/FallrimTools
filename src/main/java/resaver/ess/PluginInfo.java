@@ -95,7 +95,6 @@ final public class PluginInfo implements Element {
      */
     public PluginInfo(ByteBuffer input, boolean supportsESL) throws IOException, PluginOverflowException {
         Objects.requireNonNull(input);
-
         int pluginInfoSize = input.getInt();
         int numberOfFull = Byte.toUnsignedInt(input.get());
         if (numberOfFull < 0 || numberOfFull >= 256) {
