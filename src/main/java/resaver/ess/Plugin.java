@@ -31,9 +31,12 @@ import resaver.ess.papyrus.PapyrusContext;
 import resaver.ess.papyrus.ScriptInstance;
 import static j2html.TagCreator.*;
 import j2html.tags.DomContent;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static resaver.ResaverFormatting.makeMetric;
 import java.text.MessageFormat;
 import java.util.Optional;
+import java.util.Arrays;
+import java.util.logging.Logger;
 
 /**
  * Abstraction for plugins.
@@ -42,7 +45,7 @@ import java.util.Optional;
  */
 final public class Plugin implements AnalyzableElement, Linkable, Comparable<Plugin>, java.io.Serializable {
 
-    static public Plugin PROTOTYPE = new Plugin("Unofficial Skyrim Legendary Edition Patch", -1, false);
+    static public Plugin PROTOTYPE = new Plugin("Unofficial Skyrim Legendary Edition Patch".getBytes(UTF_8), -1, false);
 
     /**
      * Creates a new <code>Plugin</code> by reading from an input stream.
@@ -57,7 +60,7 @@ final public class Plugin implements AnalyzableElement, Linkable, Comparable<Plu
             throw new IllegalArgumentException("Invalid index: " + index);
         }
 
-        String name = mf.BufferUtil.getWString(input);
+        byte[] name = mf.BufferUtil.getWStringRaw(input);
         return new Plugin(name, index, false);
 
     }
@@ -75,7 +78,7 @@ final public class Plugin implements AnalyzableElement, Linkable, Comparable<Plu
             throw new IllegalArgumentException("Invalid index: " + index);
         }
 
-        String name = mf.BufferUtil.getWString(input);
+        byte[] name = mf.BufferUtil.getWStringRaw(input);
         return new Plugin(name, index, true);
 
     }
@@ -88,7 +91,7 @@ final public class Plugin implements AnalyzableElement, Linkable, Comparable<Plu
      */
     static public Plugin makeUnloadedPlugin(String name) {
         Objects.requireNonNull(name);
-        return new Plugin(name, -1, false);
+        return new Plugin(name.getBytes(UTF_8), -1, false);
     }
 
     /**
@@ -96,7 +99,7 @@ final public class Plugin implements AnalyzableElement, Linkable, Comparable<Plu
      * @return The Created plugin.
      */
     static public Plugin makeCreated() {
-        return new Plugin("(Created)", 0xFF, false);
+        return new Plugin("(Created)".getBytes(UTF_8), 0xFF, false);
     }
 
     /**
@@ -107,11 +110,16 @@ final public class Plugin implements AnalyzableElement, Linkable, Comparable<Plu
      * @param lightweight A flag indicating that it is a lightweight plugin.
      * @throws IOException
      */
-    private Plugin(String name, int index, boolean lightweight) {
-        Objects.requireNonNull(name);
-        this.NAME = name;
+    private Plugin(byte[] bytes, int index, boolean lightweight) {
+        Objects.requireNonNull(bytes);
+        this.NAME_RAW = bytes;
+        this.NAME = new String(bytes, UTF_8);
         this.INDEX = index;
         this.LIGHTWEIGHT = lightweight;
+        
+        if (!Arrays.equals(NAME_RAW, NAME.getBytes(UTF_8))) {
+            LOG.warning(String.format("Found a plugin filename that is not handled well: %s", NAME));
+        }
     }
 
     /**
@@ -120,7 +128,7 @@ final public class Plugin implements AnalyzableElement, Linkable, Comparable<Plu
      */
     @Override
     public void write(ByteBuffer output) {
-        mf.BufferUtil.putWString(output, this.NAME);
+        mf.BufferUtil.putWStringRaw(output, this.NAME_RAW);
     }
 
     /**
@@ -282,6 +290,13 @@ final public class Plugin implements AnalyzableElement, Linkable, Comparable<Plu
     }
 
     /**
+     * The raw bytes for the name.
+     * This is necessary because filenames are not constrained to any 
+     * particular character set.
+     */
+    final private byte[] NAME_RAW;
+
+    /**
      * The name field.
      */
     final public String NAME;
@@ -296,6 +311,9 @@ final public class Plugin implements AnalyzableElement, Linkable, Comparable<Plu
      */
     final public boolean LIGHTWEIGHT;
 
+    
+    static final private Logger LOG = Logger.getLogger(Plugin.class.getCanonicalName());
+    
     /**
      * @see Comparable#compareTo(java.lang.Object)
      * @param o
