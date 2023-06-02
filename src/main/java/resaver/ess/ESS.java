@@ -608,7 +608,7 @@ final public class ESS implements Element {
             throw new ElementException("Error in GlobalDataTable1", ex, this);
         }
         LOG.fine("Writing savegame: wrote GlobalDataTable #1.");
-
+        
         try {
             for (GlobalData data : this.TABLE2) {
                 try {
