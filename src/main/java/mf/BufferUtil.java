@@ -243,7 +243,16 @@ public class BufferUtil {
      * @return The <code>ByteBuffer</code> (allows chaining).
      */
     static public ByteBuffer putWString(ByteBuffer buffer, String string) {
-        byte[] bytes = string.getBytes(UTF_8);
+        return BufferUtil.putWStringRaw(buffer, string.getBytes(UTF_8));
+    }
+
+    /**
+     *
+     * @param buffer The <code>ByteBuffer</code> to write.
+     * @param bytes The <code>String</code>.
+     * @return The <code>ByteBuffer</code> (allows chaining).
+     */
+    static public ByteBuffer putWStringRaw(ByteBuffer buffer, byte[] bytes) {
         return buffer.putShort((short) bytes.length).put(bytes);
     }
 
