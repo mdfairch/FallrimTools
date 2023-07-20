@@ -18,11 +18,12 @@ package resaver.ess;
 import java.nio.ByteBuffer;
 import java.text.MessageFormat;
 import java.util.Objects;
+import java.util.Optional;
 import resaver.Analysis;
 import static resaver.ess.ChangeFlagConstantsAchr.*;
 
 /**
- * Describes a ChangeForm containing an NPC Reference.
+ * Describes a ChangeForm containing an ACHR Reference.
  *
  * @author Mark Fairchild
  */
@@ -39,9 +40,10 @@ public class ChangeFormACHR extends GeneralElement implements ChangeFormData {
      * @param context The <code>ESSContext</code> info.
      * @throws ElementException
      */
-    public ChangeFormACHR(ByteBuffer input, Flags.Int changeFlags, RefID refid, resaver.Analysis analysis, ESS.ESSContext context) throws ElementException {
+    public ChangeFormACHR(ByteBuffer input, Flags.Int changeFlags, RefID refid, Optional<resaver.Analysis> analysis, ESS.ESSContext context) throws ElementException {
         Objects.requireNonNull(input);
         Objects.requireNonNull(changeFlags);
+        Objects.requireNonNull(analysis);
 
         int initialType;
 
@@ -132,7 +134,7 @@ public class ChangeFormACHR extends GeneralElement implements ChangeFormData {
      * @return
      */
     @Override
-    public boolean matches(Analysis analysis, String mod) {
+    public boolean matches(Optional<Analysis> analysis, String mod) {
         return false;
     }
 
@@ -153,7 +155,7 @@ public class ChangeFormACHR extends GeneralElement implements ChangeFormData {
      * @return
      */
     @Override
-    public String getInfo(resaver.Analysis analysis, ESS save) {
+    public String getInfo(Optional<resaver.Analysis> analysis, ESS save) {
         final StringBuilder BUILDER = new StringBuilder();
         BUILDER.append("<pre><code>");
         BUILDER.append(super.toStringStructured("ACHR", 0));

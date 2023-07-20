@@ -33,6 +33,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -49,14 +50,12 @@ import resaver.ess.papyrus.Worrier;
 public class Watcher {
 
     /**
-     *
      * @param window
-     * @param worrier
-     *
+     * @param previous
      */
-    public Watcher(SaveWindow window, Worrier worrier) {
+    public Watcher(SaveWindow window, Optional<Opener.Result> previous) {
         this.WINDOW = Objects.requireNonNull(window);
-        this.WORRIER = Objects.requireNonNull(worrier);
+        this.PREVIOUS = Objects.requireNonNull(previous);
         this.worker = null;
         this.watchDirectories = null;
 
@@ -68,7 +67,6 @@ public class Watcher {
         });
 
     }
-
 
     synchronized public void start(Path... watchDirectories) {
         if (Arrays.stream(watchDirectories).allMatch(p -> Configurator.validDir(p))) {
@@ -169,7 +167,7 @@ public class Watcher {
                             }
 
                             if (Configurator.validateSavegame(FULL)) {
-                                final Opener OPENER = new Opener(WINDOW, FULL, SortingMethod.ALPHA, WORRIER, null);
+                                final Opener OPENER = new Opener(WINDOW, FULL, SortingMethod.ALPHA, PREVIOUS, null);
                                 OPENER.execute();
                             } else {
                                 LOG.info(String.format("WATCHER: Invalid file %s.", FULL));
@@ -196,7 +194,7 @@ public class Watcher {
     }
 
     final private SaveWindow WINDOW;
-    final private Worrier WORRIER;
+    final private Optional<Opener.Result> PREVIOUS;
     private WatchWorker worker;
     private List<Path> watchDirectories;
     static final private Logger LOG = Logger.getLogger(Opener.class.getCanonicalName());

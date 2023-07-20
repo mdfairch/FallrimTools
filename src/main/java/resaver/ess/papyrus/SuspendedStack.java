@@ -178,13 +178,13 @@ final public class SuspendedStack implements PapyrusElement, AnalyzableElement, 
     }
 
     /**
-     * @see AnalyzableElement#getInfo(resaver.Analysis, resaver.ess.ESS)
+     * @see AnalyzableElement#getInfo(Optional<resaver.Analysis>, resaver.ess.ESS)
      * @param analysis
      * @param save
      * @return
      */
     @Override
-    public String getInfo(resaver.Analysis analysis, ESS save) {
+    public String getInfo(Optional<resaver.Analysis> analysis, ESS save) {
         final StringBuilder BUILDER = new StringBuilder();
         BUILDER.append(String.format("<html><h3>SUSPENDEDSTACK</h3>"));
 
@@ -193,12 +193,12 @@ final public class SuspendedStack implements PapyrusElement, AnalyzableElement, 
         }
 
         if (this.hasMessage()) {
-            if (null != analysis) {
-                SortedSet<String> mods = analysis.SCRIPT_ORIGINS.get(this.MESSAGE.getScriptName().toIString());
+            analysis.ifPresent(an -> {
+                SortedSet<String> mods = an.SCRIPT_ORIGINS.get(this.MESSAGE.getScriptName().toIString());
                 if (null != mods) {
                     BUILDER.append(String.format("<p>Probably running code from mod %s.</p>", mods.last()));
                 }
-            }
+            });
 
             BUILDER.append(String.format("<p>Function: %s</p>", this.MESSAGE.getFName()));
         }
@@ -215,13 +215,13 @@ final public class SuspendedStack implements PapyrusElement, AnalyzableElement, 
     }
 
     /**
-     * @see AnalyzableElement#matches(resaver.Analysis, resaver.Mod)
+     * @see AnalyzableElement#matches(Optional<resaver.Analysis>, resaver.Mod)
      * @param analysis
      * @param mod
      * @return
      */
     @Override
-    public boolean matches(Analysis analysis, String mod) {
+    public boolean matches(Optional<Analysis> analysis, String mod) {
         Objects.requireNonNull(analysis);
         Objects.requireNonNull(mod);
         return this.hasMessage() && this.MESSAGE.matches(analysis, mod);

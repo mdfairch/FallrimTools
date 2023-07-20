@@ -160,13 +160,13 @@ final public class ChangeFormLeveled implements ChangeFormData {
     }
     
     /**
-     * @see AnalyzableElement#getInfo(resaver.Analysis, resaver.ess.ESS)
+     * @see AnalyzableElement#getInfo(Optional<resaver.Analysis>, resaver.ess.ESS)
      * @param analysis
      * @param save
      * @return
      */
     @Override
-    public String getInfo(resaver.Analysis analysis, ESS save) {
+    public String getInfo(Optional<resaver.Analysis> analysis, ESS save) {
         return p(
                 hr(),
                 p("FORMLIST"),
@@ -180,13 +180,13 @@ final public class ChangeFormLeveled implements ChangeFormData {
     }
 
     /**
-     * @see AnalyzableElement#matches(resaver.Analysis, resaver.Mod)
+     * @see AnalyzableElement#matches(Optional<resaver.Analysis>, resaver.Mod)
      * @param analysis
      * @param mod
      * @return
      */
     @Override
-    public boolean matches(Analysis analysis, String mod) {
+    public boolean matches(Optional<resaver.Analysis> analysis, String mod) {
         return false;
     }
 

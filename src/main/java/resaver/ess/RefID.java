@@ -71,7 +71,7 @@ final public class RefID implements Element, Linkable, Comparable<RefID> {
             }
         }
 
-        this.name = ess.getAnalysis() == null ? null : ess.getAnalysis().getName(this.PLUGIN, this.FORMID);
+        this.name = ess.getAnalysis().map(an -> an.getName(PLUGIN, FORMID)).orElse(null);
     }
 
     /**
@@ -147,6 +147,7 @@ final public class RefID implements Element, Linkable, Comparable<RefID> {
      * @param analysis The analysis data.
      */
     public void addNames(resaver.Analysis analysis) {
+        Objects.requireNonNull(analysis);
         this.name = analysis.getName(this.PLUGIN, this.FORMID);
     }
 

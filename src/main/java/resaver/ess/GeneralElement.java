@@ -25,6 +25,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import resaver.IString;
@@ -1198,13 +1199,12 @@ public class GeneralElement implements AnalyzableElement {
     }
 
     /**
-     * @see AnalyzableElement#getInfo(resaver.Analysis, resaver.ess.ESS)
      * @param analysis
      * @param save
      * @return
      */
     @Override
-    public String getInfo(resaver.Analysis analysis, ESS save) {
+    public String getInfo(Optional<resaver.Analysis> analysis, ESS save) {
         return body(
                 table(
                         tbody(
@@ -1217,7 +1217,7 @@ public class GeneralElement implements AnalyzableElement {
         ).toString();
     }
 
-    static private String getInfoFor(IString key, Object val, resaver.Analysis analysis, ESS save) {
+    static private String getInfoFor(IString key, Object val, Optional<resaver.Analysis> analysis, ESS save) {
         if (val == null) {
             return "null";
         } else if (val instanceof Linkable) {
@@ -1234,7 +1234,7 @@ public class GeneralElement implements AnalyzableElement {
         }
     }
 
-    static private String formatElement(String key, Object val, resaver.Analysis analysis, ESS save) {
+    static private String formatElement(String key, Object val, Optional<resaver.Analysis> analysis, ESS save) {
         final StringBuilder BUF = new StringBuilder();
         if (val == null) {
             BUF.append(String.format("%s: <NULL>", key));
@@ -1286,7 +1286,7 @@ public class GeneralElement implements AnalyzableElement {
         return BUF.toString();
     }
 
-    static private String formatGeneralElement(String key, GeneralElement gen, resaver.Analysis analysis, ESS save) {
+    static private String formatGeneralElement(String key, GeneralElement gen, Optional<resaver.Analysis> analysis, ESS save) {
         final StringBuilder BUF = new StringBuilder();
         gen.getValues().forEach((k, v) -> {
             final String S = GeneralElement.formatElement(k.toString(), v, analysis, save);
@@ -1295,7 +1295,7 @@ public class GeneralElement implements AnalyzableElement {
         return BUF.toString();
     }
 
-    static private String formatList(String key, List<?> list, resaver.Analysis analysis, ESS save) {
+    static private String formatList(String key, List<?> list, Optional<resaver.Analysis> analysis, ESS save) {
         final StringBuilder BUF = new StringBuilder();
         //BUF.append(String.format("<p>%s</p>", key));
         int i = 0;

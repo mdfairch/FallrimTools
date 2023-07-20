@@ -25,7 +25,6 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import resaver.Analysis;
 import resaver.ess.papyrus.Papyrus;
 import resaver.ess.papyrus.PapyrusContext;
 import resaver.ess.papyrus.ScriptInstance;
@@ -36,7 +35,9 @@ import static resaver.ResaverFormatting.makeMetric;
 import java.text.MessageFormat;
 import java.util.Optional;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.logging.Logger;
+import java.util.stream.Stream;
 
 /**
  * Abstraction for plugins.
@@ -203,14 +204,14 @@ final public class Plugin implements AnalyzableElement, Linkable, Comparable<Plu
     }
     
     /**
-     * @see AnalyzableElement#getInfo(resaver.Analysis, resaver.ess.ESS)
      * @param analysis
      * @param ess
      * @return
      */
     @Override
-    public String getInfo(resaver.Analysis analysis, ESS ess) {
-
+    public String getInfo(Optional<resaver.Analysis> analysis, ESS ess) {
+        Objects.requireNonNull(analysis);
+        Objects.requireNonNull(ess);
         Set<ScriptInstance> instances = this.getInstances(ess);
         Set<ChangeForm> forms = this.getChangeForms(ess);
         java.util.function.IntFunction<DomContent[]> DomList = n -> new DomContent[n];
@@ -250,7 +251,7 @@ final public class Plugin implements AnalyzableElement, Linkable, Comparable<Plu
                                 h4("Providers"),
                                 ul(mod.providers.stream().limit(20).map(p -> li(p)).toArray(DomList))
                         ))
-                        .orElse(p(em(analysis == null 
+                        .orElse(p(em(analysis.isEmpty()
                                 ? "Mod analysis is only available for Mod Organizer 2 and requires Plugin Parsing to be enabled."
                                 : "No analysis information is available for this plugin."))),
                 
@@ -269,24 +270,21 @@ final public class Plugin implements AnalyzableElement, Linkable, Comparable<Plu
     }
 
     /**
-     * @see AnalyzableElement#matches(resaver.Analysis, resaver.Mod)
      * @param analysis
      * @param mod
      * @return
      */
     @Override
-    public boolean matches(Analysis analysis, String mod) {
+    public boolean matches(Optional<resaver.Analysis> analysis, String mod) {
         Objects.requireNonNull(analysis);
         Objects.requireNonNull(mod);
 
-        Predicate<String> filter = esp -> esp.equalsIgnoreCase(NAME);
-        final List<String> PROVIDERS = new ArrayList<>();
-
-        analysis.ESPS.forEach((m, esps) -> {
-            esps.stream().filter(filter).forEach(esp -> PROVIDERS.add(m));
-        });
-
-        return PROVIDERS.contains(mod);
+        return analysis.map(an -> 
+                an.ESPS.entrySet().stream()
+                        .filter(e -> e.getKey().equalsIgnoreCase(NAME)) // find plugin that match this one's name. There should really be at most one.
+                        .flatMap(e -> e.getValue().stream()) // get all the mods that provide that plugin.
+                        .anyMatch(m -> m.equals(mod))) // find mods that match the query.
+                .orElse(false);
     }
 
     /**
@@ -357,7 +355,10 @@ final public class Plugin implements AnalyzableElement, Linkable, Comparable<Plu
         }
     }
 
-    public PluginMetrics createPluginMetrics(ESS ess, Analysis analysis) {
+    public PluginMetrics createPluginMetrics(ESS ess, Optional<resaver.Analysis> analysis) {
+        Objects.requireNonNull(ess);
+        Objects.requireNonNull(analysis);
+        
         Papyrus papyrus = ess.getPapyrus();
         PapyrusContext context = papyrus.getContext();
         Set<Element> uniqueRefs = context.getPluginReferences(this);
@@ -378,11 +379,9 @@ final public class Plugin implements AnalyzableElement, Linkable, Comparable<Plu
         
         metrics.uniqueDataPercentage = (float)metrics.uniqueData / (float)ess.getOriginalSize();
 
-        if (null == analysis) {
-            metrics.mod = Optional.empty();
-        } else {
+        analysis.ifPresentOrElse(an -> {
             ModMetrics mod = new ModMetrics();
-            mod.providers = analysis.ESPS.entrySet()
+            mod.providers = an.ESPS.entrySet()
                         .stream()
                         .filter(e -> e.getValue().stream().anyMatch(NAME::equalsIgnoreCase))
                         .map(e -> e.getKey())
@@ -396,9 +395,11 @@ final public class Plugin implements AnalyzableElement, Linkable, Comparable<Plu
                 mod.probableProvider = mod.providers.get(mod.providers.size()-1);
 
                 Predicate<SortedSet<String>> modFilter = e -> e.contains(mod.probableProvider);
-                mod.numScripts = (int) analysis.SCRIPT_ORIGINS.values().stream().filter(modFilter).count();                
+                mod.numScripts = (int) an.SCRIPT_ORIGINS.values().stream().filter(modFilter).count();                
             }
-        }
+        }, () -> {
+            metrics.mod = Optional.empty();
+        });
         
         return metrics;
     }

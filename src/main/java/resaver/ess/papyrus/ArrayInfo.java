@@ -25,7 +25,6 @@ import java.nio.ByteBuffer;
 import java.text.MessageFormat;
 import java.util.Collections;
 import java.util.List;
-import resaver.Analysis;
 import resaver.ess.ESS;
 import resaver.ess.Element;
 import resaver.ess.Linkable;
@@ -199,24 +198,24 @@ final public class ArrayInfo implements AnalyzableElement, Linkable, HasID, Sepa
     }
 
     /**
-     * @see AnalyzableElement#getInfo(resaver.Analysis, resaver.ess.ESS)
+     * @see AnalyzableElement#getInfo(Optional<resaver.Analysis>, resaver.ess.ESS)
      * @param analysis
      * @param save
      * @return
      */
     @Override
-    public String getInfo(resaver.Analysis analysis, ESS save) {
+    public String getInfo(Optional<resaver.Analysis> analysis, ESS save) {
         final StringBuilder BUILDER = new StringBuilder();
 
         BUILDER.append("<html><h3>ARRAY</h3>");
 
         List<DefinedElement> HOLDERS = save.getPapyrus().getContext().findReferees(this);
 
-        if (null != analysis) {
+        analysis.ifPresent(an -> {
             HOLDERS.forEach(owner -> {
                 if (owner instanceof ScriptInstance) {
                     ScriptInstance instance = (ScriptInstance) owner;
-                    SortedSet<String> mods = analysis.SCRIPT_ORIGINS.get(instance.getScriptName().toIString());
+                    SortedSet<String> mods = an.SCRIPT_ORIGINS.get(instance.getScriptName().toIString());
                     if (null != mods) {
                         String mod = mods.last();
                         TString type = instance.getScriptName();
@@ -224,7 +223,7 @@ final public class ArrayInfo implements AnalyzableElement, Linkable, HasID, Sepa
                     }
                 }
             });
-        }
+        });
 
         BUILDER.append("<p/>");
         BUILDER.append(String.format("<p>ID: %s</p>", this.getID()));
@@ -263,13 +262,13 @@ final public class ArrayInfo implements AnalyzableElement, Linkable, HasID, Sepa
     }
 
     /**
-     * @see AnalyzableElement#matches(resaver.Analysis, resaver.Mod)
+     * @see AnalyzableElement#matches(Optional<resaver.Analysis>, resaver.Mod)
      * @param analysis
      * @param mod
      * @return
      */
     @Override
-    public boolean matches(Analysis analysis, String mod) {
+    public boolean  matches(Optional<resaver.Analysis> analysis, String mod) {
         Objects.requireNonNull(analysis);
         Objects.requireNonNull(mod);
         return false;

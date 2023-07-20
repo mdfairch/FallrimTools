@@ -15,6 +15,8 @@
  */
 package resaver.ess;
 
+import java.util.Optional;
+
 
 /**
  * An abstract base class for adding functionality to instances of
@@ -31,7 +33,7 @@ public interface AnalyzableElement extends Element {
      * @param save The full set of savegame papyrus data.
      * @return A string to show users about the element.
      */
-    public String getInfo(resaver.Analysis analysis, ESS save);
+    public String getInfo(Optional<resaver.Analysis> analysis, ESS save);
 
     /**
      * Evaluates whether the element could have originated from the specified
@@ -42,7 +44,7 @@ public interface AnalyzableElement extends Element {
      * @return A flag indicating if the element could plausibly have originated
      * in the specified <code>Mod</code>.
      */
-    default public boolean matches(resaver.Analysis analysis, String mod) {
+    default public boolean matches(Optional<resaver.Analysis> analysis, String mod) {
         return false;
     }
 

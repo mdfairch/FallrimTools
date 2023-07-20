@@ -18,18 +18,16 @@ package resaver.gui;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.nio.channels.ClosedByInterruptException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.function.Consumer;
 import java.util.logging.Level;
@@ -38,7 +36,6 @@ import java.util.stream.Collectors;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
-import resaver.Analysis;
 import resaver.Game;
 import resaver.Mod;
 import resaver.ResaverFormatting;
@@ -70,7 +67,7 @@ public class Scanner extends SwingWorker<resaver.Analysis, Double> {
         this.SAVE = Objects.requireNonNull(save, "The save field must not be null."); //NOI18N
         this.GAME_DIR = Objects.requireNonNull(gameDir, "The game directory field must not be null."); //NOI18N
         this.MO2_INI = mo2Ini;
-        this.DOAFTER = doAfter;
+        this.DOAFTER = Objects.requireNonNull(doAfter);
         this.PROGRESS = Objects.requireNonNull(progress);
     }
 
@@ -150,7 +147,7 @@ public class Scanner extends SwingWorker<resaver.Analysis, Double> {
             final List<Path> ERR_STRINGS = new LinkedList<>();
 
             List<StringsFile> STRINGSFILES = new ArrayList<>();
-            Map<Path, Path> SCRIPT_ORIGINS = new LinkedHashMap<>();
+            Map<Path, Path> SCRIPT_ORIGINS = new java.util.LinkedHashMap<>();
 
             // Read StringsFiles and scripts.
             final mf.Counter COUNTER = new mf.Counter(MODS.size());
@@ -236,17 +233,15 @@ public class Scanner extends SwingWorker<resaver.Analysis, Double> {
             }
 
             this.PROGRESS.accept(I18N.getString("SCANNER_CREATING_ANALYSIS"));
-
+            
             final resaver.Analysis ANALYSIS = new resaver.Analysis(
                     this.SAVE.getPluginInfo(), 
                     PROFILEANALYSIS, 
                     PLUGIN_DATA, 
                     STRINGTABLE, 
                     hasModInfo);
-            
-            if (null != this.SAVE) {
-                this.WINDOW.setAnalysis(ANALYSIS);
-            }
+            this.SAVE.cacheAnalysis(ANALYSIS);
+            //this.WINDOW.setAnalysis(ANALYSIS);
 
             TIMER.stop();
             LOG.info(MessageFormat.format("Plugin scanning completed, took {0}", TIMER.getFormattedTime()));
@@ -322,11 +317,7 @@ public class Scanner extends SwingWorker<resaver.Analysis, Double> {
 
         } finally {
             this.WINDOW.removeWindowListener(this.LISTENER);
-
-            if (this.DOAFTER != null) {
-                SwingUtilities.invokeLater(DOAFTER);
-            }
-
+            SwingUtilities.invokeLater(this.DOAFTER);
         }
     }
 

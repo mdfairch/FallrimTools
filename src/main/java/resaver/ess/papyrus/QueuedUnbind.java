@@ -18,7 +18,7 @@ package resaver.ess.papyrus;
 import java.util.Objects;
 import java.util.SortedSet;
 import java.nio.ByteBuffer;
-import resaver.Analysis;
+import java.util.Optional;
 import resaver.ess.AnalyzableElement;
 import resaver.ess.ESS;
 import resaver.ess.Element;
@@ -90,13 +90,13 @@ final public class QueuedUnbind implements PapyrusElement, AnalyzableElement, Li
     }
 
     /**
-     * @see AnalyzableElement#getInfo(resaver.Analysis, resaver.ess.ESS)
+     * @see AnalyzableElement#getInfo(Optional<resaver.Analysis>, resaver.ess.ESS)
      * @param analysis
      * @param save
      * @return
      */
     @Override
-    public String getInfo(resaver.Analysis analysis, ESS save) {
+    public String getInfo(Optional<resaver.Analysis> analysis, ESS save) {
         final StringBuilder BUILDER = new StringBuilder();
         if (null != this.INSTANCE && null != this.INSTANCE.getScript()) {
             BUILDER.append(String.format("<html><h3>QUEUED UNBIND of %s</h3>", this.INSTANCE.getScript().toHTML(this)));
@@ -121,9 +121,8 @@ final public class QueuedUnbind implements PapyrusElement, AnalyzableElement, Li
             BUILDER.append("</p>");
         }
 
-        if (null != analysis) {
-            SortedSet<String> providers = analysis.SCRIPT_ORIGINS.get(this.INSTANCE.getScriptName().toIString());
-            if (null != providers) {
+        analysis.map(an -> an.SCRIPT_ORIGINS.get(this.INSTANCE.getScriptName().toIString())).ifPresent(providers -> {
+            if (!providers.isEmpty()) {
                 String probablyProvider = providers.last();
                 BUILDER.append(String.format("The queued unbinding probably came from mod \"%s\".\n\n", probablyProvider));
 
@@ -131,22 +130,22 @@ final public class QueuedUnbind implements PapyrusElement, AnalyzableElement, Li
                     BUILDER.append("<p>Full list of providers:</p><ul>");
                     providers.forEach(mod -> BUILDER.append(String.format("<li>%s", mod)));
                     BUILDER.append("</ul>");
-                }
+                }                
             }
-        }
+        });
 
         BUILDER.append("</html>");
         return BUILDER.toString();
     }
 
     /**
-     * @see AnalyzableElement#matches(resaver.Analysis, resaver.Mod)
+     * @see AnalyzableElement#matches(Optional<resaver.Analysis>, resaver.Mod)
      * @param analysis
      * @param mod
      * @return
      */
     @Override
-    public boolean matches(Analysis analysis, String mod) {
+    public boolean  matches(Optional<resaver.Analysis> analysis, String mod) {
         Objects.requireNonNull(analysis);
         Objects.requireNonNull(mod);
         return this.INSTANCE.matches(analysis, mod);

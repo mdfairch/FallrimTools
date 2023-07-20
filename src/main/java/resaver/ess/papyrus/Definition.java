@@ -16,12 +16,13 @@
 package resaver.ess.papyrus;
 
 import java.util.List;
+import java.util.Optional;
 import resaver.ess.AnalyzableElement;
 import resaver.ess.Linkable;
 
 /**
  *
- * @author Mark
+ * @author Mark Fairchild
  */
 abstract public class Definition implements PapyrusElement, AnalyzableElement, Linkable {
 

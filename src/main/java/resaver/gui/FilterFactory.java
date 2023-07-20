@@ -21,6 +21,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.logging.Logger;
@@ -42,9 +43,9 @@ public class FilterFactory {
 
     static public enum ParseLevel { PARSED, PARTIAL, UNPARSED };
     
-    public FilterFactory(ESS ess, Analysis analysis) {
+    public FilterFactory(ESS ess, Optional<Analysis> analysis) {
         Objects.requireNonNull(ess);
-        this.ANALYSIS = analysis;
+        this.ANALYSIS = Objects.requireNonNull(analysis);
         this.ESS = ess;
         this.CONTEXT = ess.getContext();
         this.FILTERS = new ArrayList<>(10);
@@ -152,6 +153,22 @@ public class FilterFactory {
     }
     
     /**
+     * Add a missing parent filter.
+     * @return
+     */
+    public FilterFactory addMissingParentSubfilter() {
+        return addSubFilter(createMissingParentFilter());
+    }
+    
+    /**
+     * Add a no-parent filter.
+     * @return
+     */
+    public FilterFactory addNoParentSubfilter() {
+        return addSubFilter(createNoParentFilter());
+    }
+    
+    /**
      * Add an undefined element filter.
      * @return
      */
@@ -234,8 +251,8 @@ public class FilterFactory {
         }
     }
     
-    final private Analysis ANALYSIS;
     final private ESS ESS;
+    final private Optional<Analysis> ANALYSIS;
     final private ESS.ESSContext CONTEXT;
     final private List<Predicate<Node>> FILTERS;
     final private List<Predicate<Node>> SUBFILTERS;
@@ -323,7 +340,7 @@ public class FilterFactory {
     }
 
     /**
-     * Setup an undefined element setFilter.
+     * Setup an undefined element filter.
      *
      * @return
      */
@@ -357,7 +374,7 @@ public class FilterFactory {
     }
 
     /**
-     * Setup an unattached element setFilter.
+     * Setup an unattached element filter.
      *
      * @return
      */
@@ -372,7 +389,37 @@ public class FilterFactory {
     }
 
     /**
-     * Setup an unattached element setFilter.
+     * Setup a missing parent filter.
+     *
+     * @return
+     */
+    private Predicate<Node> createMissingParentFilter() {
+        LOG.info("Creating 'Unattached' filter.");
+        return node -> {
+            if (node.hasElement() && node.getElement() instanceof Script) {
+                return ((Script) node.getElement()).isMissingParent();
+            }
+            return false;
+        };
+    }
+
+    /**
+     * Setup an no parent filter.
+     *
+     * @return
+     */
+    private Predicate<Node> createNoParentFilter() {
+        LOG.info("Creating 'Unattached' filter.");
+        return node -> {
+            if (node.hasElement() && node.getElement() instanceof Script) {
+                return ((Script) node.getElement()).isNoParent();
+            }
+            return false;
+        };
+    }
+
+    /**
+     * Setup an unattached element filter.
      *
      * @return
      */

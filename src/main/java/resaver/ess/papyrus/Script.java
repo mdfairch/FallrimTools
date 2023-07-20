@@ -24,7 +24,7 @@ import java.util.SortedSet;
 import java.util.stream.Collectors;
 import resaver.IString;
 import java.nio.ByteBuffer;
-import resaver.Analysis;
+import java.util.Optional;
 import resaver.ess.Element;
 import resaver.ess.ESS;
 import resaver.ess.Linkable;
@@ -116,23 +116,43 @@ final public class Script extends Definition {
      * <code>MemberDesc</code> objects of all superscripts.
      */
     public List<MemberDesc> getExtendedMembers() {
-        if (null != this.parent) {
-            final List<MemberDesc> EXTENDED = this.parent.getExtendedMembers();
+        return this.getParent().map(p -> {
+            final List<MemberDesc> EXTENDED = this.parent.get().getExtendedMembers();
             EXTENDED.addAll(this.MEMBERS);
-            return EXTENDED;
-        } else {
+            return EXTENDED;            
+        }).orElseGet(() -> {
             final List<MemberDesc> EXTENDED = new ArrayList<>(this.MEMBERS);
             return EXTENDED;
-        }
+        });
     }
 
     /**
      * @param scripts The ScriptMap.
      */
     public void resolveParent(ScriptMap scripts) {
-        this.parent = scripts.get(this.TYPE);
+        if (this.TYPE == null || this.TYPE.isEmpty()) {
+            this.parent = Optional.empty();
+        } else {
+            this.parent = Optional.of(scripts.get(this.TYPE));
+        }
     }
 
+    private Optional<Script> getParent() {
+        if (this.parent == null) {
+            throw new IllegalStateException("This function cannot be called before resolution.");
+        } else {
+            return this.parent;            
+        }
+    }
+
+    public boolean isNoParent() {
+        return this.TYPE == null || this.TYPE.isEmpty();
+    }
+    
+    public boolean isMissingParent() {
+        return this.getParent().isEmpty();
+    }
+    
     /**
      * @see resaver.ess.Linkable#toHTML(Element)
      * @param target A target within the <code>Linkable</code>.
@@ -162,32 +182,32 @@ final public class Script extends Definition {
     }
 
     /**
-     * @see AnalyzableElement#getInfo(resaver.Analysis, resaver.ess.ESS)
+     * @see AnalyzableElement#getInfo(Optional<resaver.Analysis>, resaver.ess.ESS)
      * @param analysis
      * @param save
      * @return
      */
     @Override
-    public String getInfo(resaver.Analysis analysis, ESS save) {
+    public String getInfo(Optional<resaver.Analysis> analysis, ESS save) {
         final StringBuilder BUILDER = new StringBuilder();
         BUILDER.append("<html>");
 
         if (this.TYPE.isEmpty()) {
             BUILDER.append(String.format("<h3>SCRIPT %s</h3>", this.NAME));
-        } else if (null != this.parent) {
-            BUILDER.append(String.format("<h3>SCRIPT %s extends %s</h3>", this.NAME, this.parent.toHTML(this)));
-        } else {
-            BUILDER.append(String.format("<h3>SCRIPT %s extends %s</h3>", this.NAME, this.TYPE));
+        } else if (this.isNoParent()) {
+            BUILDER.append(String.format("<h3>SCRIPT %s extends %s (warning: no parent)</h3>", this.NAME, this.TYPE));
+        } else if (this.isMissingParent()) {
+            BUILDER.append(String.format("<h3>SCRIPT %s extends %s (warning: missing parent)</h3>", this.NAME, this.TYPE));
+        } else { 
+            BUILDER.append(String.format("<h3>SCRIPT %s extends %s</h3>", this.NAME, this.getParent().get().toHTML(this)));
         }
 
         if (this.isUndefined()) {
             BUILDER.append("<p>WARNING: SCRIPT MISSING!<br />Selecting \"Remove Undefined Instances\" will delete this.</p>");
         }
 
-        if (null != analysis) {
-            SortedSet<String> mods = analysis.SCRIPT_ORIGINS.get(this.NAME.toIString());
-
-            if (null != mods) {
+        analysis.map(an -> an.SCRIPT_ORIGINS.get(this.NAME.toIString())).ifPresent(mods -> {
+            if (!mods.isEmpty()) {
                 if (mods.size() > 1) {
                     BUILDER.append("<p>WARNING: MORE THAN ONE MOD PROVIDES THIS SCRIPT!<br />Exercise caution when editing or deleting this script!</p>");
                 }
@@ -199,11 +219,11 @@ final public class Script extends Definition {
                 mods.forEach(mod -> BUILDER.append(String.format("<li>%s", mod)));
                 BUILDER.append("</ul>");
             }
-        }
+        });
 
         int inheritCount = 0;
-        for (Script p = this.parent; p != null; p = p.parent) {
-            inheritCount += p.MEMBERS.size();
+        for (Optional<Script> p = this.getParent(); p != null && p.isPresent(); p = p.get().getParent()) {
+            inheritCount += p.get().MEMBERS.size();
         }
         BUILDER.append(String.format("<p>Contains %d member variables, %d were inherited.</p>", this.MEMBERS.size() + inheritCount, inheritCount));
 
@@ -305,18 +325,20 @@ final public class Script extends Definition {
     }
 
     /**
-     * @see AnalyzableElement#matches(resaver.Analysis, resaver.Mod)
+     * @see AnalyzableElement#matches(Optional<resaver.Analysis>, resaver.Mod)
      * @param analysis
      * @param mod
      * @return
      */
     @Override
-    public boolean matches(Analysis analysis, String mod) {
+    public boolean matches(Optional<resaver.Analysis> analysis, String mod) {
         Objects.requireNonNull(analysis);
         Objects.requireNonNull(mod);
 
-        final SortedSet<String> OWNERS = analysis.SCRIPT_ORIGINS.get(this.NAME.toIString());
-        return null != OWNERS && OWNERS.contains(mod);
+        return analysis
+                .map(an -> an.SCRIPT_ORIGINS.get(this.NAME.toIString()))
+                .map(owners -> owners.contains(mod))
+                .orElse(false);
     }
 
     /**
@@ -355,6 +377,6 @@ final public class Script extends Definition {
     final private TString NAME;
     final private TString TYPE;
     final private List<MemberDesc> MEMBERS;
-    private Script parent;
+    private Optional<Script> parent;
 
 }

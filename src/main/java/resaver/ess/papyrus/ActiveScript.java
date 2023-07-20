@@ -24,9 +24,9 @@ import java.util.Objects;
 import java.util.SortedSet;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import resaver.Analysis;
 import resaver.ess.ESS;
 import resaver.ess.Element;
 import resaver.ess.Linkable;
@@ -268,13 +268,13 @@ final public class ActiveScript implements AnalyzableElement, HasID, SeparateDat
     }
 
     /**
-     * @see AnalyzableElement#getInfo(resaver.Analysis, resaver.ess.ESS)
+     * @see AnalyzableElement#getInfo(Optional<resaver.Analysis>, resaver.ess.ESS)
      * @param analysis
      * @param save
      * @return
      */
     @Override
-    public String getInfo(resaver.Analysis analysis, ESS save) {
+    public String getInfo(Optional<resaver.Analysis> analysis, ESS save) {
         final StringBuilder BUILDER = new StringBuilder();
 
         if (this.isTerminated()) {
@@ -304,16 +304,17 @@ final public class ActiveScript implements AnalyzableElement, HasID, SeparateDat
         } else {
             BUILDER.append("<p>Attachment element: <em>None</em></p>");
         }
-
-        if (null != analysis && this.hasStack()) {
-            StackFrame topFrame = this.getStackFrames().get(0);
-            SortedSet<String> mods = analysis.SCRIPT_ORIGINS.get(topFrame.getScriptName().toIString());
-            if (null != mods) {
-                String mod = mods.last();
-                BUILDER.append(String.format("<p>Probably running code from mod %s.</p>", mod));
+        
+        analysis.ifPresent(an -> {
+            if (this.hasStack()) {
+                StackFrame topFrame = this.getStackFrames().get(0);
+                SortedSet<String> mods = an.SCRIPT_ORIGINS.get(topFrame.getScriptName().toIString());
+                if (null != mods) {
+                    String mod = mods.last();
+                    BUILDER.append(String.format("<p>Probably running code from mod %s.</p>", mod));
+                }
             }
-
-        }
+        });
 
         if (null == this.owner) {
             BUILDER.append("<p>This thread doesn't seem to be attached to an instance.</p>");
@@ -382,13 +383,13 @@ final public class ActiveScript implements AnalyzableElement, HasID, SeparateDat
     }
 
     /**
-     * @see AnalyzableElement#matches(resaver.Analysis, resaver.Mod)
+     * @see AnalyzableElement#matches(Optional<resaver.Analysis>, resaver.Mod)
      * @param analysis
      * @param mod
      * @return
      */
     @Override
-    public boolean matches(Analysis analysis, String mod) {
+    public boolean matches(Optional<resaver.Analysis> analysis, String mod) {
         Objects.requireNonNull(analysis);
         Objects.requireNonNull(mod);
         return this.getStackFrames().stream().anyMatch(v -> v.matches(analysis, mod));

@@ -18,6 +18,7 @@ package resaver.ess;
 import static j2html.TagCreator.*;
 import java.nio.ByteBuffer;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  *
@@ -111,12 +112,11 @@ public class GlobalVariable implements Element {
     }
 
     /**
-     * @see AnalyzableElement#getInfo(resaver.Analysis, resaver.ess.ESS)
      * @param analysis
      * @param save
      * @return
      */
-    public String getInfo(resaver.Analysis analysis, ESS save) {
+    public String getInfo(Optional<resaver.Analysis> analysis, ESS save) {
         return body(
                 h2("GlobalVariable"),
                 h3(this.REFID.getName().orElse("NAME MISSING")),

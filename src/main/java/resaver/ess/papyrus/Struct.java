@@ -18,11 +18,12 @@ package resaver.ess.papyrus;
 import resaver.ListException;
 import resaver.ess.AnalyzableElement;
 import java.nio.ByteBuffer;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.SortedSet;
 import java.util.stream.Collectors;
-import resaver.Analysis;
 import resaver.ess.Element;
 import resaver.ess.ESS;
 import resaver.ess.Linkable;
@@ -122,34 +123,32 @@ final public class Struct extends Definition {
     }
 
     /**
-     * @see AnalyzableElement#getInfo(resaver.Analysis, resaver.ess.ESS)
+     * @see AnalyzableElement#getInfo(Optional<resaver.Analysis>, resaver.ess.ESS)
      * @param analysis
      * @param save
      * @return
      */
     @Override
-    public String getInfo(resaver.Analysis analysis, ESS save) {
+    public String getInfo(Optional<resaver.Analysis> analysis, ESS save) {
         final StringBuilder BUILDER = new StringBuilder();
         BUILDER.append("<html>");
 
         BUILDER.append(String.format("<h3>STRUCTURE DEFINITION %ss</h3>", this.NAME));
 
-        if (null != analysis) {
-            SortedSet<String> mods = analysis.SCRIPT_ORIGINS.get(this.NAME.toIString());
-
-            if (null != mods) {
-                if (mods.size() > 1) {
-                    BUILDER.append("<p>WARNING: MORE THAN ONE MOD PROVIDES THIS SCRIPT!<br />Exercise caution when editing or deleting this script!</p>");
+        analysis.map(an -> an.STRUCT_ORIGINS.get(this.NAME.toIString())).ifPresent(providers -> {
+            if (!providers.isEmpty()) {
+                if (providers.size() > 1) {
+                    BUILDER.append("<p>WARNING: MORE THAN ONE MOD PROVIDES THIS STRUCT!<br />Exercise caution when editing or deleting this struct!</p>");
                 }
 
-                String probablyProvider = mods.last();
-                BUILDER.append(String.format("<p>This script probably came from \"%s\".</p>", probablyProvider));
+                String probablyProvider = providers.last();
+                BUILDER.append(String.format("<p>This struct probably came from \"%s\".</p>", probablyProvider));
                 BUILDER.append("<p>Full list of providers:</p>");
                 BUILDER.append("<ul>");
-                mods.forEach(mod -> BUILDER.append(String.format("<li>%s", mod)));
+                providers.forEach(mod -> BUILDER.append(String.format("<li>%s", mod)));
                 BUILDER.append("</ul>");
             }
-        }
+        });
 
         BUILDER.append(String.format("<p>Contains %d member variables.</p>", this.MEMBERS.size()));
 
@@ -170,76 +169,29 @@ final public class Struct extends Definition {
             BUILDER.append("</ul>");
         }
 
-        /*if (null != analysis && analysis.STRUCT_ORIGINS.containsKey(this.NAME)) {
-            final java.io.File PEXFILE = analysis.SCRIPTS.get(this.NAME);
-            final java.io.File PARENT = PEXFILE.getParentFile();
-
-            BUILDER.append("");
-            BUILDER.append(String.format("<hr /><p>Disassembled source code:<br />(from %s)</p>", PEXFILE.getPath()));
-
-            if (PEXFILE.exists() && PEXFILE.canRead()) {
-                try {
-                    final resaver.pex.Pex SCRIPT = resaver.pex.Pex.readScript(PEXFILE);
-
-                    java.io.StringWriter code = new java.io.StringWriter();
-                    SCRIPT.disassemble(code, resaver.pex.AssemblyLevel.STRIPPED);
-
-                    BUILDER.append("<p<code><pre>");
-                    BUILDER.append(code.getBuffer());
-                    BUILDER.append("</pre></code></p>");
-
-                } catch (RuntimeException ex) {
-                    BUILDER.append("<p><em>Error: disassembly failed.</em></p>");
-                } catch (java.io.IOException ex) {
-                    BUILDER.append("<p><em>Error: couldn't read the script file.</em></p>");
-                } catch (Error ex) {
-                    BUILDER.append("<p><em>Error: unexpected error while reading script file.</em></p>");
-                }
-
-            } else if (PARENT.exists() && PARENT.isFile()) {
-                try (resaver.LittleEndianRAF input = new resaver.LittleEndianRAF(PARENT, "r")) {
-                    resaver.bsa.BSAParser BSA = new resaver.bsa.BSAParser(PARENT.getName(), input);
-                    final resaver.pex.Pex SCRIPT = BSA.getScript(PEXFILE.getName());
-
-                    java.io.StringWriter code = new java.io.StringWriter();
-                    SCRIPT.disassemble(code, resaver.pex.AssemblyLevel.STRIPPED);
-
-                    BUILDER.append("<p<code><pre>");
-                    BUILDER.append(code.getBuffer());
-                    BUILDER.append("</pre></code></p>");
-
-                } catch (RuntimeException ex) {
-                    BUILDER.append("<p><em>Error: disassembly failed.</em></p>");
-                } catch (java.io.IOException ex) {
-                    BUILDER.append("<p><em>Error: couldn't read the script file.</em></p>");
-                } catch (Error ex) {
-                    BUILDER.append("<p><em>Error: unexpected error while reading script file.</em></p>");
-                }
-            }
-        }
-         */
         BUILDER.append("</html>");
         return BUILDER.toString();
     }
 
     /**
-     * @see AnalyzableElement#matches(resaver.Analysis, resaver.Mod)
+     * @see AnalyzableElement#matches(Optional<resaver.Analysis>, resaver.Mod)
      * @param analysis
      * @param mod
      * @return
      */
     @Override
-    public boolean matches(Analysis analysis, String mod) {
+    public boolean  matches(Optional<resaver.Analysis> analysis, String mod) {
         Objects.requireNonNull(analysis);
         Objects.requireNonNull(mod);
 
-        //final SortedSet<String> OWNERS = analysis.SCRIPT_ORIGINS.get(this.NAME);
-        //return null != OWNERS && OWNERS.contains(mod);
-        return false;
+        return analysis
+                .map(an -> an.STRUCT_ORIGINS.get(this.NAME.toIString()))
+                .orElse(Collections.emptySortedSet())
+                .contains(mod);
     }
 
     /**
-     * @return A flag indicating if the <code>Script</code> is undefined.
+     * @return A flag indicating if the <code>Struct</code> is undefined.
      *
      */
     @Override

@@ -18,6 +18,7 @@ package resaver.ess.papyrus;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Stream;
 import resaver.IString;
 import resaver.ess.AnalyzableElement;
@@ -184,13 +185,13 @@ abstract public class TString implements PapyrusElement, AnalyzableElement, Link
     }
 
     /**
-     * @see AnalyzableElement#getInfo(resaver.Analysis, resaver.ess.ESS)
+     * @see AnalyzableElement#getInfo(Optional<resaver.Analysis>, resaver.ess.ESS)
      * @param analysis
      * @param save
      * @return
      */
     @Override
-    public String getInfo(resaver.Analysis analysis, ESS save) {
+    public String getInfo(Optional<resaver.Analysis> analysis, ESS save) {
         Objects.requireNonNull(save);
 
         final StringBuilder BUILDER = new StringBuilder();
@@ -224,9 +225,11 @@ abstract public class TString implements PapyrusElement, AnalyzableElement, Link
             if (this == def.getName()) {
                 LINKS.add(def.toHTML(null));
             }
-            def.getMembers().stream()
-                    .filter(member -> this.equals(member.getName()))
-                    .forEach(member -> LINKS.add(def.toHTML(member)));
+            
+            List<MemberDesc> members = def.getMembers();           
+            members.stream()
+                    .filter(m -> this.equals(m.getName()))
+                    .forEach(m -> LINKS.add(def.toHTML(m)));
         });
 
         /*

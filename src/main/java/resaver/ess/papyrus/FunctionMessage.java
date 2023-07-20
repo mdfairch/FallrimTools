@@ -20,7 +20,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.SortedSet;
 import java.nio.ByteBuffer;
-import resaver.Analysis;
 import resaver.IString;
 import resaver.ess.ESS;
 import resaver.ess.Element;
@@ -185,24 +184,26 @@ final public class FunctionMessage implements PapyrusElement, AnalyzableElement,
     }
 
     /**
-     * @see AnalyzableElement#getInfo(resaver.Analysis, resaver.ess.ESS)
+     * @see AnalyzableElement#getInfo(Optional<resaver.Analysis>, resaver.ess.ESS)
      * @param analysis
      * @param save
      * @return
      */
     @Override
-    public String getInfo(resaver.Analysis analysis, ESS save) {
+    public String getInfo(Optional<resaver.Analysis> analysis, ESS save) {
         final StringBuilder BUILDER = new StringBuilder();
         BUILDER.append(String.format("<html><h3>FUNCTIONMESSAGE</h3>"));
 
-        if (null != analysis && null != this.MESSAGE) {
-            IString scriptName = this.MESSAGE.getScriptName().toIString();
-            SortedSet<String> mods = analysis.SCRIPT_ORIGINS.get(scriptName);
-            if (null != mods) {
-                String mod = mods.last();
-                BUILDER.append(String.format("<p>Probably running code from mod %s.</p>", mod));
+        analysis.ifPresent(an -> {
+            if (null != this.MESSAGE) {
+                IString scriptName = this.MESSAGE.getScriptName().toIString();
+                SortedSet<String> mods = an.SCRIPT_ORIGINS.get(scriptName);
+                if (null != mods) {
+                    String mod = mods.last();
+                    BUILDER.append(String.format("<p>Probably running code from mod %s.</p>", mod));
+                }
             }
-        }
+        });        
 
         BUILDER.append("<p>");
         if (this.MESSAGE != null) {
@@ -231,13 +232,13 @@ final public class FunctionMessage implements PapyrusElement, AnalyzableElement,
     }
 
     /**
-     * @see AnalyzableElement#matches(resaver.Analysis, resaver.Mod)
+     * @see AnalyzableElement#matches(Optional<resaver.Analysis>, resaver.Mod)
      * @param analysis
      * @param mod
      * @return
      */
     @Override
-    public boolean matches(Analysis analysis, String mod) {
+    public boolean  matches(Optional<resaver.Analysis> analysis, String mod) {
         Objects.requireNonNull(analysis);
         Objects.requireNonNull(mod);
         return this.hasMessage() && this.MESSAGE.matches(analysis, mod);

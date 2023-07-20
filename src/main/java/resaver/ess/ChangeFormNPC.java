@@ -18,7 +18,7 @@ package resaver.ess;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Objects;
-import resaver.Analysis;
+import java.util.Optional;
 import static resaver.ess.ChangeFlagConstantsNPC.*;
 
 /**
@@ -157,7 +157,7 @@ public class ChangeFormNPC extends GeneralElement implements ChangeFormData {
      * @return
      */
     @Override
-    public String getInfo(resaver.Analysis analysis, ESS save) {
+    public String getInfo(Optional<resaver.Analysis> analysis, ESS save) {
         final StringBuilder BUILDER = new StringBuilder();
 
         BUILDER.append("<p>NPC:</p>");
@@ -229,7 +229,7 @@ public class ChangeFormNPC extends GeneralElement implements ChangeFormData {
      * @return
      */
     @Override
-    public boolean matches(Analysis analysis, String mod) {
+    public boolean matches(Optional<resaver.Analysis> analysis, String mod) {
         return false;
     }
 

@@ -18,7 +18,6 @@ package resaver.ess.papyrus;
 import resaver.ListException;
 import resaver.ess.AnalyzableElement;
 import java.util.Optional;
-import java.util.SortedSet;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.List;
@@ -90,6 +89,7 @@ final public class Reference extends DefinedElement implements SeparateData, Has
     /**
      * @return The <code>ReferenceData</code> for the instance.
      */
+    @Override
     public ReferenceData getData() {
         return this.data;
     }
@@ -208,13 +208,13 @@ final public class Reference extends DefinedElement implements SeparateData, Has
     }
 
     /**
-     * @see AnalyzableElement#getInfo(resaver.Analysis, resaver.ess.ESS)
+     * @see AnalyzableElement#getInfo(Optional<resaver.Analysis>, resaver.ess.ESS)
      * @param analysis
      * @param save
      * @return
      */
     @Override
-    public String getInfo(resaver.Analysis analysis, ESS save) {
+    public String getInfo(Optional<resaver.Analysis> analysis, ESS save) {
         final StringBuilder BUILDER = new StringBuilder();
         if (null != this.getScript()) {
             BUILDER.append(String.format("<html><h3>REFERENCE of %s</h3>", this.getScript().toHTML(this)));
@@ -222,9 +222,8 @@ final public class Reference extends DefinedElement implements SeparateData, Has
             BUILDER.append(String.format("<html><h3>REFERENCE of %s</h3>", this.getScriptName()));
         }
 
-        if (null != analysis) {
-            SortedSet<String> providers = analysis.SCRIPT_ORIGINS.get(this.getScriptName().toIString());
-            if (null != providers) {
+        analysis.map(an -> an.SCRIPT_ORIGINS.get(this.getScriptName().toIString())).ifPresent(providers -> {
+            if (!providers.isEmpty()) {
                 String probablyProvider = providers.last();
                 BUILDER.append(String.format("<p>This script probably came from \"%s\".</p>", probablyProvider));
 
@@ -234,7 +233,7 @@ final public class Reference extends DefinedElement implements SeparateData, Has
                     BUILDER.append("</ul>");
                 }
             }
-        }
+        });
 
         BUILDER.append(String.format("<p>ID: %s</p>", this.getID()));
         BUILDER.append(String.format("<p>Type2: %s</p>", this.getType()));

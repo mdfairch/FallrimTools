@@ -20,6 +20,7 @@ import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import resaver.ess.AnalyzableElement;
 import resaver.ess.ESS;
 import resaver.ess.Element;
@@ -199,13 +200,13 @@ public class StructInstance extends DefinedElement implements SeparateData, HasV
     }
 
     /**
-     * @see AnalyzableElement#getInfo(resaver.Analysis, resaver.ess.ESS)
+     * @see AnalyzableElement#getInfo(Optional<resaver.Analysis>, resaver.ess.ESS)
      * @param analysis
      * @param save
      * @return
      */
     @Override
-    public String getInfo(resaver.Analysis analysis, ESS save) {
+    public String getInfo(Optional<resaver.Analysis> analysis, ESS save) {
         final StringBuilder BUILDER = new StringBuilder();
         if (null != this.getStruct()) {
             BUILDER.append(String.format("<html><h3>STRUCTURE of %s</h3>", this.getStruct().toHTML(this)));

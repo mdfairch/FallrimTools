@@ -143,6 +143,7 @@ final public class ScriptInstance extends DefinedElement implements SeparateData
     /**
      * @return The <code>ScriptData</code> for the instance.
      */
+    @Override
     public ScriptData getData() {
         return this.data;
     }
@@ -201,7 +202,7 @@ final public class ScriptInstance extends DefinedElement implements SeparateData
                 : Collections.emptyList();
 
         final List<Variable> VARS = this.getVariables();
-        return DESCS.size() != VARS.size() && VARS.size() > 0;
+        return !VARS.isEmpty() && DESCS.size() != VARS.size();
     }
 
     /**
@@ -294,13 +295,13 @@ final public class ScriptInstance extends DefinedElement implements SeparateData
     }
 
     /**
-     * @see AnalyzableElement#getInfo(resaver.Analysis, resaver.ess.ESS)
+     * @see AnalyzableElement#getInfo(Optional<resaver.Analysis>, resaver.ess.ESS)
      * @param analysis
      * @param save
      * @return
      */
     @Override
-    public String getInfo(resaver.Analysis analysis, ESS save) {
+    public String getInfo(Optional<resaver.Analysis> analysis, ESS save) {
         final StringBuilder BUILDER = new StringBuilder();
         if (null != this.getScript()) {
             BUILDER.append(String.format("<html><h3>INSTANCE of %s</h3>", this.getScript().toHTML(this)));
@@ -327,19 +328,18 @@ final public class ScriptInstance extends DefinedElement implements SeparateData
             BUILDER.append("<p><em>REFID POINTS TO NONEXISTENT CREATED FORM.</em><br/>Remove non-existent form instances\" will delete this. However, some mods create these instances deliberately. </p>");
         }
 
-        if (null != analysis) {
-            final SortedSet<String> PROVIDERS = analysis.SCRIPT_ORIGINS.get(this.getScriptName().toIString());
-            if (null != PROVIDERS) {
-                String probableProvider = PROVIDERS.last();
+        analysis.map(an -> an.SCRIPT_ORIGINS.get(this.getScriptName().toIString())).ifPresent(providers -> {
+            if (!providers.isEmpty()) {
+                String probableProvider = providers.last();
                 BUILDER.append(String.format("<p>The script probably came from mod \"%s\".</p>", probableProvider));
 
-                if (PROVIDERS.size() > 1) {
+                if (providers.size() > 1) {
                     BUILDER.append("<p>Full list of providers:</p><ul>");
-                    PROVIDERS.forEach(mod -> BUILDER.append(String.format("<li>%s", mod)));
+                    providers.forEach(mod -> BUILDER.append(String.format("<li>%s", mod)));
                     BUILDER.append("</ul>");
                 }
             }
-        }
+        });
 
         BUILDER.append("<p>");
         BUILDER.append(String.format("ID: %s<br/>", this.getID()));
@@ -433,11 +433,10 @@ final public class ScriptInstance extends DefinedElement implements SeparateData
     private ScriptData data;
 
     static final private java.util.function.Predicate<MemberDesc> isCanary = (desc -> desc.getName().equals("::iPapyrusDataVerification_var"));
-
     static final private Logger LOG = Logger.getLogger(ScriptInstance.class.getCanonicalName());
 
     /**
-     * Describes a script instance's data in a Skyrim savegame.
+     * Describes a script instance's data in a Bethesda savefile.
      *
      * @author Mark Fairchild
      */

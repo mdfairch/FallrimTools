@@ -94,8 +94,8 @@ public class DataAnalyzer extends JSplitPane {
         //super(new BorderLayout());
 
         this.DATA = Objects.requireNonNull(newData.duplicate()).order(ByteOrder.LITTLE_ENDIAN);
-        this.SAVE = save;
-        this.ANALYSIS = save == null || save.getAnalysis() == null ? Optional.empty() : Optional.of(save.getAnalysis());
+        this.SAVE = Objects.requireNonNull(save);
+        this.ANALYSIS = save.getAnalysis();
         this.ESS_CONTEXT = ctx;
         this.PAPYRUS_CONTEXT = ctx instanceof PapyrusContext ? (PapyrusContext) ctx : null;
         

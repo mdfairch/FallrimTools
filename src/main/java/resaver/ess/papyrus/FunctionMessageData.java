@@ -23,7 +23,7 @@ import java.util.Objects;
 import java.util.SortedSet;
 import resaver.IString;
 import java.nio.ByteBuffer;
-import resaver.Analysis;
+import java.util.Optional;
 import resaver.ess.ESS;
 import resaver.ess.Flags;
 
@@ -181,13 +181,13 @@ public class FunctionMessageData implements PapyrusElement, AnalyzableElement, H
     }
 
     /**
-     * @see AnalyzableElement#getInfo(resaver.Analysis, resaver.ess.ESS)
+     * @see AnalyzableElement#getInfo(Optional<resaver.Analysis>, resaver.ess.ESS)
      * @param analysis
      * @param save
      * @return
      */
     @Override
-    public String getInfo(resaver.Analysis analysis, ESS save) {
+    public String getInfo(Optional<resaver.Analysis> analysis, ESS save) {
         final StringBuilder BUILDER = new StringBuilder();
         if (null != this.SCRIPT) {
             BUILDER.append(String.format("<html><h3>FUNCTIONMESSAGEDATA of %s</h3>", this.SCRIPT.toHTML(null)));
@@ -195,9 +195,8 @@ public class FunctionMessageData implements PapyrusElement, AnalyzableElement, H
             BUILDER.append(String.format("<html><h3>FUNCTIONMESSAGEDATA of %s</h3>", this.SCRIPTNAME));
         }
 
-        if (null != analysis) {
-            SortedSet<String> providers = analysis.SCRIPT_ORIGINS.get(this.SCRIPTNAME.toIString());
-            if (null != providers) {
+        analysis.map(an -> an.SCRIPT_ORIGINS.get(this.SCRIPTNAME.toIString())).ifPresent(providers -> {
+            if (!providers.isEmpty()) {
                 String probablyProvider = providers.last();
                 BUILDER.append(String.format("<p>This message probably came from \"%s\".</p>", probablyProvider));
                 if (providers.size() > 1) {
@@ -206,7 +205,7 @@ public class FunctionMessageData implements PapyrusElement, AnalyzableElement, H
                     BUILDER.append("</ul>");
                 }
             }
-        }
+        });
 
         BUILDER.append("<p>");
 
@@ -233,21 +232,20 @@ public class FunctionMessageData implements PapyrusElement, AnalyzableElement, H
     }
 
     /**
-     * @see AnalyzableElement#matches(resaver.Analysis, resaver.Mod)
+     * @see AnalyzableElement#matches(Optional<resaver.Analysis>, resaver.Mod)
      * @param analysis
      * @param mod
      * @return
      */
     @Override
-    public boolean matches(Analysis analysis, String mod) {
+    public boolean  matches(Optional<resaver.Analysis> analysis, String mod) {
         Objects.requireNonNull(analysis);
         Objects.requireNonNull(mod);
 
-        final SortedSet<String> OWNERS = analysis.SCRIPT_ORIGINS.get(this.SCRIPTNAME.toIString());
-        if (null == OWNERS) {
-            return false;
-        }
-        return OWNERS.contains(mod);
+        return analysis
+                .map(an -> an.SCRIPT_ORIGINS.get(this.SCRIPTNAME.toIString()))
+                .orElse(Collections.emptySortedSet())
+                .contains(mod);
     }
 
     /**

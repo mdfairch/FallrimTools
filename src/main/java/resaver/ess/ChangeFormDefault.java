@@ -17,6 +17,7 @@ package resaver.ess;
 
 import java.util.Arrays;
 import java.nio.ByteBuffer;
+import java.util.Optional;
 import resaver.Analysis;
 
 /**
@@ -70,7 +71,7 @@ final public class ChangeFormDefault implements ChangeFormData {
      * @return
      */
     @Override
-    public String getInfo(resaver.Analysis analysis, ESS save) {
+    public String getInfo(Optional<resaver.Analysis> analysis, ESS save) {
         final StringBuilder BUILDER = new StringBuilder();
 
         BUILDER.append("<hr/><p>RAW DATA:</p><code><pre>");
@@ -103,7 +104,7 @@ final public class ChangeFormDefault implements ChangeFormData {
      * @return
      */
     @Override
-    public boolean matches(Analysis analysis, String mod) {
+    public boolean matches(Optional<Analysis> analysis, String mod) {
         return false;
     }
 

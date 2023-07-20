@@ -21,6 +21,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -315,7 +316,10 @@ final public class ChangeForm implements Element, AnalyzableElement, Linkable {
      * @return The <code>ChangeFormData</code>.
      *
      */
-    public ChangeFormData getData(resaver.Analysis analysis, ESS.ESSContext context, boolean bestEffort) {
+    public ChangeFormData getData(Optional<resaver.Analysis> analysis, ESS.ESSContext context, boolean bestEffort) {
+        Objects.requireNonNull(analysis);
+        Objects.requireNonNull(context);
+
         if (parsedData != null) {
             return this.parsedData;
         }
@@ -347,6 +351,9 @@ final public class ChangeForm implements Element, AnalyzableElement, Linkable {
                     break;
                 case NPC_:
                     this.parsedData = new ChangeFormNPC(BODYDATA, this.changeFlags, context);
+                    break;
+                case QUST:
+                    this.parsedData = new ChangeFormQust(BODYDATA, this.changeFlags, context);
                     break;
                 default:
                     if (bestEffort) {
@@ -460,7 +467,7 @@ final public class ChangeForm implements Element, AnalyzableElement, Linkable {
      * @return
      */
     @Override
-    public String getInfo(resaver.Analysis analysis, ESS save) {
+    public String getInfo(Optional<resaver.Analysis> analysis, ESS save) {
         final StringBuilder BUILDER = new StringBuilder();
 
         final Set<ScriptInstance> HOLDERS = save.getPapyrus()
@@ -538,7 +545,7 @@ final public class ChangeForm implements Element, AnalyzableElement, Linkable {
      * @return
      */
     @Override
-    public boolean matches(Analysis analysis, String mod) {
+    public boolean matches(Optional<Analysis> analysis, String mod) {
         return false;
     }
 

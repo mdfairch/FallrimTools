@@ -20,6 +20,8 @@ import resaver.Game;
 import java.util.Set;
 import java.awt.*;
 import java.awt.event.*;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -30,6 +32,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.SortedSet;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
@@ -85,7 +88,7 @@ final public class SaveWindow extends JFrame {
         LOG.info("Created timer.");
 
         this.save = null;
-        this.analysis = null;
+        this.analysis = Optional.empty();
         this.filter = (x -> true);
         this.scanner = null;
         
@@ -135,6 +138,9 @@ final public class SaveWindow extends JFrame {
         
         this.MI_SHOWUNATTACHED = new JCheckBoxMenuItem("Show unattached instances", PREFS.getBoolean("settings.showUnattached", false));
         this.MI_SHOWUNDEFINED = new JCheckBoxMenuItem("Show undefined elements", PREFS.getBoolean("settings.showUndefined", false));
+        this.MI_SHOWNOPARENTS = new JCheckBoxMenuItem("Show scripts with no parent", PREFS.getBoolean("settings.showNoParents", false));
+        this.MI_SHOWMISSINGPARENTS = new JCheckBoxMenuItem("Show scripts with missing parent", PREFS.getBoolean("settings.showMissingParents", false));
+        
         this.MI_SHOWMEMBERLESS = new JCheckBoxMenuItem("Show memberless instances", PREFS.getBoolean("settings.showMemberless", false));
         this.MI_SHOWCANARIES = new JCheckBoxMenuItem("Show zeroed canaries", PREFS.getBoolean("settings.showCanaries", false));
         this.MI_SHOWNULLREFS = new JCheckBoxMenuItem("Show Formlists containg nullrefs", PREFS.getBoolean("settings.showNullrefs", false));
@@ -177,8 +183,7 @@ final public class SaveWindow extends JFrame {
         this.LBL_MEMORY = new MemoryLabel();
         this.LBL_WATCHING = new JLabel("WATCHING");
         this.LBL_SCANNING = new JLabel("SCANNING");
-        this.WORRIER = new Worrier();
-        this.WATCHER = new Watcher(this, this.WORRIER);
+        this.WATCHER = new Watcher(this, Optional.empty());
 
         this.initComponents(path, autoParse);
 
@@ -265,6 +270,8 @@ final public class SaveWindow extends JFrame {
         fillMenu(MENU_FILTER, 
                 MI_SHOWUNATTACHED, 
                 MI_SHOWUNDEFINED,
+                MI_SHOWNOPARENTS,
+                MI_SHOWMISSINGPARENTS,
                 null,
                 MENU_FILTER, 
                 MI_SHOWMEMBERLESS, 
@@ -343,6 +350,8 @@ final public class SaveWindow extends JFrame {
         this.MI_SETTINGS.addActionListener(e -> showSettings());
         this.MI_SHOWUNATTACHED.addActionListener(e -> updateFilters(false));
         this.MI_SHOWUNDEFINED.addActionListener(e -> updateFilters(false));
+        this.MI_SHOWNOPARENTS.addActionListener(e -> updateFilters(false));
+        this.MI_SHOWMISSINGPARENTS.addActionListener(e -> updateFilters(false));
         this.MI_SHOWMEMBERLESS.addActionListener(e -> updateFilters(false));
         this.MI_SHOWCANARIES.addActionListener(e -> updateFilters(false));
         this.MI_SHOWNULLREFS.addActionListener(e -> updateFilters(false));
@@ -365,7 +374,7 @@ final public class SaveWindow extends JFrame {
         this.MI_REMOVENONEXISTENT.addActionListener(e -> cleanNonexistent());
         this.MI_BATCHCLEAN.addActionListener(e -> batchClean());
         this.MI_KILL.addActionListener(e -> kill());
-        this.MI_SHOWMODS.addActionListener(e -> this.setAnalysis(this.analysis));
+        this.MI_SHOWMODS.addActionListener(e -> showModPanel(analysis));
         this.MI_SHOWMODS.addActionListener(e -> PREFS.putBoolean("settings.showMods", this.MI_SHOWMODS.isSelected()));
         this.MI_LOOKUPID.addActionListener(e -> lookupID());
         this.MI_LOOKUPBASE.addActionListener(e -> lookupBase());
@@ -527,39 +536,62 @@ final public class SaveWindow extends JFrame {
      * available.
      *
      */
-    void setAnalysis(Analysis newAnalysis) {
-        this.analysis = newAnalysis;
+    private void clearAnalysis() {
+        this.analysis = Optional.empty();
         this.updateContextInformation();
-        this.save.addNames(analysis);
-        this.refreshTree();
-
-        if (null != this.analysis) {
-            this.MI_LOOKUPID.setEnabled(true);
-            this.MI_LOOKUPBASE.setEnabled(true);
-        } else {
-            this.MI_LOOKUPID.setEnabled(false);
-            this.MI_LOOKUPBASE.setEnabled(false);
+        this.MI_LOOKUPID.setEnabled(false);
+        this.MI_LOOKUPBASE.setEnabled(false);
+        this.hideModPanel();
+    }
+    
+    /**
+     * Sets the <code>Analysis</code>.
+     *
+     * @param newAnalysis The mod data, or null if there is no mod data
+     * available.
+     *
+     */
+    private void setAnalysis(Analysis newAnalysis) {
+        Objects.requireNonNull(newAnalysis);
+        
+        if (this.analysis.filter(newAnalysis::equals).isPresent()) {
+            LOG.info("Reusing analysis.");            
         }
+        
+        this.analysis = Optional.of(newAnalysis);
+        this.updateContextInformation();
+        this.save.addNames(newAnalysis);
+        this.MI_LOOKUPID.setEnabled(true);
+        this.MI_LOOKUPBASE.setEnabled(true);   
 
-        if (null == this.analysis || !this.MI_SHOWMODS.isSelected()) {
-            this.MODCOMBO.setModel(new DefaultComboBoxModel<>());
-            this.MODPANEL.setVisible(false);
-
+        if (this.MI_SHOWMODS.isSelected()) {
+            showModPanel(analysis);
         } else {
-            final Mod[] MODS = new Mod[this.analysis.MODS.size()];
-            this.analysis.MODS.toArray(MODS);
+            hideModPanel();
+        }
+        
+        this.refreshTree();
+    }
+
+    private void showModPanel(Optional<Analysis> analysis) {
+        analysis.ifPresentOrElse(an -> {
+            final Mod[] MODS = new Mod[an.MODS.size()];
+            an.MODS.toArray(MODS);
             Arrays.sort(MODS, (a, b) -> a.getName().compareToIgnoreCase(b.getName()));
 
             DefaultComboBoxModel<Mod> modModel = new DefaultComboBoxModel<>(MODS);
             modModel.insertElementAt(null, 0);
             this.MODCOMBO.setModel(modModel);
             this.MODCOMBO.setSelectedIndex(0);
-            this.MODPANEL.setVisible(true);
-        }
-
-        this.refreshTree();
+            this.MODPANEL.setVisible(true);        
+        }, () -> hideModPanel());
     }
-
+    
+    private void hideModPanel() {
+        this.MODCOMBO.setModel(new DefaultComboBoxModel<>());
+        this.MODPANEL.setVisible(false);
+    }
+    
     /**
      * Regenerates the treeview if the underlying model has changed.
      *
@@ -708,6 +740,8 @@ final public class SaveWindow extends JFrame {
                 LOG.info("Adding filters.");
                 if (this.MI_SHOWUNDEFINED.isSelected()) factory.addUndefinedSubfilter();
                 if (this.MI_SHOWUNATTACHED.isSelected()) factory.addUnattachedSubfilter();
+                if (this.MI_SHOWNOPARENTS.isSelected()) factory.addNoParentSubfilter();
+                if (this.MI_SHOWMISSINGPARENTS.isSelected()) factory.addMissingParentSubfilter();
                 if (this.MI_SHOWNULLREFS.isSelected()) factory.addNullRefSubfilter();
                 if (this.MI_SHOWMEMBERLESS.isSelected()) factory.addMemberlessSubfilter();
                 if (this.MI_SHOWCANARIES.isSelected()) factory.addCanarySubfilter();
@@ -783,6 +817,8 @@ final public class SaveWindow extends JFrame {
                         this.MI_SHOWNULLREFS.setSelected(false);
                         this.MI_SHOWUNDEFINED.setSelected(false);
                         this.MI_SHOWUNATTACHED.setSelected(false);
+                        this.MI_SHOWMISSINGPARENTS.setSelected(false);
+                        this.MI_SHOWNOPARENTS.setSelected(false);
                         this.MI_SHOWMEMBERLESS.setSelected(false);
                         this.MI_SHOWCANARIES.setSelected(false);
                         this.MI_SHOWLONGSTRINGS.setSelected(false);
@@ -1014,7 +1050,7 @@ final public class SaveWindow extends JFrame {
                 }                
             };
             
-            final Opener OPENER = new Opener(this, path, getSorting(), this.WORRIER, DOAFTER);
+            final Opener OPENER = new Opener(this, path, getSorting(), openerResult, DOAFTER);
             OPENER.execute();
 
         } else if (Mod.GLOB_SCRIPT.matches(path)) {
@@ -1050,12 +1086,7 @@ final public class SaveWindow extends JFrame {
             this.scanner = null;
         }
         
-        if (this.analysis != null && this.analysis.PLUGINS.equals(this.save.getPluginInfo()))
-        {
-            LOG.info("Reusing analysis.");
-            this.setAnalysis(this.analysis);
-            
-        } else {
+        this.analysis.filter(an -> an.PLUGINS.equals(this.save.getPluginInfo())).ifPresentOrElse(this::setAnalysis, () -> {
             final Game GAME = this.save.getHeader().GAME;
 
             final Path GAME_DIR = Configurator.choosePathModal(this,
@@ -1078,9 +1109,24 @@ final public class SaveWindow extends JFrame {
                     this::onScanProgress);
 
                 this.scanner.execute();
+                this.scanner.addPropertyChangeListener(evt -> {
+                    try {
+                        if (scanner.isDone()) {
+                            Analysis newAnalysis = scanner.get();
+                            if (newAnalysis == null) {
+                                this.clearAnalysis();
+                            } else {
+                                this.setAnalysis(newAnalysis);
+                            }
+                        }
+                    } catch (InterruptedException|ExecutionException ex) {
+                        LOG.severe("There was a problem getting the analysis.");
+                        JOptionPane.showMessageDialog(this, "There was a problem getting the analysis.", "ERROR", JOptionPane.ERROR_MESSAGE);
+                    }
+                });
                 this.setScanning(true);
-            }            
-        }
+            }                        
+        });
     }
 
     private void onScanProgress(String msg) {
@@ -1149,30 +1195,30 @@ final public class SaveWindow extends JFrame {
             return;
         }
 
-        Set<Integer> matches = this.analysis.find(searchTerm);
-        if (matches.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "No matches were found.", "No matches", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
+        analysis.map(an -> an.find(searchTerm)).ifPresent(matches -> {
+            if (matches.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "No matches were found.", "No matches", JOptionPane.ERROR_MESSAGE);
+            } else {
+                final StringBuilder BUF = new StringBuilder();
+                BUF.append("The following matches were found:\n\n");
 
-        final StringBuilder BUF = new StringBuilder();
-        BUF.append("The following matches were found:\n\n");
+                matches.forEach(id -> {
+                    BUF.append(String.format("%08x", id));
 
-        matches.forEach(id -> {
-            BUF.append(String.format("%08x", id));
+                    int pluginIndex = id >>> 24;
+                    final java.util.List<Plugin> PLUGINS = this.save.getPluginInfo().getFullPlugins();
 
-            int pluginIndex = id >>> 24;
-            final java.util.List<Plugin> PLUGINS = this.save.getPluginInfo().getFullPlugins();
+                    if (0 <= pluginIndex && pluginIndex < PLUGINS.size()) {
+                        final Plugin PLUGIN = PLUGINS.get(pluginIndex);
+                        BUF.append(" (").append(PLUGIN).append(")");
+                    }
+                    BUF.append('\n');
+                });
 
-            if (0 <= pluginIndex && pluginIndex < PLUGINS.size()) {
-                final Plugin PLUGIN = PLUGINS.get(pluginIndex);
-                BUF.append(" (").append(PLUGIN).append(")");
+                JOptionPane.showMessageDialog(this, BUF.toString(), "Matches", JOptionPane.INFORMATION_MESSAGE);
+                System.out.println(matches);
             }
-            BUF.append('\n');
         });
-
-        JOptionPane.showMessageDialog(this, BUF.toString(), "Matches", JOptionPane.INFORMATION_MESSAGE);
-        System.out.println(matches);
     }
 
     /**
@@ -1584,7 +1630,7 @@ final public class SaveWindow extends JFrame {
             this.MI_LOADESPS.setEnabled(false);
         } else {
             this.LBL_SCANNING.setVisible(false);
-            this.MI_LOADESPS.setEnabled(this.save != null && this.analysis == null);
+            this.MI_LOADESPS.setEnabled(this.save != null && this.analysis.isPresent());
         }
     }
 
@@ -2050,7 +2096,8 @@ final public class SaveWindow extends JFrame {
         if (element instanceof ESS) {
             this.RIGHTSPLITTER.setResizeWeight(1.0);
             this.RIGHTSPLITTER.setDividerLocation(1.0);
-            this.INFOPANE.setText(this.save.getInfo(analysis) + this.WORRIER.getMessage() + "</hr>");
+            String worries = openerResult.map(r -> r.WORRIER.getMessage().toString()).orElse("OPENER NO RESULTS");
+            this.INFOPANE.setText(this.save.getInfo(analysis) + worries + "</hr>");
 
             try {
                 final Document DOC = this.INFOPANE.getDocument();
@@ -2140,13 +2187,13 @@ final public class SaveWindow extends JFrame {
 
         Integer index1 = null;
         try {
-            index1 = Integer.parseInt(MATCHER.group("target1"));
+            index1 = Integer.valueOf(MATCHER.group("target1"));
         } catch (NumberFormatException | NullPointerException ex) {
         }
 
         Integer index2 = null;
         try {
-            index2 = Integer.parseInt(MATCHER.group("target2"));
+            index2 = Integer.valueOf(MATCHER.group("target2"));
         } catch (NumberFormatException | NullPointerException ex) {
         }
 
@@ -2389,7 +2436,8 @@ final public class SaveWindow extends JFrame {
      * Listener for tree selection events.
      */
     private ESS save;
-    private Analysis analysis;
+    private Optional<Opener.Result> openerResult = Optional.empty();
+    private Optional<Analysis> analysis;
     private boolean modified;
     private Predicate<Node> filter;
     private Scanner scanner;
@@ -2452,6 +2500,8 @@ final public class SaveWindow extends JFrame {
     final private JMenuItem MI_SETTINGS;
     final private JCheckBoxMenuItem MI_SHOWUNATTACHED;
     final private JCheckBoxMenuItem MI_SHOWUNDEFINED;
+    final private JCheckBoxMenuItem MI_SHOWNOPARENTS;
+    final private JCheckBoxMenuItem MI_SHOWMISSINGPARENTS;
     final private JCheckBoxMenuItem MI_SHOWMEMBERLESS;
     final private JCheckBoxMenuItem MI_SHOWCANARIES;
     final private JCheckBoxMenuItem MI_SHOWNULLREFS;
@@ -2468,7 +2518,6 @@ final public class SaveWindow extends JFrame {
     final private JValueMenuItem<String> MI_CHANGEFORMCONTENTFILTER;
     final private LogWindow LOGWINDOW;
     final private Watcher WATCHER;
-    final private Worrier WORRIER;
     final private mf.Timer TIMER;
     final private Object JFXPANEL;
 

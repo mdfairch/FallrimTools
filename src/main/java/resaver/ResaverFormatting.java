@@ -17,6 +17,7 @@ package resaver;
 
 import static j2html.TagCreator.*;
 import j2html.tags.ContainerTag;
+import j2html.tags.DomContent;
 import java.text.MessageFormat;
 import java.util.List;
 import java.util.function.Function;
@@ -56,7 +57,7 @@ abstract public class ResaverFormatting {
         }
     }
     
-    static public <T> CharSequence makeHTMLList(String msg, java.util.Collection<T> items, int limit) {
+    static public <T> DomContent makeHTMLList(String msg, java.util.Collection<T> items, int limit) {
         return makeHTMLList(msg, items, limit, s -> s.toString());
     }
     
@@ -64,8 +65,9 @@ abstract public class ResaverFormatting {
         return makeTextList(msg, items, limit, s -> s.toString());
     }
     
-    static public <T> CharSequence makeHTMLList(String msg, java.util.Collection<T> items, int limit, Function<T, ? extends CharSequence> namer) {
+    static public <T> DomContent makeHTMLList(String msg, java.util.Collection<T> items, int limit, Function<T, ? extends CharSequence> namer) {
         int excess = items.size() - limit;
+        
         List<String> names = items.stream()
                 .limit(limit)
                 .map(namer)
@@ -73,14 +75,13 @@ abstract public class ResaverFormatting {
                 .collect(Collectors.toList());
         
         return p(
-                text(String.format(msg, items.size())),
-                ol(each(names, name -> li(rawHtml(name)))
-                        //items.stream().limit(limit).map(namer).map(n -> li(n.toString())).toArray(ContainerTag[]::new)
-                ),
+                text(msg),
+                text("(%d items)".formatted(items.size())),
+                ol(each(names, name -> li(rawHtml(name)))),
                 text(excess > 0 
                         ? String.format("(+ %d more)", excess) 
                         : "")
-        ).toString();
+        );
     }
 
     static public <T> CharSequence makeTextList(String msg, java.util.Collection<T> items, int limit, Function<T, ? extends CharSequence> namer) {

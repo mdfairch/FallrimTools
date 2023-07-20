@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.logging.Level;
@@ -42,7 +43,6 @@ import java.util.zip.CRC32;
 import java.util.zip.DataFormatException;
 import mf.BufferUtil;
 import mf.Timer;
-import resaver.Analysis;
 import resaver.ListException;
 import resaver.ess.papyrus.Papyrus;
 import resaver.ess.papyrus.PapyrusElement;
@@ -729,6 +729,7 @@ final public class ESS implements Element {
      * @param analysis The analysis data.
      */
     public void addNames(resaver.Analysis analysis) {
+        Objects.requireNonNull(analysis);
         this.REFIDS.values().parallelStream().forEach(v -> v.addNames(analysis));
     }
 
@@ -831,7 +832,7 @@ final public class ESS implements Element {
      * @param analysis
      * @return The number of forms removed.
      */
-    public int[] resetHavok(Analysis analysis) {
+    public int[] resetHavok(Optional<resaver.Analysis> analysis) {
         int success = 0;
         int failure = 0;
 
@@ -873,7 +874,7 @@ final public class ESS implements Element {
      * changeforms that had their havok data cleared, the second is the number
      * that couldn't be processed.
      */
-    public int[] cleanseFormLists(Analysis analysis) {
+    public int[] cleanseFormLists(Optional<resaver.Analysis> analysis) {
         int entries = 0;
         int forms = 0;
 
@@ -1040,11 +1041,10 @@ final public class ESS implements Element {
     }
 
     /**
-     * @see AnalyzableElement#getInfo(resaver.Analysis, resaver.ess.ESS)
      * @param analysis
      * @return
      */
-    public String getInfo(resaver.Analysis analysis) {
+    public String getInfo(Optional<resaver.Analysis> analysis) {
         String race = this.HEADER.RACEID.toString().replace("Race", "");
         String name = this.HEADER.NAME.toString();
         int level = this.HEADER.LEVEL;
@@ -1078,9 +1078,9 @@ final public class ESS implements Element {
                                 : li(String.format("Total size: %1.1f mb", calculatedSize)),
                         li(String.format("Papyrus size: %1.1f mb", papyrusSize)),
                         li(String.format("ChangeForms size: %1.1f mb", changeFormsSize)),
-                        li(analysis != null 
-                                ? String.format("Total ScriptData in load order: %1.1f mb", analysis.getScriptDataSize() / 1048576.0f)
-                                : "Total ScriptData in load order: not available")
+                        li(analysis
+                                .map(an -> String.format("Total ScriptData in load order: %1.1f mb", an.getScriptDataSize() / 1048576.0f))
+                                .orElse("Total ScriptData in load order: not available"))
                 ))
         ).toString();
     }
@@ -1185,10 +1185,15 @@ final public class ESS implements Element {
         return this.TABLE3;
     }
 
-    public resaver.Analysis getAnalysis() {
+    public Optional<resaver.Analysis> getAnalysis() {
         return this.analysis;
     }
 
+    public void cacheAnalysis(resaver.Analysis analysis) {
+        Objects.requireNonNull(analysis);
+        this.analysis = Optional.of(analysis);
+    }
+    
     /**
      * Verifies that two instances of <code>ESS</code> are identical.
      *
@@ -1275,7 +1280,7 @@ final public class ESS implements Element {
     final private AnimObjects ANIMATIONS;
     final private GlobalVariableTable GLOBALS;
     final private java.util.Map<Integer, RefID> REFIDS;
-    private resaver.Analysis analysis;
+    private Optional<resaver.Analysis> analysis = Optional.empty();
     private boolean truncated = false;
     private boolean pluginOverflow = false;
     private boolean papyrusError = false;

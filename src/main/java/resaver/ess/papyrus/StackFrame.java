@@ -30,7 +30,6 @@ import java.util.stream.Collectors;
 import resaver.IString;
 import java.nio.ByteBuffer;
 import java.util.stream.Stream;
-import resaver.Analysis;
 import resaver.ess.ESS;
 import resaver.ess.Element;
 import resaver.ess.Flags;
@@ -423,13 +422,13 @@ final public class StackFrame implements PapyrusElement, AnalyzableElement, Link
     }
 
     /**
-     * @see AnalyzableElement#getInfo(resaver.Analysis, resaver.ess.ESS)
+     * @see AnalyzableElement#getInfo(Optional<resaver.Analysis>, resaver.ess.ESS)
      * @param analysis
      * @param save
      * @return
      */
     @Override
-    public String getInfo(resaver.Analysis analysis, ESS save) {
+    public String getInfo(Optional<resaver.Analysis> analysis, ESS save) {
         final StringBuilder BUILDER = new StringBuilder();
 
         //BUILDER.append("<html><h3>STACKFRAME</h3>");
@@ -498,7 +497,7 @@ final public class StackFrame implements PapyrusElement, AnalyzableElement, Link
         BUILDER.append(String.format("Opcode version: %d.%d<br/>", this.OPCODE_MAJORVERSION, this.OPCODE_MINORVERSION));
         BUILDER.append("</p>");
 
-        if (this.CODE.size() > 0) {
+        if (!this.CODE.isEmpty()) {
             BUILDER.append("<hr/><p>PAPYRUS BYTECODE:</p>");
             BUILDER.append("<code><pre>");
             List<OpcodeData> OPS = new ArrayList<>(this.CODE);
@@ -515,21 +514,20 @@ final public class StackFrame implements PapyrusElement, AnalyzableElement, Link
     }
 
     /**
-     * @see AnalyzableElement#matches(resaver.Analysis, resaver.Mod)
+     * @see AnalyzableElement#matches(Optional<resaver.Analysis>, resaver.Mod)
      * @param analysis
      * @param mod
      * @return
      */
     @Override
-    public boolean matches(Analysis analysis, String mod) {
+    public boolean  matches(Optional<resaver.Analysis> analysis, String mod) {
         Objects.requireNonNull(analysis);
         Objects.requireNonNull(mod);
 
-        final SortedSet<String> OWNERS = analysis.SCRIPT_ORIGINS.get(this.SCRIPTNAME.toIString());
-        if (null == OWNERS) {
-            return false;
-        }
-        return OWNERS.contains(mod);
+        return analysis
+                .map(an -> an.SCRIPT_ORIGINS.get(this.SCRIPTNAME.toIString()))
+                .orElse(Collections.emptySortedSet())
+                .contains(mod);
     }
 
     /**

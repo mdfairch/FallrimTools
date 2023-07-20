@@ -18,6 +18,7 @@ package resaver.ess;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.Optional;
 import resaver.Analysis;
 import resaver.esp.RecordCode;
 import static resaver.ess.ChangeFlagConstantsRefr.*;
@@ -41,9 +42,11 @@ public class ChangeFormRefr extends GeneralElement implements ChangeFormData {
      * @throws ElementException
      * 
      */
-    public ChangeFormRefr(ByteBuffer input, Flags.Int changeFlags, RefID refid, resaver.Analysis analysis, ESS.ESSContext context) throws ElementException {
+    public ChangeFormRefr(ByteBuffer input, Flags.Int changeFlags, RefID refid, Optional<resaver.Analysis> analysis, ESS.ESSContext context) throws ElementException {
         Objects.requireNonNull(input);
         Objects.requireNonNull(changeFlags);
+        Objects.requireNonNull(analysis);
+        Objects.requireNonNull(context);
 
         int initialType;
 
@@ -106,19 +109,19 @@ public class ChangeFormRefr extends GeneralElement implements ChangeFormData {
                 super.readBytesVS(input, "ANIMATIONS");
             }
 
-            if (analysis != null) {
+            if (analysis.isPresent()) {
                 Element baseObjectRef = initial.getElement("BASE_OBJECT");
                 if (initialType == 5 && baseObjectRef != null && baseObjectRef instanceof RefID) {
                     RefID ref = (RefID) baseObjectRef;
 
                     if (ref.PLUGIN != null && ref.isValid() && ref.getType() != RefID.Type.CREATED) {
-                        RecordCode code = analysis.getType(ref.PLUGIN, ref.FORMID);
+                        RecordCode code = analysis.get().getType(ref.PLUGIN, ref.FORMID);
                         if (code == RecordCode.EXPL) {
                             super.readElement(input, "EXPLOSION", in -> new ChangeFormExtraDataData.Explosion(in, context));
                         }
                     }
                 }
-            }
+            };
             
             if (super.readUnparsed(input)) {
                 throw new UnparsedException();
@@ -169,7 +172,7 @@ public class ChangeFormRefr extends GeneralElement implements ChangeFormData {
      * @return
      */
     @Override
-    public String getInfo(resaver.Analysis analysis, ESS save) {
+    public String getInfo(Optional<resaver.Analysis> analysis, ESS save) {
         final StringBuilder BUILDER = new StringBuilder();
         BUILDER.append("<pre><code>");
         BUILDER.append(super.toStringStructured("REFR", 0));
@@ -184,7 +187,7 @@ public class ChangeFormRefr extends GeneralElement implements ChangeFormData {
      * @return
      */
     @Override
-    public boolean matches(Analysis analysis, String mod) {
+    public boolean matches(Optional<Analysis> analysis, String mod) {
         return false;
     }
 

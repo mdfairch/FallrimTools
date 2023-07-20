@@ -22,6 +22,7 @@ import java.awt.event.WindowEvent;
 import java.nio.file.Path;
 import java.text.MessageFormat;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -38,22 +39,34 @@ import resaver.ess.papyrus.Worrier;
  *
  * @author Mark Fairchild
  */
-public class Opener extends SwingWorker<ESS, Double> {
+public class Opener extends SwingWorker<Opener.Result, Double> {
 
+    final public class Result {
+        public Result(ESS ess, ESS.Result result, Worrier worrier) {
+            ESS = ess;
+            RESULT = result;
+            WORRIER = worrier;
+        }
+        
+        final public ESS ESS;
+        final public ESS.Result RESULT;
+        final public Worrier WORRIER;
+    }
+    
     /**
      *
      * @param window
      * @param savefile
      * @param sort
-     * @param worrier
+     * @param previousResult
      * @param doAfter
      * 
      */
-    public Opener(SaveWindow window, Path savefile, SortingMethod sort, Worrier worrier, Runnable doAfter) {
+    public Opener(SaveWindow window, Path savefile, SortingMethod sort, Optional<Result> previousResult, Runnable doAfter) {
         this.WINDOW = Objects.requireNonNull(window);
         this.SAVEFILE = Objects.requireNonNull(savefile);
-        this.WORRIER = worrier;
-        this.DOAFTER = doAfter;
+        this.PREVIOUS = Objects.requireNonNull(previousResult);
+        this.DOAFTER = Objects.requireNonNull(doAfter);
         this.SORT = Objects.requireNonNull(sort);
         Configurator.setPreviousSave(savefile);
     }
@@ -63,7 +76,7 @@ public class Opener extends SwingWorker<ESS, Double> {
      * @return @throws Exception
      */
     @Override
-    protected ESS doInBackground() throws Exception {
+    protected Opener.Result doInBackground() throws Exception {
         if (!Configurator.validateSavegame(this.SAVEFILE)) {
             return null;
         }
@@ -80,29 +93,17 @@ public class Opener extends SwingWorker<ESS, Double> {
             final ModelBuilder MB = new ModelBuilder(PM, SORT, null);
             PROGRESS.setModel(PM);
             final ESS.Result RESULT = ESS.readESS(this.SAVEFILE, MB);
+            final Worrier WORRIER = new Worrier(RESULT, PREVIOUS.map(p -> p.WORRIER));
             
-            WORRIER.check(RESULT);
             this.WINDOW.setESS(RESULT.SAVE_FILE, RESULT.ESS, RESULT.MODEL, WORRIER.shouldDisableSaving());
 
-            if (this.DOAFTER != null) {
-                SwingUtilities.invokeLater(DOAFTER);
-            }
+            SwingUtilities.invokeLater(DOAFTER);
             
             if (WORRIER.shouldWorry() || WORRIER.shouldDisableSaving()) {
-                new Thread((Runnable) java.awt.Toolkit.getDefaultToolkit().getDesktopProperty("win.sound.exclamation")).start(); //NOI18N
-                final String TITLE = I18N.getString("OPENER_SUCCESS");
-                final JOptionPane JOP = new JOptionPane(new TextDialog(WORRIER.getMessage()), WORRIER.shouldWorry() ? JOptionPane.ERROR_MESSAGE : JOptionPane.INFORMATION_MESSAGE);
-                final JDialog DIALOG = JOP.createDialog(this.WINDOW, TITLE);
-                DIALOG.setModalityType(Dialog.ModalityType.DOCUMENT_MODAL);
-                DIALOG.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
-
-                if (!WINDOW.isFocused()) {
-                    new javax.swing.Timer(5000, e -> DIALOG.setVisible(false)).start();
-                }
-                DIALOG.setVisible(true);
+                this.showErrors(WORRIER.getMessage().toString(), WORRIER.shouldWorry());
             }
             
-            return RESULT.ESS;
+            return new Opener.Result(RESULT.ESS, RESULT, WORRIER);
 
         } catch (Exception | Error ex) {            
             final String MSG = MessageFormat.format(I18N.getString("OPENER_ERROR"), this.SAVEFILE.getFileName(), ex.getMessage());
@@ -119,7 +120,7 @@ public class Opener extends SwingWorker<ESS, Double> {
 
     final private Path SAVEFILE;
     final private SaveWindow WINDOW;
-    final private Worrier WORRIER;
+    final private Optional<Result> PREVIOUS;
     final private Runnable DOAFTER;
     final private SortingMethod SORT;
     static final private Logger LOG = Logger.getLogger(Opener.class.getCanonicalName());
@@ -133,5 +134,19 @@ public class Opener extends SwingWorker<ESS, Double> {
             }
         }
     };
+    
+    private void showErrors(String worries, boolean shouldWorry) {
+            new Thread((Runnable) java.awt.Toolkit.getDefaultToolkit().getDesktopProperty("win.sound.exclamation")).start(); //NOI18N
+            final String TITLE = I18N.getString("OPENER_SUCCESS");
+            final JOptionPane JOP = new JOptionPane(new TextDialog(worries), shouldWorry ? JOptionPane.ERROR_MESSAGE : JOptionPane.INFORMATION_MESSAGE);
+            final JDialog DIALOG = JOP.createDialog(this.WINDOW, TITLE);
+            DIALOG.setModalityType(Dialog.ModalityType.DOCUMENT_MODAL);
+            DIALOG.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+
+            if (!WINDOW.isFocused()) {
+                new javax.swing.Timer(5000, e -> DIALOG.setVisible(false)).start();
+            }
+            DIALOG.setVisible(true);        
+    }            
 
 }

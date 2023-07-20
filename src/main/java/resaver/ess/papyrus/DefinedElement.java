@@ -19,7 +19,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.SortedSet;
 import java.nio.ByteBuffer;
-import resaver.Analysis;
+import java.util.Collections;
+import java.util.Optional;
 import resaver.ess.AnalyzableElement;
 import resaver.ess.Linkable;
 
@@ -104,21 +105,20 @@ abstract public class DefinedElement implements AnalyzableElement, Linkable, Pap
     abstract public boolean isUndefined();
 
     /**
-     * @see AnalyzableElement#matches(resaver.Analysis, resaver.Mod)
+     * @see AnalyzableElement#matches(Optional<resaver.Analysis>, resaver.Mod)
      * @param analysis
      * @param mod
      * @return
      */
     @Override
-    public boolean matches(Analysis analysis, String mod) {
+    public boolean matches(Optional<resaver.Analysis> analysis, String mod) {
         Objects.requireNonNull(analysis);
         Objects.requireNonNull(mod);
 
-        final SortedSet<String> OWNERS = analysis.SCRIPT_ORIGINS.get(this.DEFINITION_NAME.toIString());
-        if (null == OWNERS) {
-            return false;
-        }
-        return OWNERS.contains(mod);
+        return analysis
+                .map(an -> an.SCRIPT_ORIGINS.get(this.DEFINITION_NAME.toIString()))
+                .orElse(Collections.emptySortedSet())
+                .contains(mod);
     }
 
     /**

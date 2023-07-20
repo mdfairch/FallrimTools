@@ -22,6 +22,8 @@ import java.util.Objects;
  * Stores binary flag fields.
  *
  * @author Mark
+ * @param T The type of number used to represent the flags.
+ * 
  */
 abstract public class Flags<T extends Number> implements Element {
 
@@ -30,12 +32,9 @@ abstract public class Flags<T extends Number> implements Element {
      */
     public String toHTML() {
         final char[] ONES = new char[]{'\u2080', '\u2081', '\u2082', '\u2083', '\u2084', '\u2085', '\u2086', '\u2087', '\u2088', '\u2089'};
-        //final char[] TENS = new char[]{'\u0000', '\u2081', '\u2082', '\u2083', '\u2084', '\u2085', '\u2086', '\u2087', '\u2088', '\u2089'};
         final int BITS = 8 * this.calculateSize();
         final StringBuilder BUF = new StringBuilder();
 
-        //BUF.append("<p style=\"display:inline-table;\">");        
-        //BUF.append("</p>");
         BUF.append("<code><table cellspacing=0 cellpadding=1 border=0.5 style=\"display:inline-table;\">");
         BUF.append("<tr align=center>");
 
@@ -164,6 +163,11 @@ abstract public class Flags<T extends Number> implements Element {
     }
     
     /**
+     * @return Tests if all the fields of the flags object are zero.
+     */
+    abstract public boolean allZero();
+    
+    /**
      * 8-bit array of flags.
      */
     static public class Byte extends Flags<java.lang.Byte> {
@@ -233,6 +237,11 @@ abstract public class Flags<T extends Number> implements Element {
         @Override
         public boolean equals(Object obj) {
             return obj != null && obj instanceof Byte && ((Byte) obj).FLAGS == this.FLAGS;
+        }
+
+        @Override
+        public boolean allZero() {
+            return this.FLAGS == 0;
         }
 
         final public byte FLAGS;
@@ -311,6 +320,11 @@ abstract public class Flags<T extends Number> implements Element {
             return obj != null && obj instanceof Short && ((Short) obj).FLAGS == this.FLAGS;
         }
 
+        @Override
+        public boolean allZero() {
+            return this.FLAGS == 0;
+        }
+
         final public short FLAGS;
 
     }
@@ -384,6 +398,11 @@ abstract public class Flags<T extends Number> implements Element {
         @Override
         public boolean equals(Object obj) {
             return obj != null && obj instanceof Int && ((Int) obj).FLAGS == this.FLAGS;
+        }
+
+        @Override
+        public boolean allZero() {
+            return this.FLAGS == 0;
         }
 
         final public int FLAGS;
