@@ -352,6 +352,9 @@ final public class ChangeForm implements Element, AnalyzableElement, Linkable {
                 case NPC_:
                     this.parsedData = new ChangeFormNPC(BODYDATA, this.changeFlags, context);
                     break;
+                case RELA:
+                    this.parsedData = new ChangeFormRela(BODYDATA, this.changeFlags, this.REFID, context);
+                    break;
                 case QUST:
                     this.parsedData = new ChangeFormQust(BODYDATA, this.changeFlags, context);
                     break;
