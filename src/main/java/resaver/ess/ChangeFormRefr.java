@@ -28,7 +28,7 @@ import static resaver.ess.ChangeFlagConstantsRefr.*;
  *
  * @author Mark Fairchild
  */
-public class ChangeFormRefr extends GeneralElement implements ChangeFormData {
+public class ChangeFormRefr extends GeneralElement implements ChangeFormData, HasInitial {
 
     /**
      * Creates a new <code>ChangeFormRefr</code> by reading from a
@@ -60,8 +60,11 @@ public class ChangeFormRefr extends GeneralElement implements ChangeFormData {
             initialType = 0;
         }
 
+        ChangeFormInitialData initial = null;
+        Element[] inventory = null;
+        
         try {
-            ChangeFormInitialData initial = super.readElement(input, "INITIAL", in -> new ChangeFormInitialData(in, initialType, context));
+            initial = super.readElement(input, "INITIAL", in -> new ChangeFormInitialData(in, initialType, context));
 
             if (changeFlags.getFlag(CHANGE_REFR_HAVOK_MOVE)) {
                 super.readBytesVS(input, "HAVOK");
@@ -98,7 +101,7 @@ public class ChangeFormRefr extends GeneralElement implements ChangeFormData {
             }
 
             if (changeFlags.getFlag(CHANGE_REFR_INVENTORY) || changeFlags.getFlag(CHANGE_REFR_LEVELED_INVENTORY)) {
-                super.readVSElemArray(input, "INVENTORY", in -> new ChangeFormInventoryItem(in, context));
+                inventory = super.readVSElemArray(input, "INVENTORY", in -> new ChangeFormInventoryItem(in, context));
             }
 
             if (changeFlags.getFlag(CHANGE_REFR_PROMOTED)) {
@@ -121,7 +124,7 @@ public class ChangeFormRefr extends GeneralElement implements ChangeFormData {
                         }
                     }
                 }
-            };
+            }
             
             if (super.readUnparsed(input)) {
                 throw new UnparsedException();
@@ -132,6 +135,9 @@ public class ChangeFormRefr extends GeneralElement implements ChangeFormData {
         } catch (RuntimeException | ElementException ex) {
             super.readUnparsed(input);
             throw new ElementException("Failed to read REFR", ex, this);
+        } finally {
+            INITIAL = initial;
+            INVENTORY = inventory;
         }
     }
 
@@ -165,6 +171,11 @@ public class ChangeFormRefr extends GeneralElement implements ChangeFormData {
         return ChangeFlagConstantsRefr.values();
     }
     
+    @Override
+    public ChangeFormInitialData getInitial() {
+        return INITIAL;
+    }
+    
     /**
      * @see AnalyzableElement#getInfo(resaver.Analysis, resaver.ess.ESS)
      * @param analysis
@@ -190,5 +201,9 @@ public class ChangeFormRefr extends GeneralElement implements ChangeFormData {
     public boolean matches(Optional<Analysis> analysis, String mod) {
         return false;
     }
+
+    
+    final public ChangeFormInitialData INITIAL;
+    final public Element[] INVENTORY;
 
 }
