@@ -251,7 +251,7 @@ final public class Plugin implements AnalyzableElement, Linkable, Comparable<Plu
                                 h4("Providers"),
                                 ul(mod.providers.stream().limit(20).map(p -> li(p)).toArray(DomList))
                         ))
-                        .orElse(p(em(analysis.isEmpty()
+                        .orElse(p(em(!analysis.isPresent()
                                 ? "Mod analysis is only available for Mod Organizer 2 and requires Plugin Parsing to be enabled."
                                 : "No analysis information is available for this plugin."))),
                 
