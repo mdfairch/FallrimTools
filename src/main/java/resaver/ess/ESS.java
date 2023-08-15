@@ -727,10 +727,11 @@ final public class ESS implements Element {
 
     /**
      * @param analysis The analysis data.
+     * @param ctx The savefile context data.
      */
-    public void addNames(resaver.Analysis analysis) {
+    public void addNames(resaver.Analysis analysis, ESSContext ctx) {
         Objects.requireNonNull(analysis);
-        this.REFIDS.values().parallelStream().forEach(v -> v.addNames(analysis));
+        this.REFIDS.values().parallelStream().forEach(v -> v.addNames(analysis, ctx));
     }
 
     /**
@@ -1357,6 +1358,16 @@ final public class ESS implements Element {
             this.MODEL = model;
         }
 
+        public Result(Result original) {
+            this.ESS = original.ESS;
+            this.GAME = original.GAME;
+            this.SAVE_FILE = original.SAVE_FILE;
+            this.BACKUP_FILE = original.BACKUP_FILE;
+            this.TIME_S = original.TIME_S;
+            this.SIZE_MB = original.SIZE_MB;
+            this.MODEL = original.MODEL;
+        }
+        
         final public ESS ESS;
         final public Game GAME;
         final public Path SAVE_FILE;
