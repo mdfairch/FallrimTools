@@ -27,7 +27,7 @@ import static resaver.ess.ChangeFlagConstantsAchr.*;
  *
  * @author Mark Fairchild
  */
-public class ChangeFormACHR extends GeneralElement implements ChangeFormData {
+public class ChangeFormACHR extends GeneralElement implements ChangeFormData, HasInitial {
 
     /**
      * Creates a new <code>ChangeFormACHR</code> by reading from a
@@ -57,8 +57,11 @@ public class ChangeFormACHR extends GeneralElement implements ChangeFormData {
             initialType = 0;
         }
 
+        ChangeFormInitialData initial = null;
+        Element[] inventory = null;
+        
         try {
-            super.readElement(input, "INITIAL", in -> new ChangeFormInitialData(in, initialType, context));
+            initial = super.readElement(input, "INITIAL", in -> new ChangeFormInitialData(in, initialType, context));
 
             if (changeFlags.getFlag(CHANGE_REFR_HAVOK_MOVE)) {
                 this.readBytesVS(input, "HAVOK");
@@ -95,10 +98,8 @@ public class ChangeFormACHR extends GeneralElement implements ChangeFormData {
             }
 
             if (changeFlags.getFlags(CHANGE_REFR_INVENTORY, CHANGE_REFR_LEVELED_INVENTORY)) {
-                INVENTORY = super.readVSElemArray(input, "INVENTORY", in -> new ChangeFormInventoryItem(in, context));
-            } else {
-                INVENTORY = null;
-            }
+                inventory = super.readVSElemArray(input, "INVENTORY", in -> new ChangeFormInventoryItem(in, context));
+            } 
 
             if (changeFlags.getFlag(CHANGE_REFR_ANIMATION)) {
                 super.readBytesVS(input, "ANIMATIONS");
@@ -116,6 +117,9 @@ public class ChangeFormACHR extends GeneralElement implements ChangeFormData {
             //System.err.println(MessageFormat.format("Failed to read ACHR {0}", refid));
             //ex.printStackTrace(System.err);
             throw new ElementException(MessageFormat.format("Failed to read ACHR {0}", refid), ex, this);
+        } finally {
+            INITIAL = initial;
+            INVENTORY = inventory;            
         }
     }
 
@@ -148,6 +152,11 @@ public class ChangeFormACHR extends GeneralElement implements ChangeFormData {
         return ChangeFlagConstantsAchr.values();
     }
     
+    @Override
+    public ChangeFormInitialData getInitial() {
+        return INITIAL;
+    }
+    
     /**
      * @see AnalyzableElement#getInfo(resaver.Analysis, resaver.ess.ESS)
      * @param analysis
@@ -163,6 +172,7 @@ public class ChangeFormACHR extends GeneralElement implements ChangeFormData {
         return BUILDER.toString();
     }
     
+    final public ChangeFormInitialData INITIAL;
     final public Element[] INVENTORY;
 
 }
