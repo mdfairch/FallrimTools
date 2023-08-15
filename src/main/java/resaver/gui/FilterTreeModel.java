@@ -348,7 +348,8 @@ final public class FilterTreeModel implements TreeModel {
             // children at all unless the Element itself is filtered. 
             // Don't apply this to the root!
             node.setVisible(nodeVisible);
-
+            node.getChildren().parallelStream().forEach(child -> this.setFilter(child, n->true));
+            
         } else {
             // For folders, determine which children to setFilter.
             boolean filterChildren = (nodeVisible && node.filterChildren()) || !nodeVisible;
