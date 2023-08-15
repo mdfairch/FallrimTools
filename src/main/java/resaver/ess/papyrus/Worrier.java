@@ -86,8 +86,10 @@ final public class Worrier {
     }
     
     private void msg(String tag, DomContent msg, boolean fatal) {
-        if (fatal) MESSAGES_FATAL.add(p(strong(em(tag)), msg));
-        else MESSAGES_WARNING.add(p(strong(tag), msg));
+        //if (fatal) MESSAGES_FATAL.add(p(strong(em(tag)), msg));
+        //else MESSAGES_WARNING.add(p(strong(tag), msg));
+        if (fatal) MESSAGES_FATAL.add(div(h3(tag), msg, br()));
+        else MESSAGES_WARNING.add(div(h3(tag), msg, br()));
     }
     
     private DomContent check(ESS.Result result) {
@@ -100,21 +102,22 @@ final public class Worrier {
         this.checkFatal();
         this.checkNonFatal(result);
         
-        return html(body(
+        return div(
                 this.shouldDisableSaving() 
-                        ? p(h3("Serious problems were identified"), h2("Saving is disabled. Trust me, it's for your own good."), hr())
+                        ? p(h1("Serious problems were identified"), h2("Saving is disabled. Trust me, it's for your own good."), hr())
                         : emptyTag("IGNORE"),
                 each(this.MESSAGES_FATAL, t->t),
                 hr(),
                 this.checkPerformance(result),
                 hr(),
                 this.shouldWorry()
-                        ? text(this.shouldDisableSaving() 
+                        ? h2(this.shouldDisableSaving() 
                                 ? "Additional problems were identified"
                                 : "Potential problems were identified")
                         : emptyTag("No worries"),
+                hr(),
                 each(this.MESSAGES_WARNING, t->t)
-        ));
+        );
     }
 
     private void checkFatal() {
@@ -123,7 +126,7 @@ final public class Worrier {
             this.shouldWorry = true;
             this.disableSaving = true;
             
-            fatal("Broken savefile", "It is corrupted and can never be recovered, not even by the unhindered zeal of an Andean Mountain Tapir.");
+            fatal("Broken savefile", "It is corrupted and can never be recovered, not even by the unhindered zeal of an Andean Mountain Tapir. ");
 
             if (ESS.isPluginOverflow()) {
                 fatal("Plugin overflow", "This is caused by having exactly 255 or 256 plugins installed.");
@@ -139,11 +142,11 @@ final public class Worrier {
             } else {
                 if (PAPYRUS.getStringTable().isTruncated()) {
                     int missing = PAPYRUS.getStringTable().getMissingCount();
-                    fatal("Truncated string-table", "%d strings missing. The cause of this is unknown, but sometimes involves the scripts that append to strings in a loop.".formatted(missing));
+                    fatal("Truncated string-table", String.format("%d strings missing. The cause of this is unknown, but sometimes involves the scripts that append to strings in a loop.", missing));
                 } 
                 
                 if (PAPYRUS.isTruncated()) {
-                    fatal("Truncated papyrus block", "This is usually caused by too many scripts running at once, or recursive scripts without proper boundary conditions.");
+                    fatal("Truncated papyrus block", "The Papyrus block is truncated (part of it is missing). This is usually caused by too many scripts running at once, recursive scripts without proper boundary conditions, excessive size, or multithreading problems. Sometimes it means that your savefile has data in it that ReSaver doesn't recognize.");
                 }
 
                 if (Arrays.stream(ESS.getFormIDs()).anyMatch(i -> i == 0)) {
@@ -153,7 +156,7 @@ final public class Worrier {
                     while (present < ESS.getFormIDs().length && ESS.getFormIDs()[present] != 0) {
                         present++;
                     }
-                    fatal("Truncated formID array", "%d/%d formIDs read and %d  null values in total. This is sometimes caused by updating mods without following their proper updating procedure.".formatted(present, total, zeroes));
+                    fatal("Truncated formID array", String.format("%d/%d formIDs read and %d null values in total. This is sometimes caused by updating mods without following their proper updating procedure.", present, total, zeroes));
                 }
             }
         }
@@ -175,31 +178,31 @@ final public class Worrier {
         int unattached = PAPYRUS.countUnattachedInstances();
         if (unattached > 0) {
             this.shouldWorry = (result.GAME != Game.FALLOUT4 || unattached > 2);
-            warn("Unattached instances", "There are %s script instances that are not attached to anything in-game.".formatted(unattached));
+            warn("Unattached instances", String.format("There are %s script instances that are not attached to anything in-game. This is usually caused by uninstalling mods, or by updating mods that are not safe to update.", unattached));
         }
 
         int[] undefined = PAPYRUS.countUndefinedElements();
 
         if (undefined[0] > 0) {
             this.shouldWorry = true;
-            warn("Undefined elements", "There are %d elements whose definition is missing, which is usually caused by updating or uninstalling mods.".formatted(undefined[0]));
+            warn("Undefined elements", String.format("There are %d elements whose definition is missing. This is usually caused by updating or uninstalling mods.", undefined[0]));
         }
 
         if (undefined[1] > 0) {
             this.shouldWorry = true;
-            warn("Undefined threads", "There are %d undefined threads, which is a serious problem usually caused by updating or uninstalling mods.".formatted(undefined[1]));
+            warn("Undefined threads", String.format("There are %d undefined threads. This is a serious problem, which is usually caused by updating or uninstalling mods.", undefined[1]));
         }
 
         long missingParents = PAPYRUS.getScripts().values().stream().filter(s -> s.isMissingParent()).count();
         if (missingParents > 0) {
             this.shouldWorry = true;
-            warn("Missing parents", "There are %s scripts with missing parents, which is usually caused by updating a mod to a new version that has major script changes.".formatted(missingParents));
+            warn("Missing parents", String.format("There are %s scripts with missing parents. This is usually caused by updating a mod to a new version that has major script changes.", missingParents));
         }
 
         long noParents = PAPYRUS.getScripts().values().stream().filter(s -> s.isNoParent()).count();
         if (noParents > 0) {
             this.shouldWorry = true;
-            warn("No parents", "There are %s scripts with no parent script, which is usually caused by updating a mod to a new version that has major script changes.".formatted(noParents));
+            warn("No parents", String.format("There are %s scripts with no parent script. This is usually caused by updating a mod to a new version that has major script changes.", noParents));
         }
 
         int numStacks = PAPYRUS.getActiveScripts().size();
@@ -240,14 +243,14 @@ final public class Worrier {
             
             if (numStacks > 50 || numFrames > 150) {
                 this.shouldWorry = true;
-                warn("Stack count", "There are %d stacks and %d frames, which may indicate a problem.".formatted(numStacks, numFrames));
+                warn("Stack count", String.format("There are %d stacks and %d frames. This may indicate a serious problem, but it can also just mean that Papyrus is overloaded because of low FPS or too many mods doing things at the same time.", numStacks, numFrames));
 
                 if (numStacks > 200 || numFrames > 1000) {
                     if (frames.size() >= 1) {
-                        warn("Frame count", "%s occurs the most often as a stack frame (%d occurrences)</p>".formatted(frames.get(0).toHTML(null), frameCounts.get(frames.get(0))));
+                        warn("Frame count", String.format("%s occurs the most often as a stack frame (%d occurrences)</p>", frames.get(0).toHTML(null), frameCounts.get(frames.get(0))));
                     }
                     if (frames.size() >= 2) {
-                        warn("Frame count", "%s occurs the second most often as a stack frame (%d occurrences)</p>".formatted(frames.get(1).toHTML(null), frameCounts.get(frames.get(1))));
+                        warn("Frame count", String.format("%s occurs the second most often as a stack frame (%d occurrences)</p>", frames.get(1).toHTML(null), frameCounts.get(frames.get(1))));
                     }
                 }
             }
@@ -261,7 +264,7 @@ final public class Worrier {
                 this.shouldWorry = true;
                 ActiveScript deepest = deep.get(0);
                 int depth = deepest.getStackFrames().size();
-                warn("Stack depth", "There is a stack %d frames deep (%s).".formatted(depth, deepest.toHTML(null)));
+                warn("Stack depth", String.format("There is a stack %d frames deep (%s).", depth, deepest.toHTML(null)));
             }
         }
 
@@ -276,7 +279,7 @@ final public class Worrier {
                     double difference = 200.0 * (currentSize - previousSize) / (currentSize + previousSize);
                     if (difference < -5.0) {
                         this.shouldWorry = true;
-                        warn("Data drop", "This savefile has %2.2f%% less papyrus data the previous one.".formatted(-difference));
+                        warn("Data drop", String.format("This savefile has %2.2f%% less papyrus data the previous one. This most often happens because of finishing a major quest or leaving a cell with lots of non-persistent objects. Sometimes it means that important data was truncated in a way that is not easily detectable.", -difference));
                     }
                 }
 
@@ -290,7 +293,7 @@ final public class Worrier {
 
                 if (!missingNamespaces.isEmpty()) {
                     this.shouldWorry = true;
-                    msg("Canary error", makeHTMLList("This savefile has missing namespaces.", missingNamespaces, LIMIT), false);
+                    msg("Canary error", makeHTMLList("This savefile has missing namespaces. This can be caused by uninstalling or updating mods, or by what Kinggath named the 'canary error'.", missingNamespaces, LIMIT), false);
                 }
 
                 List<mf.Pair<Script,Integer>> canaryErrors = this.previousCanaries.keySet().stream()
@@ -302,7 +305,7 @@ final public class Worrier {
 
                 if (!canaryErrors.isEmpty()) {
                     this.shouldWorry = true;
-                    msg("Canary error", makeHTMLList("This savefile has zeroed canaries.", canaryErrors, LIMIT, CanaryErrorFormatter), false);
+                    msg("Canary error", makeHTMLList("This savefile has zeroed canaries. The cause of this seems to be related to script memory limits but it is not clear; Kinggath named it the 'canary error' if you want to search for more information.", canaryErrors, LIMIT, CanaryErrorFormatter), false);
                 }                
             }
         });
@@ -314,7 +317,7 @@ final public class Worrier {
 
         if (!memberless.isEmpty()) {
             this.shouldWorry = true;
-            msg("Missing member data", makeHTMLList("This savefile has zeroed canaries.", memberless, LIMIT, MemberlessFormatter), false);
+            msg("Missing member data", makeHTMLList("This savefile has zeroed canaries. The cause of this seems to be related to script memory limits but it is not clear; Kinggath named it the 'canary error' if you want to search for more information.", memberless, LIMIT, MemberlessFormatter), false);
         }
 
         List<ScriptInstance> definitionErrors = PAPYRUS.getScriptInstances().values()
@@ -324,16 +327,16 @@ final public class Worrier {
 
         if (!definitionErrors.isEmpty()) {
             this.shouldWorry = true;
-            msg("Mismatched member data", makeHTMLList("This savefile has script instances with mismatched member data.", definitionErrors, LIMIT, DefinitionErrorFormatter), false);
+            msg("Mismatched member data", makeHTMLList("This savefile has script instances with mismatched member data. This is usually caused by updating mods that weren't designed to be safe to update.", definitionErrors, LIMIT, DefinitionErrorFormatter), false);
         }
     }
 
     private DomContent checkPerformance(ESS.Result result) {
         return p(text("The savefile was successfully loaded."), 
             ul(
-                    li("Read %1.1f mb in %1.1f seconds.".formatted(result.TIME_S, result.SIZE_MB)),
+                    li(String.format("Read %1.1f mb in %1.1f seconds.", result.TIME_S, result.SIZE_MB)),
                     li(result.ESS.hasCosave() 
-                            ? "%s co-save was loaded.".formatted(result.GAME.COSAVE_EXT.toUpperCase())
+                            ? String.format("%s co-save was loaded.", result.GAME.COSAVE_EXT.toUpperCase())
                             : "No co-save was found.")
                     
             )
