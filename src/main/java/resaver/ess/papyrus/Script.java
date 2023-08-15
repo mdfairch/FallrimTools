@@ -146,13 +146,16 @@ final public class Script extends Definition {
     }
 
     public boolean isNoParent() {
-        return this.TYPE == null || this.TYPE.isEmpty();
+        return (this.TYPE == null || this.TYPE.isEmpty()) && !this.isBaseScript();
     }
     
     public boolean isMissingParent() {
-        return this.getParent().isEmpty();
+        return !this.getParent().isPresent() && !this.isBaseScript();
     }
     
+    public boolean isBaseScript() {
+        return Script.NATIVE_SCRIPTS.contains(this.NAME.toIString());
+    }
     /**
      * @see resaver.ess.Linkable#toHTML(Element)
      * @param target A target within the <code>Linkable</code>.
@@ -357,7 +360,8 @@ final public class Script extends Definition {
     /**
      * A list of scripts that only exist implicitly.
      */
-    static final java.util.List<IString> NATIVE_SCRIPTS = java.util.Arrays.asList(IString.get("ActiveMagicEffect"),
+    static final java.util.List<IString> NATIVE_SCRIPTS = java.util.Arrays.asList(
+            IString.get("ActiveMagicEffect"),
             IString.get("Alias"),
             IString.get("Debug"),
             IString.get("Form"),
