@@ -74,9 +74,9 @@ abstract public class ResaverFormatting {
                 .map(CharSequence::toString)
                 .collect(Collectors.toList());
         
-        return p(
+        return div(
                 text(msg),
-                text("(%d items)".formatted(items.size())),
+                text(String.format(" (%d items)", items.size())),
                 ol(each(names, name -> li(rawHtml(name)))),
                 text(excess > 0 
                         ? String.format("(+ %d more)", excess) 
