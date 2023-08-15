@@ -42,8 +42,8 @@ import resaver.ess.papyrus.Worrier;
 public class Opener extends SwingWorker<Opener.Result, Double> {
 
     final public class Result {
-        public Result(ESS ess, ESS.Result result, Worrier worrier) {
-            ESS = ess;
+        public Result(ESS.Result result, Worrier worrier) {
+            ESS = result.ESS;
             RESULT = result;
             WORRIER = worrier;
         }
@@ -92,18 +92,18 @@ public class Opener extends SwingWorker<Opener.Result, Double> {
             final ProgressModel PM = new ProgressModel();
             final ModelBuilder MB = new ModelBuilder(PM, SORT, null);
             PROGRESS.setModel(PM);
-            final ESS.Result RESULT = ESS.readESS(this.SAVEFILE, MB);
-            final Worrier WORRIER = new Worrier(RESULT, PREVIOUS.map(p -> p.WORRIER));
-            
-            this.WINDOW.setESS(RESULT.SAVE_FILE, RESULT.ESS, RESULT.MODEL, WORRIER.shouldDisableSaving());
-
+            final ESS.Result ESS_RESULT = ESS.readESS(this.SAVEFILE, MB);
+            final Worrier WORRIER = new Worrier(ESS_RESULT, PREVIOUS.map(p -> p.WORRIER));
+            final Opener.Result RESULT = new Opener.Result(ESS_RESULT, WORRIER);
+                    
+            this.WINDOW.setESSResult(RESULT);
             SwingUtilities.invokeLater(DOAFTER);
             
             if (WORRIER.shouldWorry() || WORRIER.shouldDisableSaving()) {
                 this.showErrors(WORRIER.getMessage().toString(), WORRIER.shouldWorry());
             }
             
-            return new Opener.Result(RESULT.ESS, RESULT, WORRIER);
+            return RESULT;
 
         } catch (Exception | Error ex) {            
             final String MSG = MessageFormat.format(I18N.getString("OPENER_ERROR"), this.SAVEFILE.getFileName(), ex.getMessage());
