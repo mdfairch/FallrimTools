@@ -145,10 +145,31 @@ final public class RefID implements Element, Linkable, Comparable<RefID> {
      * Adds the EDID/FULL field for the RefID.
      *
      * @param analysis The analysis data.
+     * @param ctx The savefile context data.
      */
-    public void addNames(resaver.Analysis analysis) {
+    public void addNames(resaver.Analysis analysis, ESS.ESSContext ctx) {
         Objects.requireNonNull(analysis);
-        this.name = analysis.getName(this.PLUGIN, this.FORMID);
+        String newName = analysis.getName(this.PLUGIN, this.FORMID);
+        
+        // Fallback for created records.
+        if (this.getType() == Type.CREATED && this.name == null) {
+            ChangeForm cf = ctx.getChangeForm(this);
+            if (cf != null) {
+                ChangeFormData data = cf.getData(Optional.of(analysis), ctx, true);
+                if (data instanceof HasInitial) {
+                    ChangeFormInitialData initial = ((HasInitial) data).getInitial();
+                    if (initial != null) {
+                        RefID base = (RefID) initial.getElement("BASE_OBJECT");
+                        if (base != null) {
+                            newName = analysis.getName(base.PLUGIN, base.FORMID);
+                        }
+                    }
+                }
+            }
+            
+        }
+        
+        this.name = newName;
     }
 
     /**
