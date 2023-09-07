@@ -74,12 +74,19 @@ public enum Game {
             "f4se",
             Paths.get("Fallout 4 VR"),
             Paths.get("Fallout4VR/Saves"),
-            Paths.get("fallout4vr.exe"));
+            Paths.get("fallout4vr.exe")),
+    STARFIELD("Starfield", 
+            "Starfield Savefile", 
+            "sfs", 
+            "sfse", 
+            Paths.get("Starfield"), 
+            Paths.get("Starfield/Saves"), 
+            Paths.get("Starfield.exe"));
 
     /**
      * A filename filter for all of the games.
      */
-    static final public FileNameExtensionFilter FILTER_ALL = new FileNameExtensionFilter("Bethesda Savefiles", "ess", "fos", "sav0");
+    static final public FileNameExtensionFilter FILTER_ALL = new FileNameExtensionFilter("Bethesda Savefiles", "ess", "fos", "sav0", "sfs");
 
     /**
      * Cached list version of the values.

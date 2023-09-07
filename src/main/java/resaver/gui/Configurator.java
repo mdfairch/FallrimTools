@@ -343,7 +343,7 @@ abstract public class Configurator {
         if (parent.isJavaFXAvailable()) {
             javafx.stage.FileChooser CHOOSER = new javafx.stage.FileChooser();
             CHOOSER.setTitle(java.util.ResourceBundle.getBundle("Strings").getString("CONFIG_OPEN_TITLE"));
-            javafx.stage.FileChooser.ExtensionFilter FX_FILTER = new javafx.stage.FileChooser.ExtensionFilter(Game.FILTER_ALL.getDescription(), Game.FALLOUT4.SAVE_GLOB, Game.SKYRIM_LE.SAVE_GLOB, Game.SKYRIM_SW.SAVE_GLOB);
+            javafx.stage.FileChooser.ExtensionFilter FX_FILTER = new javafx.stage.FileChooser.ExtensionFilter(Game.FILTER_ALL.getDescription(), Game.FALLOUT4.SAVE_GLOB, Game.SKYRIM_LE.SAVE_GLOB, Game.SKYRIM_SW.SAVE_GLOB, Game.STARFIELD.SAVE_GLOB);
             CHOOSER.getExtensionFilters().add(FX_FILTER);
             CHOOSER.setInitialDirectory(startingDirectory.toFile());
             if (startingFile != null) {

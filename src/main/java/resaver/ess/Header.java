@@ -56,6 +56,10 @@ final public class Header implements Element {
                 this.MAGIC = new byte[12];
                 break;
             }
+            case "BCPS": {
+                this.MAGIC = new byte[4];
+                break;
+            }
             default:
                 throw new IllegalArgumentException("Unrecognized header: " + PREFIX);
         }
@@ -93,6 +97,12 @@ final public class Header implements Element {
                     throw new IllegalArgumentException("Unknown version of Fallout4: " + this.VERSION);
                 }
                 break;
+            case "BCPS":
+                if (72 <= this.VERSION && Game.STARFIELD.testFilename(path)) {
+                    this.GAME = Game.STARFIELD;
+                } else {
+                    throw new IllegalArgumentException("Unknown version of Starfield: " + this.VERSION);
+                }
             default:
                 throw new IllegalArgumentException("Unknown game: " + MAGICSTRING);
         }

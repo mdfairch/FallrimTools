@@ -177,6 +177,7 @@ final public class SaveWindow extends JFrame {
 
         this.MI_SHOWLOG = new JMenuItem("Show Log", KeyEvent.VK_S);
         this.MI_ABOUT = new JMenuItem("About", KeyEvent.VK_A);
+        this.MI_SUPPORT = new JMenuItem("Support");
 
         this.BTN_CLEAR_FILTER = new JButton("Clear Filters");
         this.LOGWINDOW = new LogWindow();
@@ -330,7 +331,7 @@ final public class SaveWindow extends JFrame {
         MI_LOADESPS.setEnabled(false);
 
         MENU_HELP.setMnemonic('h');
-        fillMenu(MENU_HELP, MI_SHOWLOG, MI_ABOUT);
+        fillMenu(MENU_HELP, MI_SHOWLOG, MI_ABOUT, MI_SUPPORT);
 
         this.MENUBAR.add(this.MENU_FILE);
         this.MENUBAR.add(this.MENU_FILTER);
@@ -382,6 +383,7 @@ final public class SaveWindow extends JFrame {
         this.MI_COMPARETO.addActionListener(e -> compareTo());
         this.MI_SHOWLOG.addActionListener(e -> showLog());
         this.MI_ABOUT.addActionListener(e -> AboutDialog.show(this));
+        this.MI_SUPPORT.addActionListener(e -> SupportDialog.show(this));
         this.MI_USEMO2.addActionListener(e -> PREFS.putBoolean("settings.useMO2", this.MI_USEMO2.isSelected()));
 
         this.MI_EXIT.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E, KeyEvent.CTRL_DOWN_MASK));
@@ -2510,6 +2512,7 @@ final public class SaveWindow extends JFrame {
     final private JCheckBoxMenuItem MI_WATCHSAVES;
     final private JMenuItem MI_SHOWLOG;
     final private JMenuItem MI_ABOUT;
+    final private JMenuItem MI_SUPPORT;
     final private JMenuItem MI_EXPORTPLUGINS;
     final private JMenuItem MI_SETTINGS;
     final private JCheckBoxMenuItem MI_SHOWUNATTACHED;
