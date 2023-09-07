@@ -27,6 +27,7 @@ import javax.swing.JOptionPane;
 import static j2html.TagCreator.*;
 import java.awt.Insets;
 import javax.swing.JEditorPane;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 
@@ -59,11 +60,7 @@ public class SupportDialog {
         
         JEditorPane pane = new JEditorPane("text/html", text);
         pane.setEditable(false);
-        
-        Insets margin = pane.getMargin();
-        margin.left += 10;
-        margin.right += 10;
-        pane.setMargin(margin);
+        pane.setBorder(null);
         
         pane.addHyperlinkListener((HyperlinkEvent e) -> {
             if (e.getEventType().equals(HyperlinkEvent.EventType.ACTIVATED)) {
@@ -97,9 +94,11 @@ public class SupportDialog {
 
         // create some css from the label's font
         return new StringBuilder("font-family:" + font.getFamily() + ";")
-            .append("font-weight:" + (font.isBold() ? "bold" : "normal") + ";")
-            .append("font-size:" + font.getSize() + "pt;")
-            .append("background-color: rgb("+color.getRed()+","+color.getGreen()+","+color.getBlue()+");")
+            .append("font-weight:").append(font.isBold() ? "bold" : "normal").append(";")
+            .append("font-size:").append(font.getSize()).append("pt;")
+            .append("background-color: rgb(").append(color.getRed()).append(",").append(color.getGreen()).append(",").append(color.getBlue()).append(");")
+            .append("margin-left: 15pt;")
+            .append("margin-right: 15pt;")
             .toString();
     }
     
