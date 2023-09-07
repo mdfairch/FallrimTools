@@ -17,28 +17,28 @@ package resaver.ess.papyrus;
 
 import resaver.ListException;
 import java.nio.ByteBuffer;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 
 /**
  *
  * @author Mark
  * @param <T>
  */
-public class PapyrusElementMap<T extends HasID> extends java.util.LinkedHashMap<EID, T> implements PapyrusElement {
+public class PapyrusElementList<T extends HasID> extends java.util.ArrayList<T> implements PapyrusElement {
 
-    PapyrusElementMap(ByteBuffer input, PapyrusElementReader<T> reader, mf.Counter counter) throws PapyrusElementException {
+    PapyrusElementList(ByteBuffer input, PapyrusElementReader<T> reader) throws PapyrusElementException {
         try {
             int count = input.getInt();
-            if (counter != null) {
-                counter.click(4);
-            }
+            super.ensureCapacity(count);
             
             for (int i = 0; i < count; i++) {
                 try {
                     T element = reader.read(input);
-                    if (counter != null) {
-                        counter.click(element.calculateSize());
-                    }
-                    this.put(element.getID(), element);
+                    this.add(element);
                 } catch (PapyrusFormatException ex) {
                     throw new ListException(i, count, ex);
                 }
@@ -48,29 +48,33 @@ public class PapyrusElementMap<T extends HasID> extends java.util.LinkedHashMap<
         }
     }
 
-    PapyrusElementMap(ByteBuffer input, PapyrusElementReader<T> reader) throws PapyrusElementException {
-        this(input, reader, null);
-    }
-
-    PapyrusElementMap() {
+    PapyrusElementList() {
     }
 
     @Override
     public int calculateSize() {
-        return 4 + this.values().parallelStream().mapToInt(v -> v.calculateSize()).sum();
+        return 4 + this.parallelStream().mapToInt(v -> v.calculateSize()).sum();
     }
 
     @Override
     public void write(ByteBuffer output) {
         output.putInt(this.size());
-        this.values().forEach(v -> v.write(output));
+        this.forEach(v -> v.write(output));
     }
 
+    public boolean containsKey(EID id) {
+        return this.stream().anyMatch(e -> Objects.equals(id, e.getID()));
+    }
+            
+    public T get(EID id) {
+        Optional<T> val = this.stream().filter(e -> Objects.equals(id, e.getID())).findFirst();
+        return val.orElse(null);
+    }
+            
     private static final long serialVersionUID = 1L;
 
     @FunctionalInterface
     interface PapyrusElementReader<T> {
-
         public T read(ByteBuffer input) throws PapyrusFormatException, PapyrusElementException;
     }
 

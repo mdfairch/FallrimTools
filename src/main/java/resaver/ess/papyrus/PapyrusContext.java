@@ -236,20 +236,6 @@ public class PapyrusContext extends resaver.ess.ESS.ESSContext {
         }
     }
 
-    public HasID findAll(EID id) {
-        return Stream.of(this.PAPYRUS.getScriptInstances(),
-                this.PAPYRUS.getStructInstances(),
-                this.PAPYRUS.getReferences(),
-                this.PAPYRUS.getArrays(),
-                this.PAPYRUS.getActiveScripts(),
-                this.PAPYRUS.getSuspendedStacks1(),
-                this.PAPYRUS.getSuspendedStacks2(),
-                this.PAPYRUS.getUnbinds())
-                .filter(c -> c.containsKey(id))
-                .map(c -> c.get(id))
-                .findAny().orElse(null);
-    }
-
     void buildCrossreferences() {
         generalCrossReference = createSearchMap();
         search((a, b) -> generalCrossReference.computeIfAbsent(a, k -> createSearchSet()).add(b));

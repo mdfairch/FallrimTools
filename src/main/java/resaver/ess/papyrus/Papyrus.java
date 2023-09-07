@@ -351,14 +351,23 @@ final public class Papyrus implements PapyrusElement, GlobalDataBlock {
             model.addUnknownIDList(this.UNKS);
             SUM.click(4 + this.UNKS.parallelStream().mapToInt(v -> v.calculateSize()).sum());
 
-            UnbindMap unbinds = null;
+            long positionBeforeUnbinds = input.position();
+            long x1 = SUM.getCounter();
+            
+            UnbindList unbinds = null;
             try {
-                unbinds = new UnbindMap(input, CONTEXT);
+                //unbinds = new UnbindList(input, CONTEXT, SUM);
+                unbinds = new UnbindList(input, CONTEXT);
             } catch (PapyrusElementException ex) {
-                unbinds = (UnbindMap) ex.getPartial();
-                throw new PapyrusException("Error reading SuspendedStacks2.", ex, this);
+                unbinds = (UnbindList) ex.getPartial();
+                throw new PapyrusException("Error reading QueuedUnbinds.", ex, this);
             } finally {
                 this.UNBINDMAP = unbinds;
+                long positionAterUnbinds = input.position();
+                long unbindsSize = this.UNBINDMAP.calculateSize();
+                long positionDifference = positionAterUnbinds-positionBeforeUnbinds;
+                long x2 = SUM.getCounter();
+                long xDiff = x2 - x1;
                 model.addUnbinds(unbinds);
                 SUM.click(this.UNBINDMAP.calculateSize());
             }
@@ -613,8 +622,8 @@ final public class Papyrus implements PapyrusElement, GlobalDataBlock {
     /**
      * @return Accessor for the queued unbinds list.
      */
-    public UnbindMap getUnbinds() {
-        return this.UNBINDMAP == null ? new UnbindMap() : this.UNBINDMAP;
+    public UnbindList getUnbinds() {
+        return this.UNBINDMAP == null ? new UnbindList() : this.UNBINDMAP;
     }
 
     /**
@@ -959,7 +968,7 @@ final public class Papyrus implements PapyrusElement, GlobalDataBlock {
     final private List<FunctionMessage> FUNCTIONMESSAGES;
     final private SuspendedStackMap SUSPENDEDSTACKS1;
     final private SuspendedStackMap SUSPENDEDSTACKS2;
-    final private UnbindMap UNBINDMAP;
+    final private UnbindList UNBINDMAP;
     final private List<EID> UNKS;
     final private OtherData OTHER;
     final private byte[] ARRAYSBLOCK;

@@ -16,7 +16,6 @@
 package resaver.ess.papyrus;
 
 import java.util.Objects;
-import java.util.SortedSet;
 import java.nio.ByteBuffer;
 import java.util.Optional;
 import resaver.ess.AnalyzableElement;

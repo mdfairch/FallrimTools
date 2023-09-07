@@ -50,7 +50,7 @@ import resaver.ess.papyrus.StructMap;
 import resaver.ess.papyrus.StructInstanceMap;
 import resaver.ess.papyrus.SuspendedStackMap;
 import resaver.ess.papyrus.TString;
-import resaver.ess.papyrus.UnbindMap;
+import resaver.ess.papyrus.UnbindList;
 import resaver.gui.FilterTreeModel.RootNode;
 import resaver.gui.FilterTreeModel.ContainerNode;
 import resaver.gui.FilterTreeModel.PluginNode;
@@ -243,13 +243,13 @@ public class ModelBuilder {
     }
 
     /**
-     * Add a <code>UnbindMap</code> to the model.
+     * Add a <code>UnbindList</code> to the model.
      *
-     * @param unbinds The <code>UnbindMap</code>.
+     * @param unbinds The <code>UnbindList</code>.
      */
-    public void addUnbinds(UnbindMap unbinds) {
+    public void addUnbinds(UnbindList unbinds) {
         this.TASKS.add(this.EXECUTOR.submit(() -> {
-            final GroupNode NODE = new GroupNode("QueuedUnbinds", unbinds.values()).sort();
+            final GroupNode NODE = new GroupNode("QueuedUnbinds", unbinds).sort();
             PROGRESS.modifyValue(1);
             return NODE;
         }));

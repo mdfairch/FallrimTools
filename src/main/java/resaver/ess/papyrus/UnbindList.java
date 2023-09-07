@@ -20,13 +20,13 @@ package resaver.ess.papyrus;
  * @author Mark Fairchild
  */
 @SuppressWarnings("serial")
-final public class UnbindMap extends PapyrusElementMap<QueuedUnbind> {
+final public class UnbindList extends PapyrusElementList<QueuedUnbind> {
 
-    UnbindMap(java.nio.ByteBuffer input, PapyrusContext context) throws PapyrusElementException {
+    UnbindList(java.nio.ByteBuffer input, PapyrusContext context) throws PapyrusElementException {
         super(input, b -> new QueuedUnbind(b, context));
     }
 
-    UnbindMap() {
+    UnbindList() {
     }
 
 }
