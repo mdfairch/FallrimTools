@@ -334,7 +334,7 @@ final public class Worrier {
     private DomContent checkPerformance(ESS.Result result) {
         return p(text("The savefile was successfully loaded."), 
             ul(
-                    li(String.format("Read %1.1f mb in %1.1f seconds.", result.TIME_S, result.SIZE_MB)),
+                    li(String.format("Read %1.1f mb in %1.1f seconds.", result.SIZE_MB, result.TIME_S)),
                     li(result.ESS.hasCosave() 
                             ? String.format("%s co-save was loaded.", result.GAME.COSAVE_EXT.toUpperCase())
                             : "No co-save was found.")
