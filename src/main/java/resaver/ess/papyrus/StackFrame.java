@@ -501,9 +501,21 @@ final public class StackFrame implements PapyrusElement, AnalyzableElement, Link
             BUILDER.append("<hr/><p>PAPYRUS BYTECODE:</p>");
             BUILDER.append("<code><pre>");
             List<OpcodeData> OPS = new ArrayList<>(this.CODE);
-            OPS.subList(0, PTR).forEach(v -> BUILDER.append(String.format("   %s\n", v)));
-            BUILDER.append(String.format("==><b>%s</b>\n", OPS.get(this.PTR)));
-            OPS.subList(PTR + 1, this.CODE.size()).forEach(v -> BUILDER.append(String.format("   %s\n", v)));
+            
+            for (int opIndex = 0; opIndex < PTR; opIndex++) {
+                BUILDER.append(String.format(" %03d %s\n", opIndex, OPS.get(opIndex)));
+            }
+
+            BUILDER.append(String.format("\u2b95%03d %s\n", PTR, OPS.get(PTR)));
+
+            for (int opIndex = PTR+1; opIndex < OPS.size(); opIndex++) {
+                BUILDER.append(String.format(" %03d %s\n", opIndex, OPS.get(opIndex)));
+            }
+
+            
+            //OPS.subList(0, PTR).forEach(v -> BUILDER.append(String.format("   %s\n", v)));
+            //BUILDER.append(String.format("==><b>%s</b>\n", OPS.get(this.PTR)));
+            //OPS.subList(PTR + 1, this.CODE.size()).forEach(v -> BUILDER.append(String.format("   %s\n", v)));
             BUILDER.append("</pre></code>");
         } else {
             BUILDER.append("<p><em>Papyrus bytecode not available.</em></p>");
@@ -520,7 +532,7 @@ final public class StackFrame implements PapyrusElement, AnalyzableElement, Link
      * @return
      */
     @Override
-    public boolean  matches(Optional<resaver.Analysis> analysis, String mod) {
+    public boolean matches(Optional<resaver.Analysis> analysis, String mod) {
         Objects.requireNonNull(analysis);
         Objects.requireNonNull(mod);
 
@@ -850,5 +862,5 @@ final public class StackFrame implements PapyrusElement, AnalyzableElement, Link
     final private List<Variable> VARIABLES;
     final private DefinedElement OWNER;
     static final Pattern AUTOVAR_REGEX = Pattern.compile("^::(.+)_var$", Pattern.CASE_INSENSITIVE);
-
+    
 }
